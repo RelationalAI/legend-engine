@@ -48,6 +48,9 @@
         <module>legend-engine-xts-mongodb</module>
         <module>legend-engine-xts-elasticsearch</module>
 
+        <!-- RelationalAI -->
+        <module>legend-engine-xt-relationalai-pure</module>
+
         <!-- External Formats -->
         <module>legend-engine-xts-xml</module>
         <module>legend-engine-xts-protobuf</module>
@@ -108,7 +111,7 @@
 
     <properties>
         <!-- Legend -->
-        <legend.pure.version>4.5.13</legend.pure.version>
+        <legend.pure.version>4.5.13-SNAPSHOT</legend.pure.version>
         <legend.shared.version>0.24.0</legend.shared.version>
 
         <!-- SONAR -->
@@ -132,8 +135,8 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.release>8</maven.compiler.release>
-	<maven.enforcer.requireJavaVersion>[11.0.10,12)</maven.enforcer.requireJavaVersion>
-	<maven.enforcer.requireMavenVersion>3.6.2</maven.enforcer.requireMavenVersion>
+        <maven.enforcer.requireJavaVersion>[11.0.10,12)</maven.enforcer.requireJavaVersion>
+        <maven.enforcer.requireMavenVersion>3.6.2</maven.enforcer.requireMavenVersion>
         <project.build.outputTimestamp>1680115922</project.build.outputTimestamp>
         <surefire.vm.params>-XX:SoftRefLRUPolicyMSPerMB=1</surefire.vm.params>
         <surefire.reports.directory />
@@ -483,9 +486,9 @@
                                 <requireJavaVersion>
                                     <version>${maven.enforcer.requireJavaVersion}</version>
                                 </requireJavaVersion>
-				<requireMavenVersion>
-				  <version>${maven.enforcer.requireMavenVersion}</version>
-				</requireMavenVersion>
+                                <requireMavenVersion>
+                                    <version>${maven.enforcer.requireMavenVersion}</version>
+                                </requireMavenVersion>
                                 <dependencyConvergence />
                                 <bannedDependencies>
                                     <excludes>
