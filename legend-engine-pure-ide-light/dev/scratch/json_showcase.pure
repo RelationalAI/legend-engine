@@ -1,0 +1,271 @@
+import json_showcase::*;
+import meta::rel::mapping::frontend::*;
+import meta::rel::runtime::*;
+import meta::rel::utils::*;
+
+Class json_showcase::Person {
+  firstName: String[1];
+  lastName: String[1];
+
+  stockTrades() {
+    $this.trades
+      ->filter(t | $t->instanceOf(StockTrade))
+      ->map(t | $t->cast(@StockTrade))
+  }: StockTrade[*];
+}
+
+Class json_showcase::Trade {
+  datetime: DateTime[1];
+  amount: Integer[1];
+  price: Float[1];
+
+  cost() {
+    $this.amount * $this.price;
+  }: Number[1];
+}
+
+Association json_showcase::Ledger {
+  person: Person[1];
+  trades: Trade[*];
+}
+
+Class json_showcase::StockTrade extends Trade {
+  stock: Stock[1];
+}
+
+Class json_showcase::OptionTrade extends Trade {
+  type: String[1];
+  underlying: Stock[1];
+  expiration: StrictDate[1];
+  strike: Float[1];
+
+  cost() {
+    $this.amount * 100 * $this.price;
+  }: Number[1];
+}
+
+Class json_showcase::Stock {
+  symbol: String[1];
+  name: String[1];
+}
+
+function json_showcase::doQuery(connection: RAIConnection[1], query: FunctionDefinition<{->Any[*]}>[1]): Any[*] {  
+  let schema = $connection.element->cast(@RAISchema);
+
+  let runtime = ^meta::pure::runtime::Runtime(connections=$connection);
+
+  let result = execute(
+    $query,
+    $schema.mapping,
+    $runtime,
+    meta::rel::extension::defaultRAIExtension()//, debug()
+  );
+
+  $result.values;
+}
+
+function json_showcase::doPrint(objects: Any[*]): Any[*] {
+  $objects->map({object | 
+    $object->match([
+      {person: Person[1] |
+        format('Person: %s %s', [$person.firstName, $person.lastName])
+          ->println();
+      },
+      {stockTrade: StockTrade[1] | 
+        format('Trade: %d for %f$ at %s', [$stockTrade.amount, $stockTrade.price, $stockTrade.datetime->toString()])
+          ->println();
+      },
+      {optionTrade: OptionTrade[1] |
+        format('Trade %d %f %s (%s) for %f$ at %s', [$optionTrade.amount, $optionTrade.strike, $optionTrade.type, $optionTrade.expiration->toString(), $optionTrade.price, $optionTrade.datetime->toString()])
+          ->println();
+      },
+      {tds: TabularDataSet[1] |
+        println($tds.columns.name->map(c | $c + '\t')->joinStrings());
+        $tds.rows->json_showcase::doPrint();
+      },
+      {row: TDSRow[1] |
+        println($row.values->map(v | $v->toString() + '\t')->joinStrings());
+      }, 
+      {other: Any[1] | println($other); }
+    ]);
+  });
+}
+
+function json_showcase::demo(): Any[*] {
+  let schema = RAISchema('json')
+    ->includeClass(Trade)
+    ->includeClass(OptionTrade)
+    ->includeClass(StockTrade)
+    ->includeClass(Stock);
+
+  let rai = $schema
+    ->meta::rel::runtime::RAIConnection('localhost', '8010', 'http', 'json', 'local');
+
+  // Show all stock trades of Brian Minor
+  $rai
+    ->doQuery({| 
+      StockTrade.all()
+        ->filter(t | $t.person.firstName == 'Brian' && $t.person.lastName == 'Minor')
+        ->project([
+          #/StockTrade/datetime!datetime#,
+          #/StockTrade/amount!amount#,
+          #/StockTrade/stock/symbol!symbol#,
+          #/StockTrade/stock/name!title#,
+          #/StockTrade/price!price#
+        ])
+    })
+    ->json_showcase::doPrint();
+
+  // Show the cost of each trade of Brian Minor
+  /*$rai
+    ->doQuery({|
+      Trade.all()
+        ->filter(t | $t.person.firstName == 'Brian' && $t.person.lastName == 'Minor')
+        ->project([
+          col(t | $t.datetime, 'datetime'),
+          col(t | $t.amount, 'amount'),
+          col({t | 
+            if ($t->instanceOf(StockTrade), 
+              | $t->cast(@StockTrade).stock.symbol, 
+              {| 
+                $t
+                  ->cast(@OptionTrade)
+                  ->map(ot | $ot.type + ' ' + $ot.underlying.symbol)
+              }
+            )
+          }, 'name'),
+          col(t | $t.price, 'price'),
+          col({t | 
+            if ($t->instanceOf(StockTrade), 
+              | $t->cast(@StockTrade).cost(), 
+              | $t->cast(@OptionTrade).cost()
+            )
+          }, 'cost')
+        ])
+    })
+    ->json_showcase::doPrint();*/
+
+  // For each person and instrument type, show the number of trades done with that instrument type.
+  /*$rai
+    ->doQuery({|
+      Person.all()
+        ->project([
+          col(p | $p.firstName + ' ' + $p.lastName, 'Name'),
+          col(p | $p.trades->filter(t | $t->instanceOf(StockTrade))->count(), '# Stock trades'),
+          col(p | $p.trades->filter(t | $t->instanceOf(OptionTrade))->count(), '# Option trades')
+        ])
+    })
+    ->json_showcase::doPrint();*/
+
+  // Show those persons who traded a stock more than once.
+  /*$rai
+    ->doQuery({|
+      Person.all()
+        ->filter(p | 
+          $p.stockTrades()
+            ->exists(t1 | 
+              $p.stockTrades()
+                ->exists(t2 | $t1 != $t2 && $t1.stock.symbol == $t2.stock.symbol)
+            )
+        )
+    })
+    ->json_showcase::doPrint();*/
+  
+  // Show the number of option trades per underlying
+  /*$rai
+    ->doQuery({|
+      OptionTrade.all()
+        ->groupBy([t | $t.underlying.symbol], [agg(t | $t, ts | $ts->count())], ['Underlying', 'Count'])
+    })
+    ->json_showcase::doPrint();*/
+
+
+  // Show all stocks with more than 20 call option trades
+  /*$rai
+    ->doQuery({|
+      Stock.all()
+        ->filter(s | OptionTrade.all()->filter(ot | $ot.underlying == $s)->count() > 20)
+    })
+    ->json_showcase::doPrint();*/
+
+  
+  // Show the most active option trader
+  /*$rai
+    ->doQuery({|
+      Person.all()
+        ->filter(p1 | 
+          Person.all()->forAll(p2 | 
+            $p1 == $p2 ||
+            ($p1.trades
+              ->filter(t | $t->instanceOf(OptionTrade))
+              ->count() >=
+            $p2.trades
+              ->filter(t | $t->instanceOf(OptionTrade))
+              ->count())
+          )
+        )
+    })
+    ->json_showcase::doPrint();*/
+
+
+    // Find the stock with the most long trades and show
+    // the total number of shares purchased.
+    /*$rai
+      ->doQuery({|
+        Stock.all()
+          ->filter(s1 |
+            Stock.all()
+              ->forAll(s2 |
+                $s1 == $s2 ||
+                (StockTrade.all()
+                  ->filter(st | $st.stock == $s1)
+                  ->count()
+                  >= 
+                  StockTrade.all()
+                    ->filter(st | $st.stock == $s2)
+                    ->count()
+                )
+              )
+          )
+          ->project([#/Stock/symbol!symbol#])
+          ->join(
+            StockTrade.all()
+              ->project([#/StockTrade/stock/symbol!symbol#, #/StockTrade/amount!amount#]),
+            meta::relational::metamodel::join::JoinType.INNER,
+            {stock: TDSRow[1], trade: TDSRow[1] | $stock.getString('symbol') == $trade.getString('symbol')}
+          )
+          ->groupBy(['symbol'], [agg('count', t | $t, ts | $ts->count())])
+      })
+      ->inspect()
+      ->json_showcase::doPrint();*/
+
+  
+
+  // Show the largest long stock trade
+  /*$rai 
+    ->doQuery({|
+      StockTrade.all()
+        ->filter(t1 | StockTrade.all()->forAll(t2 | $t2.cost() <= $t1.cost()))
+        ->project([
+          col(t | $t.datetime, 'datetime'),
+          col(t | $t.stock.symbol, 'symbol'),
+          col(t | $t.stock.name, 'name'),
+          col(t | $t.amount, 'amount'),
+          col(t | $t.price, 'price'),
+          col(t | $t.cost(), 'cost')
+        ])
+    })
+    ->json_showcase::doPrint();*/
+
+  /*$rai
+    ->doQuery({|
+      Dummy.all()
+        ->project([#/Dummy/name#, #/Dummy/value#])
+        ->join(
+          Person.all()
+            ->project([#/Person/lastName#, #/Person/firstName#]),
+          meta::relational::metamodel::join::JoinType.INNER,
+          {t1: TDSRow[1], t2: TDSRow[1] | $t1.getString('name') == $t2.getString('lastName')}
+        )
+    });*/
+}

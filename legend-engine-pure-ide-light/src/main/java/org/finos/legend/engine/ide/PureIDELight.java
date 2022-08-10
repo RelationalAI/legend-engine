@@ -64,7 +64,9 @@ public class PureIDELight extends PureIDEServer
                     .with(this.buildCore("legend-engine-pure-ide-light-metadata-pure", "ide_metadata"))
                     .with(this.buildCore("legend-engine-pure-code-compiled-core", ""))
                     .with(this.buildCore("legend-engine-xt-analytics-mapping-pure", "analytics-mapping"))
-                    .with(new MutableFSCodeStorage(new PureIDECodeRepository(), Paths.get(ideFilesLocation)));
+                    .with(this.buildCore("legend-engine-xt-relationalai-pure", "relationalai"))
+                    .with(new MutableFSCodeStorage(new PureIDECodeRepository(), Paths.get(ideFilesLocation)))
+                    .with(new MutableFSCodeStorage(new LibCodeRepository("scratch"), Paths.get("legend-engine-pure-ide-light/dev/scratch")));
         }
         catch (IOException e)
         {

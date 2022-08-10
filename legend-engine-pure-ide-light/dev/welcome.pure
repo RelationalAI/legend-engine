@@ -1,0 +1,3 @@
+function go(): Any[*] {
+  json_showcase::demo();
+}
