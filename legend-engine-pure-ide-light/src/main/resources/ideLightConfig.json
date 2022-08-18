@@ -26,5 +26,8 @@
       "appenders": [
       ]
     }
+  },
+  "sourceLocationConfiguration": {
+    "welcomeFileDirectory": "legend-engine-pure-ide-light/dev"
   }
 }
