@@ -12,15 +12,25 @@ Class json_showcase::Person {
       ->filter(t | $t->instanceOf(StockTrade))
       ->map(t | $t->cast(@StockTrade))
   }: StockTrade[*];
+
+  latestTrade: Trade[0..1];
+
+  /*
+  Future support:
+  <<rai.materialize>> latestTrade(): {
+    $this.trades
+      ->filter(t1 | !$this.trades->exists(t2 | $t2 > $t1.datetime))
+  }: Trade[1];
+  */
 }
 
 Class json_showcase::Trade {
   datetime: DateTime[1];
-  amount: Integer[1];
-  price: Float[1];
+  quantity: Integer[1];
+  costBasis: Float[1];
 
   cost() {
-    $this.amount * $this.price;
+    $this.quantity * $this.costBasis;
   }: Number[1];
 }
 
@@ -40,7 +50,7 @@ Class json_showcase::OptionTrade extends Trade {
   strike: Float[1];
 
   cost() {
-    $this.amount * 100 * $this.price;
+    $this.quantity * 100 * $this.costBasis;
   }: Number[1];
 }
 
@@ -49,7 +59,7 @@ Class json_showcase::Stock {
   name: String[1];
 }
 
-function json_showcase::doQuery(connection: RAIConnection[1], query: FunctionDefinition<{->Any[*]}>[1]): Any[*] {  
+function json_showcase::doQuery(connection: meta::pure::runtime::Connection[1], query: FunctionDefinition<{->Any[*]}>[1]): Any[*] {  
   let schema = $connection.element->cast(@RAISchema);
 
   let runtime = ^meta::pure::runtime::Runtime(connections=$connection);
@@ -72,11 +82,11 @@ function json_showcase::doPrint(objects: Any[*]): Any[*] {
           ->println();
       },
       {stockTrade: StockTrade[1] | 
-        format('Trade: %d for %f$ at %s', [$stockTrade.amount, $stockTrade.price, $stockTrade.datetime->toString()])
+        format('Trade: %d for %f$ at %s', [$stockTrade.quantity, $stockTrade.costBasis, $stockTrade.datetime->toString()])
           ->println();
       },
       {optionTrade: OptionTrade[1] |
-        format('Trade %d %f %s (%s) for %f$ at %s', [$optionTrade.amount, $optionTrade.strike, $optionTrade.type, $optionTrade.expiration->toString(), $optionTrade.price, $optionTrade.datetime->toString()])
+        format('Trade %d %f %s (%s) for %f$ at %s', [$optionTrade.quantity, $optionTrade.strike, $optionTrade.type, $optionTrade.expiration->toString(), $optionTrade.costBasis, $optionTrade.datetime->toString()])
           ->println();
       },
       {tds: TabularDataSet[1] |
@@ -99,22 +109,24 @@ function json_showcase::demo(): Any[*] {
     ->includeClass(Stock);
 
   let rai = $schema
-    ->meta::rel::runtime::RAIConnection('localhost', '8010', 'http', 'json', 'local');
+    //->meta::rel::runtime::RAIConnection('localhost', '8010', 'http', 'json-showcase', 'local');
+    ->meta::rel::runtime::TestConnection({source | println('Execution skipped (test connection).'); });
+  
 
   // Show all stock trades of Brian Minor
-  $rai
+  /*$rai
     ->doQuery({| 
       StockTrade.all()
         ->filter(t | $t.person.firstName == 'Brian' && $t.person.lastName == 'Minor')
         ->project([
           #/StockTrade/datetime!datetime#,
-          #/StockTrade/amount!amount#,
+          #/StockTrade/quantity!quantity#,
           #/StockTrade/stock/symbol!symbol#,
           #/StockTrade/stock/name!title#,
-          #/StockTrade/price!price#
+          #/StockTrade/costBasis!costBasis#
         ])
     })
-    ->json_showcase::doPrint();
+    ->json_showcase::doPrint();*/
 
   // Show the cost of each trade of Brian Minor
   /*$rai
@@ -123,7 +135,7 @@ function json_showcase::demo(): Any[*] {
         ->filter(t | $t.person.firstName == 'Brian' && $t.person.lastName == 'Minor')
         ->project([
           col(t | $t.datetime, 'datetime'),
-          col(t | $t.amount, 'amount'),
+          col(t | $t.quantity, 'quantity'),
           col({t | 
             if ($t->instanceOf(StockTrade), 
               | $t->cast(@StockTrade).stock.symbol, 
@@ -134,7 +146,7 @@ function json_showcase::demo(): Any[*] {
               }
             )
           }, 'name'),
-          col(t | $t.price, 'price'),
+          col(t | $t.costBasis, 'costBasis'),
           col({t | 
             if ($t->instanceOf(StockTrade), 
               | $t->cast(@StockTrade).cost(), 
@@ -230,7 +242,7 @@ function json_showcase::demo(): Any[*] {
           ->project([#/Stock/symbol!symbol#])
           ->join(
             StockTrade.all()
-              ->project([#/StockTrade/stock/symbol!symbol#, #/StockTrade/amount!amount#]),
+              ->project([#/StockTrade/stock/symbol!symbol#, #/StockTrade/quantity!quantity#]),
             meta::relational::metamodel::join::JoinType.INNER,
             {stock: TDSRow[1], trade: TDSRow[1] | $stock.getString('symbol') == $trade.getString('symbol')}
           )
@@ -241,7 +253,7 @@ function json_showcase::demo(): Any[*] {
 
   
 
-  // Show the largest long stock trade
+  // Show the largest bought stock trade
   /*$rai 
     ->doQuery({|
       StockTrade.all()
@@ -250,22 +262,40 @@ function json_showcase::demo(): Any[*] {
           col(t | $t.datetime, 'datetime'),
           col(t | $t.stock.symbol, 'symbol'),
           col(t | $t.stock.name, 'name'),
-          col(t | $t.amount, 'amount'),
-          col(t | $t.price, 'price'),
+          col(t | $t.quantity, 'quantity'),
+          col(t | $t.costBasis, 'costBasis'),
           col(t | $t.cost(), 'cost')
         ])
     })
     ->json_showcase::doPrint();*/
 
-  /*$rai
+  // Show the latest trade of Brian Minor
+  $rai
     ->doQuery({|
-      Dummy.all()
-        ->project([#/Dummy/name#, #/Dummy/value#])
-        ->join(
-          Person.all()
-            ->project([#/Person/lastName#, #/Person/firstName#]),
-          meta::relational::metamodel::join::JoinType.INNER,
-          {t1: TDSRow[1], t2: TDSRow[1] | $t1.getString('name') == $t2.getString('lastName')}
-        )
-    });*/
+      Person.all()
+        ->filter(p | $p.firstName == 'Brian' && $p.lastName == 'Minor')
+        ->map(p | $p.latestTrade)
+        ->project([
+          col(t | $t.datetime, 'datetime'),
+          col(t | $t.quantity, 'quantity'),
+          col({t | 
+            if ($t->instanceOf(StockTrade), 
+              | $t->cast(@StockTrade).stock.symbol, 
+              {| 
+                $t
+                  ->cast(@OptionTrade)
+                  ->map(ot | $ot.type + ' ' + $ot.underlying.symbol)
+              }
+            )
+          }, 'name'),
+          col(t | $t.costBasis, 'costBasis'),
+          col({t | 
+            if ($t->instanceOf(StockTrade), 
+              | $t->cast(@StockTrade).cost(), 
+              | $t->cast(@OptionTrade).cost()
+            )
+          }, 'cost')
+        ])
+    })
+    ->json_showcase::doPrint();
 }
