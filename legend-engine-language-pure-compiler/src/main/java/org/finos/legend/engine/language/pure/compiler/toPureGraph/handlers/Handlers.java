@@ -23,8 +23,10 @@ import org.eclipse.collections.impl.factory.Maps;
 import org.eclipse.collections.impl.factory.Sets;
 import org.eclipse.collections.impl.list.mutable.FastList;
 import org.eclipse.collections.impl.map.mutable.UnifiedMap;
+import org.eclipse.collections.impl.utility.LazyIterate;
 import org.eclipse.collections.impl.utility.ListIterate;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.CompileContext;
+import org.finos.legend.engine.language.pure.compiler.toPureGraph.MilestoningDatePropagationContext;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.ProcessingContext;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.PureModel;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.ValueSpecificationBuilder;
@@ -67,6 +69,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Handlers
 {
@@ -195,29 +198,34 @@ public class Handlers
 
     public static final ParametersInference LambdaCollectionInference = (parameters, ov, cc, pc) ->
     {
-        updateLambdaCollection(parameters, parameters.get(0).accept(new ValueSpecificationBuilder(cc, ov, pc))._genericType(), new org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.Multiplicity(1, 1), 1);
-        return parameters.stream().map(p -> p.accept(new ValueSpecificationBuilder(cc, ov, pc))).collect(Collectors.toList());
+        ValueSpecification firstProcessedParameter = parameters.get(0).accept(new ValueSpecificationBuilder(cc, ov, pc));
+        updateLambdaCollection(parameters, firstProcessedParameter._genericType(), new org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.Multiplicity(1, 1), 1);
+        return Stream.concat(Stream.of(firstProcessedParameter), parameters.stream().skip(1).map(p -> p.accept(new ValueSpecificationBuilder(cc, ov, pc)))).collect(Collectors.toList());
     };
 
     public static final ParametersInference TDSContainsInference = (parameters, ov, cc, pc) ->
     {
-        updateLambdaCollection(parameters, parameters.get(0).accept(new ValueSpecificationBuilder(cc, ov, pc))._genericType(), new org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.Multiplicity(1, 1), 1);
+        ValueSpecification firstProcessedParameter = parameters.get(0).accept(new ValueSpecificationBuilder(cc, ov, pc));
+        updateLambdaCollection(parameters, firstProcessedParameter._genericType(), new org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.Multiplicity(1, 1), 1);
         updateTDSRowLambda(((Lambda) parameters.get(4)).parameters);
-        return parameters.stream().map(p -> p.accept(new ValueSpecificationBuilder(cc, ov, pc))).collect(Collectors.toList());
+        return Stream.concat(Stream.of(firstProcessedParameter), parameters.stream().skip(1).map(p -> p.accept(new ValueSpecificationBuilder(cc, ov, pc)))).collect(Collectors.toList());
     };
 
     public static final ParametersInference EvalInference = (parameters, ov, cc, pc) ->
     {
-        updateLambdaCollection(parameters, parameters.get(1).accept(new ValueSpecificationBuilder(cc, ov, pc))._genericType(), new org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.Multiplicity(1, 1), 0);
-        return parameters.stream().map(p -> p.accept(new ValueSpecificationBuilder(cc, ov, pc))).collect(Collectors.toList());
+        ValueSpecification secondProcessedParameter = parameters.get(1).accept(new ValueSpecificationBuilder(cc, ov, pc));
+        updateLambdaCollection(parameters, secondProcessedParameter._genericType(), new org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.Multiplicity(1, 1), 0);
+        ValueSpecification firstProcessedParameter = parameters.get(0).accept(new ValueSpecificationBuilder(cc, ov, pc));
+        return Stream.concat(Stream.of(firstProcessedParameter, secondProcessedParameter), parameters.stream().skip(2).map(p -> p.accept(new ValueSpecificationBuilder(cc, ov, pc)))).collect(Collectors.toList());
     };
 
     public static final ParametersInference LambdaColCollectionInference = (parameters, ov, cc, pc) ->
     {
-        GenericType gt = parameters.get(0).accept(new ValueSpecificationBuilder(cc, ov, pc))._genericType();
+        ValueSpecification firstProcessedParameter = parameters.get(0).accept(new ValueSpecificationBuilder(cc, ov, pc));
+        GenericType gt = firstProcessedParameter._genericType();
         final GenericType gt2 = gt._rawType()._name().equals("TabularDataSet") || gt._rawType()._name().equals("TableTDS") ? cc.pureModel.getGenericType("meta::pure::tds::TDSRow") : gt;
         toCollection(parameters.get(1)).values.forEach(l -> updateLambdaWithCol(gt2, l));
-        return parameters.stream().map(p -> p.accept(new ValueSpecificationBuilder(cc, ov, pc))).collect(Collectors.toList());
+        return Stream.concat(Stream.of(firstProcessedParameter), parameters.stream().skip(1).map(p -> p.accept(new ValueSpecificationBuilder(cc, ov, pc)))).collect(Collectors.toList());
     };
 
     public static final ParametersInference LambdaInference = (parameters, ov, cc, pc) ->
@@ -252,15 +260,18 @@ public class Handlers
 
     public static final ParametersInference TDSFilterInference = (parameters, ov, cc, pc) ->
     {
-        GenericType gt = parameters.get(0).accept(new ValueSpecificationBuilder(cc, ov, pc))._genericType();
+        ValueSpecification firstProcessedParameter = parameters.get(0).accept(new ValueSpecificationBuilder(cc, ov, pc));
+        GenericType gt = firstProcessedParameter._genericType();
         if ("TabularDataSet".equals(gt._rawType()._name()))
         {
             updateSimpleLambda(parameters.get(1), cc.pureModel.getGenericType("meta::pure::tds::TDSRow"), new org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.Multiplicity(1, 1));
-            return parameters.stream().map(p -> p.accept(new ValueSpecificationBuilder(cc, ov, pc))).collect(Collectors.toList());
+            return Stream.concat(Stream.of(firstProcessedParameter), parameters.stream().skip(1).map(p -> p.accept(new ValueSpecificationBuilder(cc, ov, pc)))).collect(Collectors.toList());
         }
         else
         {
-            return LambdaInference.update(parameters, ov, cc, pc);
+            List<ValueSpecification> firstPassProcessed = parameters.stream().skip(1).map(p -> p instanceof Lambda ? null : p.accept(new ValueSpecificationBuilder(cc, ov, pc))).collect(Collectors.toList());
+            updateSimpleLambda(parameters.get(1), parameters.size() != 0 && parameters.get(0) instanceof Lambda ? firstPassProcessed.get(0)._genericType() : firstProcessedParameter._genericType(), new org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.Multiplicity(1, 1));
+            return ListIterate.zip(LazyIterate.concatenate(FastList.newListWith(firstProcessedParameter), firstPassProcessed).toList(), parameters).collect(p -> p.getOne() != null ? p.getOne() : p.getTwo().accept(new ValueSpecificationBuilder(cc, ov, pc)));
         }
     };
 
@@ -296,10 +307,11 @@ public class Handlers
     public static final ParametersInference LambdaAndAggInference = (parameters, ov, cc, pc) ->
     {
         // Main Lambda
-        GenericType gt = parameters.get(0).accept(new ValueSpecificationBuilder(cc, ov, pc))._genericType();
+        ValueSpecification firstProcessedParameter = parameters.get(0).accept(new ValueSpecificationBuilder(cc, ov, pc));
+        GenericType gt = firstProcessedParameter._genericType();
         updateLambdaCollection(parameters, gt, new org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.Multiplicity(1, 1), 1);
         aggInferenceAll(parameters, gt, 0, 1, ov, cc, pc);
-        return parameters.stream().map(p -> p.accept(new ValueSpecificationBuilder(cc, ov, pc))).collect(Collectors.toList());
+        return Stream.concat(Stream.of(firstProcessedParameter), parameters.stream().skip(1).map(p -> p.accept(new ValueSpecificationBuilder(cc, ov, pc)))).collect(Collectors.toList());
     };
 
     private final Map<String, FunctionExpressionBuilder> map = UnifiedMap.newMap();
@@ -395,11 +407,11 @@ public class Handlers
                 m(h("meta::pure::functions::collection::agg_FunctionDefinition_1__FunctionDefinition_1__AggregateValue_1_", false, ps -> res("meta::pure::functions::collection::AggregateValue", "one"), ps -> true))));
 
 
-        register(m(m(h("meta::pure::tds::col_Function_1__String_1__String_1__BasicColumnSpecification_1_", false, ps -> res(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("")
+        register(m(m(h("meta::pure::tds::col_Function_1__String_1__String_1__BasicColumnSpecification_1_", false, ps -> res(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("", null, this.pureModel.getClass("meta::pure::metamodel::type::generics::GenericType"))
                                 ._rawType(this.pureModel.getType("meta::pure::tds::BasicColumnSpecification"))
                                 ._typeArguments(Lists.fixedSize.of(((FunctionType) ps.get(0)._genericType()._typeArguments().getFirst()._rawType())._parameters().getFirst()._genericType())),
                         "one"), ps -> ps.size() == 3)),
-                m(h("meta::pure::tds::col_Function_1__String_1__BasicColumnSpecification_1_", false, ps -> res(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("")
+                m(h("meta::pure::tds::col_Function_1__String_1__BasicColumnSpecification_1_", false, ps -> res(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("", null, this.pureModel.getClass("meta::pure::metamodel::type::generics::GenericType"))
                                 ._rawType(this.pureModel.getType("meta::pure::tds::BasicColumnSpecification"))
                                 ._typeArguments(Lists.fixedSize.of(((FunctionType) ps.get(0)._genericType()._typeArguments().getFirst()._rawType())._parameters().getFirst()._genericType())),
                         "one"), ps -> true))));
@@ -524,17 +536,15 @@ public class Handlers
                         m(h("meta::pure::graphFetch::execution::graphFetch_T_MANY__RootGraphFetchTree_1__Integer_1__T_MANY_", false, ps -> res(ps.get(0)._genericType(), "zeroMany"), ps -> ps.size() == 3))
                 )
         );
-        register("meta::pure::graphFetch::execution::graphFetchChecked_T_MANY__RootGraphFetchTree_1__Checked_MANY_", false, ps -> res(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("")._rawType(this.pureModel.getType("meta::pure::dataQuality::Checked"))._typeArgumentsAdd(ps.get(0)._genericType()), "zeroMany"));
+        register("meta::pure::dataQuality::checked_T_MANY__Checked_MANY_", false, ps -> res(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("", null, this.pureModel.getClass("meta::pure::metamodel::type::generics::GenericType"))._rawType(this.pureModel.getType("meta::pure::dataQuality::Checked"))._typeArgumentsAdd(ps.get(0)._genericType()), "zeroMany"));
+        register("meta::pure::graphFetch::execution::graphFetchChecked_T_MANY__RootGraphFetchTree_1__Checked_MANY_", false, ps -> res(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("", null, this.pureModel.getClass("meta::pure::metamodel::type::generics::GenericType"))._rawType(this.pureModel.getType("meta::pure::dataQuality::Checked"))._typeArgumentsAdd(ps.get(0)._genericType()), "zeroMany"));
+        register("meta::pure::graphFetch::execution::graphFetchUnexpanded_T_MANY__RootGraphFetchTree_1__T_MANY_", false, ps -> res(ps.get(0)._genericType(), "zeroMany"));
+        register("meta::pure::graphFetch::execution::graphFetchCheckedUnexpanded_T_MANY__RootGraphFetchTree_1__Checked_MANY_", false, ps -> res(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("", null, this.pureModel.getClass("meta::pure::metamodel::type::generics::GenericType"))._rawType(this.pureModel.getType("meta::pure::dataQuality::Checked"))._typeArgumentsAdd(ps.get(0)._genericType()), "zeroMany"));
         register(m(
                         m(h("meta::pure::graphFetch::execution::serialize_Checked_MANY__RootGraphFetchTree_1__String_1_", false, ps -> res("String", "one"), ps -> ps.size() == 2 && "Checked".equals(ps.get(0)._genericType()._rawType()._name()))),
                         m(h("meta::pure::graphFetch::execution::serialize_T_MANY__RootGraphFetchTree_1__String_1_", false, ps -> res("String", "one"), ps -> ps.size() == 2)),
                         m(h("meta::pure::graphFetch::execution::serialize_Checked_MANY__RootGraphFetchTree_1__AlloySerializationConfig_1__String_1_", false, ps -> res("String", "one"), ps -> ps.size() == 3 && "Checked".equals(ps.get(0)._genericType()._rawType()._name()) && "AlloySerializationConfig".equals(ps.get(2)._genericType()._rawType()._name()))),
                         m(h("meta::pure::graphFetch::execution::serialize_T_MANY__RootGraphFetchTree_1__AlloySerializationConfig_1__String_1_", false, ps -> res("String", "one"), ps -> ps.size() == 3))
-                )
-        );
-        register(m(
-                        m(h("meta::external::shared::format::executionPlan::externalize_Checked_MANY__Binding_1__String_1_", false, ps -> res("String", "one"), ps -> ps.size() == 2 && "Checked".equals(ps.get(0)._genericType()._rawType()._name()))),
-                        m(h("meta::external::shared::format::executionPlan::externalize_T_MANY__Binding_1__String_1_", false, ps -> res("String", "one"), ps -> ps.size() == 2))
                 )
         );
 
@@ -549,7 +559,7 @@ public class Handlers
         register(m(m(h("meta::pure::functions::collection::dropAt_T_MANY__Integer_1__T_MANY_", false, ps -> res(ps.get(0)._genericType(), "zeroMany"), ps -> ps.size() == 2)),
                 m(h("meta::pure::functions::collection::dropAt_T_MANY__Integer_1__Integer_1__T_MANY_", false, ps -> res(ps.get(0)._genericType(), "zeroMany"), ps -> ps.size() == 3))));
 
-        register("meta::pure::functions::collection::zip_T_MANY__U_MANY__Pair_MANY_", true, ps -> res(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("")
+        register("meta::pure::functions::collection::zip_T_MANY__U_MANY__Pair_MANY_", true, ps -> res(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("", null, this.pureModel.getClass("meta::pure::metamodel::type::generics::GenericType"))
                 ._rawType(this.pureModel.getType("meta::pure::functions::collection::Pair"))
                 ._typeArguments(Lists.fixedSize.ofAll(ps.stream().map(ValueSpecificationAccessor::_genericType).collect(Collectors.toList()))), "oneMany"));
         register(m(grp(LambdaInference, h("meta::pure::functions::collection::removeDuplicatesBy_T_MANY__Function_1__T_MANY_", false, ps -> res(ps.get(0)._genericType(), "zeroMany"), p -> true))));
@@ -566,6 +576,7 @@ public class Handlers
         register("meta::pure::functions::collection::tail_T_MANY__T_MANY_", true, ps -> res(ps.get(0)._genericType(), "zeroMany"));
         register("meta::pure::functions::collection::head_T_MANY__T_$0_1$_", false, ps -> res(ps.get(0)._genericType(), "zeroOne"));
         register("meta::pure::functions::collection::oneOf_Boolean_MANY__Boolean_1_", false, ps -> res("Boolean", "one"));
+        register("meta::pure::functions::collection::defaultIfEmpty_T_MANY__T_$1_MANY$__T_$1_MANY$_", false, ps -> res(MostCommonType.mostCommon(Lists.fixedSize.of(ps.get(0)._genericType(), ps.get(1)._genericType()), pureModel), "oneMany"));
 
         register("meta::pure::functions::string::isUUID_String_$0_1$__Boolean_1_", false, ps -> res("Boolean", "one"));
         register("meta::json::schema::mapSchema_String_1__Type_1__DiscriminatorMapping_1_", false, ps -> res("meta::json::schema::DiscriminatorMapping", "one"));
@@ -1219,7 +1230,7 @@ public class Handlers
         return new TypeAndMultiplicity(genericType, mul);
     }
 
-    private TypeAndMultiplicity res(GenericType genericType, String mul)
+    public TypeAndMultiplicity res(GenericType genericType, String mul)
     {
         return new TypeAndMultiplicity(genericType, this.pureModel.getMultiplicity(mul));
     }
@@ -1392,7 +1403,7 @@ public class Handlers
         {
             RichIterable<? extends GenericType> g = gt._typeArguments();
             Multiplicity m = gt._multiplicityArguments().getFirst();
-            return (FunctionType) PureModel.buildFunctionType(FastList.newListWith(new Root_meta_pure_metamodel_valuespecification_VariableExpression_Impl("")._genericType(g.getFirst())._multiplicity(pm.getMultiplicity("one"))), g.getLast(), m)._rawType();
+            return (FunctionType) PureModel.buildFunctionType(FastList.newListWith(new Root_meta_pure_metamodel_valuespecification_VariableExpression_Impl("", null, pm.getClass("meta::pure::metamodel::valuespecification::VariableExpression"))._genericType(g.getFirst())._multiplicity(pm.getMultiplicity("one"))), g.getLast(), m, pm)._rawType();
         }
         return (FunctionType) gt._typeArguments().getFirst()._rawType();
     }
@@ -1598,6 +1609,7 @@ public class Handlers
         map.put("meta::pure::functions::collection::containsAny_Any_MANY__Any_MANY__Boolean_1_", (List<ValueSpecification> ps) -> ps.size() == 2);
         map.put("meta::pure::functions::collection::contains_Any_MANY__Any_1__Boolean_1_", (List<ValueSpecification> ps) -> ps.size() == 2 && isOne(ps.get(1)._multiplicity()));
         map.put("meta::pure::functions::collection::count_Any_MANY__Integer_1_", (List<ValueSpecification> ps) -> ps.size() == 1);
+        map.put("meta::pure::functions::collection::defaultIfEmpty_T_MANY__T_$1_MANY$__T_$1_MANY$_", (List<ValueSpecification> ps) -> ps.size() == 2 && matchOneMany(ps.get(1)._multiplicity()));
         map.put("meta::pure::functions::collection::distinct_T_MANY__T_MANY_", (List<ValueSpecification> ps) -> ps.size() == 1);
         map.put("meta::pure::functions::collection::dropAt_T_MANY__Integer_1__Integer_1__T_MANY_", (List<ValueSpecification> ps) -> ps.size() == 3 && isOne(ps.get(1)._multiplicity()) && ("Nil".equals(ps.get(1)._genericType()._rawType()._name()) || "Integer".equals(ps.get(1)._genericType()._rawType()._name())) && isOne(ps.get(2)._multiplicity()) && ("Nil".equals(ps.get(2)._genericType()._rawType()._name()) || "Integer".equals(ps.get(2)._genericType()._rawType()._name())));
         map.put("meta::pure::functions::collection::dropAt_T_MANY__Integer_1__T_MANY_", (List<ValueSpecification> ps) -> ps.size() == 2 && isOne(ps.get(1)._multiplicity()) && ("Nil".equals(ps.get(1)._genericType()._rawType()._name()) || "Integer".equals(ps.get(1)._genericType()._rawType()._name())));

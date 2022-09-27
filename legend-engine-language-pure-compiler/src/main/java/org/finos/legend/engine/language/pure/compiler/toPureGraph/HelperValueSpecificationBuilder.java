@@ -14,6 +14,7 @@
 
 package org.finos.legend.engine.language.pure.compiler.toPureGraph;
 
+import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.impl.factory.Lists;
@@ -44,6 +45,7 @@ import org.finos.legend.pure.generated.Root_meta_pure_router_analytics_Analytics
 import org.finos.legend.pure.generated.Root_meta_pure_runtime_ExecutionContext_Impl;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.graphFetch.GraphFetchTree;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.PackageableElement;
+import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.function.Function;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.function.LambdaFunction;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.function.property.AbstractProperty;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.function.property.Property;
@@ -89,6 +91,17 @@ public class HelperValueSpecificationBuilder
         ctx.push("new lambda");
         ctx.addVariableLevel();
         MutableList<VariableExpression> pureParameters = ListIterate.collect(parameters, p -> (VariableExpression) p.accept(new ValueSpecificationBuilder(context, Lists.mutable.empty(), ctx)));
+        if (parameters.size() != 0 && !parameters.get(0).name.equals("v_automap"))
+        {
+            if (ctx.milestoningDatePropagationContext.size() == 0)
+            {
+                ctx.pushMilestoningDatePropagationContext(new MilestoningDatePropagationContext(null, null));
+            }
+            else
+            {
+                ctx.pushMilestoningDatePropagationContext(ctx.peekMilestoningDatePropagationContext());
+            }
+        }
         MutableList<String> openVariables = Lists.mutable.empty();
         MutableList<org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.valuespecification.ValueSpecification> valueSpecifications = ListIterate.collect(expressions, p -> p.accept(new ValueSpecificationBuilder(context, openVariables, ctx)));
 
@@ -101,12 +114,16 @@ public class HelperValueSpecificationBuilder
         List<String> lets = valueSpecifications.collect(v -> v instanceof FunctionExpression && "letFunction".equals(((FunctionExpression) v)._functionName()) ? ((InstanceValue) ((FunctionExpression) v)._parametersValues().getFirst())._values().getFirst().toString() : "");
         cleanedOpenVariables.removeAll(lets);
 
-        GenericType functionType = PureModel.buildFunctionType(pureParameters, valueSpecifications.getLast()._genericType(), valueSpecifications.getLast()._multiplicity());
+        GenericType functionType = PureModel.buildFunctionType(pureParameters, valueSpecifications.getLast()._genericType(), valueSpecifications.getLast()._multiplicity(), context.pureModel);
         ctx.removeLastVariableLevel();
         ctx.pop();
+        if (parameters.size() != 0 && !parameters.get(0).name.equals("v_automap") && ctx.milestoningDatePropagationContext.size() != 0)
+        {
+            ctx.popMilestoningDatePropagationContext();
+        }
 
         LambdaFunction lambda = new Root_meta_pure_metamodel_function_LambdaFunction_Impl<>(lambdaId)
-                ._classifierGenericType(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("")._rawType(context.pureModel.getType("meta::pure::metamodel::function::LambdaFunction"))._typeArguments(FastList.newListWith(functionType)))
+                ._classifierGenericType(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("", null, context.pureModel.getClass("meta::pure::metamodel::type::generics::GenericType"))._rawType(context.pureModel.getType("meta::pure::metamodel::function::LambdaFunction"))._typeArguments(FastList.newListWith(functionType)))
                 ._openVariables(cleanedOpenVariables)
                 ._expressionSequence(valueSpecifications);
 
@@ -207,16 +224,16 @@ public class HelperValueSpecificationBuilder
                 List<Variable> lambdaParams = new FastList<>();
                 lambdaParams.add(automaLambdaparam);
                 automapLambda.parameters = lambdaParams;
-                MilestoningDatePropagationHelper.updateMilestoningPropagationContextForAutoMap(foundProperty, context, appliedProperty.parameters.size(), processedParameters.get(0), processingContext);
                 List<ValueSpecification> newParams = Lists.mutable.of(parameters.get(0), automapLambda);
+                MilestoningDatePropagationHelper.updateMilestoningPropagationContextWhileReprocessingFunctionExpression(processingContext);
                 result = context.buildFunctionExpression("map", null, newParams, openVariables, null, processingContext).getOne();
                 processingContext.pop();
             }
             else
             {
-                result = new Root_meta_pure_metamodel_valuespecification_SimpleFunctionExpression_Impl("")
+                result = new Root_meta_pure_metamodel_valuespecification_SimpleFunctionExpression_Impl("", null, context.pureModel.getClass("meta::pure::metamodel::valuespecification::SimpleFunctionExpression"))
                         ._func(foundProperty)
-                        ._propertyName(new Root_meta_pure_metamodel_valuespecification_InstanceValue_Impl("")._values(Lists.fixedSize.of(foundProperty.getName())))
+                        ._propertyName(new Root_meta_pure_metamodel_valuespecification_InstanceValue_Impl("", null, context.pureModel.getClass("meta::pure::metamodel::valuespecification::InstanceValue"))._values(Lists.fixedSize.of(foundProperty.getName())))
                         ._genericType(genericType)
                         ._multiplicity(multiplicity)
                         ._parametersValues(processedParameters);
@@ -254,7 +271,7 @@ public class HelperValueSpecificationBuilder
         {
             AnalyticsExecutionContext analyticsExecutionContext = (AnalyticsExecutionContext) executionContext;
             LambdaFunction<?> lambda = (LambdaFunction<?>) ((org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.valuespecification.InstanceValue) analyticsExecutionContext.toFlowSetFunction.accept(new ValueSpecificationBuilder(context, Lists.mutable.empty(), new ProcessingContext(""))))._values().getFirst();
-            return new Root_meta_pure_router_analytics_AnalyticsExecutionContext_Impl("")
+            return new Root_meta_pure_router_analytics_AnalyticsExecutionContext_Impl("", null, context.pureModel.getClass("meta::pure::router::analytics::AnalyticsExecutionContext"))
                     ._queryTimeOutInSeconds(analyticsExecutionContext.queryTimeOutInSeconds)
                     ._enableConstraints(analyticsExecutionContext.enableConstraints)
                     ._useAnalytics(analyticsExecutionContext.useAnalytics)
@@ -304,7 +321,7 @@ public class HelperValueSpecificationBuilder
         Type returnType = subType == null ? property._genericType()._rawType() : subType;
 
         ListIterable<GraphFetchTree> children = ListIterate.collect(propertyGraphFetchTree.subTrees, subTree -> buildGraphFetchTree(subTree, context, (Class<?>) returnType, openVariables, processingContext));
-        return new Root_meta_pure_graphFetch_PropertyGraphFetchTree_Impl("")
+        return new Root_meta_pure_graphFetch_PropertyGraphFetchTree_Impl("", null, context.pureModel.getClass("meta::pure::graphFetch::PropertyGraphFetchTree"))
                 ._property(property)
                 ._parameters(pureParameters)
                 ._alias(propertyGraphFetchTree.alias)
