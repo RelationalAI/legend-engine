@@ -125,6 +125,9 @@ function json_showcase::demo(): Any[*] {
           #/StockTrade/stock/name!title#,
           #/StockTrade/costBasis!costBasis#
         ])
+        ->project([
+          col(r: TDSRow[1] | $r.getString('title'), 'title')
+        ])
     })
     ->json_showcase::doPrint();*/
 
@@ -158,7 +161,7 @@ function json_showcase::demo(): Any[*] {
     ->json_showcase::doPrint();*/
 
   // For each person and instrument type, show the number of trades done with that instrument type.
-  /*$rai
+  $rai
     ->doQuery({|
       Person.all()
         ->project([
@@ -167,8 +170,8 @@ function json_showcase::demo(): Any[*] {
           col(p | $p.trades->filter(t | $t->instanceOf(OptionTrade))->count(), '# Option trades')
         ])
     })
-    ->json_showcase::doPrint();*/
-
+    ->json_showcase::doPrint();
+    
   // Show those persons who traded a stock more than once.
   /*$rai
     ->doQuery({|
@@ -184,12 +187,12 @@ function json_showcase::demo(): Any[*] {
     ->json_showcase::doPrint();*/
   
   // Show the number of option trades per underlying
-  /*$rai
+  $rai
     ->doQuery({|
       OptionTrade.all()
         ->groupBy([t | $t.underlying.symbol], [agg(t | $t, ts | $ts->count())], ['Underlying', 'Count'])
     })
-    ->json_showcase::doPrint();*/
+    ->json_showcase::doPrint();
 
 
   // Show all stocks with more than 20 call option trades
@@ -270,7 +273,7 @@ function json_showcase::demo(): Any[*] {
     ->json_showcase::doPrint();*/
 
   // Show the latest trade of Brian Minor
-  $rai
+  /*$rai
     ->doQuery({|
       Person.all()
         ->filter(p | $p.firstName == 'Brian' && $p.lastName == 'Minor')
@@ -297,5 +300,5 @@ function json_showcase::demo(): Any[*] {
           }, 'cost')
         ])
     })
-    ->json_showcase::doPrint();
+    ->json_showcase::doPrint();*/
 }

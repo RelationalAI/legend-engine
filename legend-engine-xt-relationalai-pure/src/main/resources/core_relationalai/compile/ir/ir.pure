@@ -923,6 +923,12 @@ function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: Rel
         }),
         case($other == meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_, {| 
           meta::rel::compile::ir::tds::intoPExpr($func);
+        }),
+        case($other == meta::rel::query::def_String_1__FunctionDefinition_1__Any_MANY_, {| 
+          let query = $func.parametersValues->at(1)->intoScoped()->unwrap()->inspect();
+
+          meta::rel::compile::ir::const(1)->ok();
+          //error('Not implemented', @PExpr);
         })
       ], {|
         let error = error(| 

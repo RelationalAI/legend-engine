@@ -13,7 +13,8 @@ function meta::rel::contract::contract(): StoreContract[1] {
       meta::pure::tds::project_TableTDS_1__ColumnSpecification_MANY__TabularDataSet_1_,
       // meta::pure::tds::tableToTDS_Table_1__TableTDS_1_,
       // meta::pure::tds::viewToTDS_View_1__TableTDS_1_,
-      meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_
+      meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_,
+      meta::rel::query::def_String_1__FunctionDefinition_1__Any_MANY_
       // meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__String_$1_MANY$__String_$1_MANY$__TabularDataSet_1_,
       // meta::relational::functions::database::tableReference_Database_1__String_1__String_1__Table_1_,
       // meta::relational::functions::columnProjectionsFromRoot_Any_MANY__NamedRelation_1__String_MANY__Boolean_$0_1$__Integer_$0_1$__RelationData_1_
