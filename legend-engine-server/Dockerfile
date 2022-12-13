@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM openjdk:11.0.16-bullseye
+FROM eclipse-temurin:11.0.17_8-jdk-jammy
 COPY target/legend-engine-server-*.jar /app/bin/
-COPY src/main/resources/docker/config /config
+COPY src/main/resources/docker/config/config.json /config/config.json
+COPY src/main/resources/docker/config/vault.properties /config/vault.properties
 CMD java -cp /app/bin/*-shaded.jar \
 -XX:+ExitOnOutOfMemoryError \
 -XX:MaxRAMPercentage=60 \

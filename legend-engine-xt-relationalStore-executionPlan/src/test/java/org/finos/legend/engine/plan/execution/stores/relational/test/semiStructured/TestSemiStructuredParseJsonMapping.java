@@ -21,11 +21,12 @@ public class TestSemiStructuredParseJsonMapping extends AbstractTestSemiStructur
 {
     private static final String snowflakeMapping = "parseJson::mapping::SnowflakeMapping";
     private static final String snowflakeRuntime = "parseJson::runtime::SnowflakeRuntime";
+    private static final String h2Runtime = "parseJson::runtime::H2Runtime";
 
     @Test
     public void testParseJsonInMapping()
     {
-        String snowflakePlan = this.buildExecutionPlanString("parseJson::parseJsonInMapping", snowflakeMapping, snowflakeRuntime);
+        String snowflakePlan = this.buildExecutionPlanString("parseJson::parseJsonInMapping__TabularDataSet_1_", snowflakeMapping, snowflakeRuntime);
         String snowflakeExpected = "Relational\n" +
                 "(\n" +
                 "  type = TDS[(First Name, String, VARCHAR(100), \"\"), (Firm Name, String, \"\", \"\"), (Manager Firm Legal Name, String, \"\", \"\"), (Manager Manager Firm Legal Name, String, \"\", \"\"), (Manager Manager Firm Legal Name Dup1, String, \"\", \"\"), (Manager Manager Firm Legal Name Dup2, String, \"\", \"\")]\n" +
@@ -34,6 +35,16 @@ public class TestSemiStructuredParseJsonMapping extends AbstractTestSemiStructur
                 "  connection = RelationalDatabaseConnection(type = \"Snowflake\")\n" +
                 ")\n";
         Assert.assertEquals(snowflakeExpected, snowflakePlan);
+
+        String h2Result = this.executeFunction("parseJson::parseJsonInMapping__TabularDataSet_1_", snowflakeMapping, h2Runtime);
+        Assert.assertEquals("Peter,Firm X,Firm X,Firm X,Firm X,Firm X\n" +
+                "John,Firm X,Firm X,,,\n" +
+                "John,Firm X,Firm X,Firm X,Firm X,Firm X\n" +
+                "Anthony,Firm X,,,,\n" +
+                "Fabrice,Firm A,,,,\n" +
+                "Oliver,Firm B,Firm B,,,\n" +
+                "David,Firm B,,,,\n" +
+                "UNKNOWN,,,,,\n", h2Result.replace("\r\n", "\n"));
     }
 
     public String modelResourcePath()

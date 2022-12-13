@@ -92,6 +92,8 @@ public abstract class RelationalGeneratorAbstract
 
     public abstract Optional<String> batchIdPattern();
 
+    public abstract Optional<Long> infiniteBatchIdValue();
+
     //---------- FIELDS ----------
 
     public abstract IngestMode ingestMode();
@@ -115,6 +117,7 @@ public abstract class RelationalGeneratorAbstract
             .executionTimestampClock(executionTimestampClock())
             .batchStartTimestampPattern(batchStartTimestampPattern())
             .batchEndTimestampPattern(batchEndTimestampPattern())
+            .infiniteBatchIdValue(infiniteBatchIdValue())
             .batchIdPattern(batchIdPattern());
 
         relationalSink().optimizerForCaseConversion(caseConversion()).ifPresent(builder::addOptimizers);
@@ -142,7 +145,7 @@ public abstract class RelationalGeneratorAbstract
             .collect(Collectors.toList());
     }
 
-    //TODO: ledav -- generateOperationsWithDataSplitsForEmptyBatch
+    //TODO: generateOperationsWithDataSplitsForEmptyBatch
 
 
     // ---------- UTILITY METHODS ----------
@@ -150,6 +153,11 @@ public abstract class RelationalGeneratorAbstract
     GeneratorResult generateOperations(Datasets datasets, Resources resources)
     {
         Planner planner = Planners.get(datasets, ingestMode(), plannerOptions());
+        return generateOperations(datasets, resources, planner);
+    }
+
+    GeneratorResult generateOperations(Datasets datasets, Resources resources, Planner planner)
+    {
         Transformer<SqlGen, SqlPlan> transformer = new RelationalTransformer(relationalSink(), transformOptions());
 
         // pre-run statistics

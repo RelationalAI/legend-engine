@@ -15,25 +15,38 @@
 package org.finos.legend.engine.language.pure.dsl.service.compiler.toPureGraph;
 
 import org.eclipse.collections.api.RichIterable;
+import org.eclipse.collections.api.block.function.Function;
 import org.eclipse.collections.api.block.function.Function3;
 import org.eclipse.collections.impl.factory.Lists;
 import org.eclipse.collections.impl.utility.ListIterate;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.CompileContext;
+import org.finos.legend.engine.language.pure.compiler.toPureGraph.HelperValueSpecificationBuilder;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.ProcessingContext;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.extension.Processor;
+import org.finos.legend.engine.language.pure.compiler.toPureGraph.handlers.FunctionHandlerRegistrationInfo;
+import org.finos.legend.engine.language.pure.compiler.toPureGraph.handlers.Handlers;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.test.TestFirstPassBuilder;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.test.assertion.TestAssertionFirstPassBuilder;
 import org.finos.legend.engine.protocol.pure.v1.model.context.EngineErrorType;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.connection.PackageableConnection;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.data.DataElement;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.runtime.PackageableRuntime;
+import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.PureSingleExecution;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.Service;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.ServiceTest;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.ServiceTestSuite;
 import org.finos.legend.engine.protocol.pure.v1.model.test.Test;
+import org.finos.legend.engine.shared.core.operational.Assert;
 import org.finos.legend.engine.shared.core.operational.errorManagement.EngineException;
 import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_ParameterValue;
+import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_PostValidation;
+import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_PostValidationAssertion;
+import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_PostValidationAssertion_Impl;
+import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_PostValidation_Impl;
 import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_PureExecution;
+import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_PureExecution_Impl;
+import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_PureMultiExecution_Impl;
+import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_PureSingleExecution_Impl;
 import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_Service;
 import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_ServiceTest;
 import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_ServiceTestSuite;
@@ -44,6 +57,7 @@ import org.finos.legend.pure.generated.Root_meta_pure_metamodel_extension_Tagged
 import org.finos.legend.pure.generated.Root_meta_pure_test_AtomicTest;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.type.FunctionType;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.valuespecification.VariableExpression;
+import org.finos.legend.pure.m3.navigation.multiplicity.Multiplicity;
 
 import java.util.Collections;
 import java.util.List;
@@ -94,10 +108,73 @@ public class ServiceCompilerExtensionImpl implements ServiceCompilerExtension
                             for (Root_meta_pure_test_AtomicTest pureTest : pureServiceTestSuite._tests())
                             {
                                 Root_meta_legend_service_metamodel_ServiceTest pureServiceTest = (Root_meta_legend_service_metamodel_ServiceTest) pureTest;
+
+                                if (pureService._execution() instanceof Root_meta_legend_service_metamodel_PureSingleExecution_Impl && pureServiceTest._keys().size() != 0)
+                                {
+                                    throw new EngineException("Service Test cannot have keys for SingleExecution Tests", service.sourceInformation, EngineErrorType.COMPILATION);
+                                }
+
                                 HelperServiceBuilder.validateServiceTestParameterValues((List<Root_meta_legend_service_metamodel_ParameterValue>) pureServiceTest._parameters().toList(), parameters, ListIterate.detect(suite.tests, t -> t.id.equals(pureServiceTest._id())).sourceInformation);
+
                             }
                             return pureServiceTestSuite;
                         }));
+                    }
+                    //post validation
+                    if (service.postValidations != null)
+                    {
+                        pureService._postValidations(ListIterate.collect(service.postValidations, constraint ->
+                                new Root_meta_legend_service_metamodel_PostValidation_Impl<>("", null, context.pureModel.getClass("meta::legend::service::metamodel::PostValidation"))
+                                        ._description(constraint.description)
+                                        ._parameters(ListIterate.collect(constraint.parameters, parameter -> HelperValueSpecificationBuilder.buildLambda(parameter, context)))
+                                        ._assertions(ListIterate.collect(constraint.assertions, assertion ->
+                                                new Root_meta_legend_service_metamodel_PostValidationAssertion_Impl<>("", null, context.pureModel.getClass("meta::legend::service::metamodel::PostValidationAssertion"))
+                                                    ._id(assertion.id)
+                                                    ._assertion(HelperValueSpecificationBuilder.buildLambda(assertion.assertion, context))))
+                        ));
+
+                        if (pureService._execution() instanceof Root_meta_legend_service_metamodel_PureSingleExecution_Impl)
+                        {
+                            FunctionType executionFunctionType = (FunctionType) ((Root_meta_legend_service_metamodel_PureSingleExecution_Impl)pureService._execution())._func()._classifierGenericType()._typeArguments().getFirst()._rawType();
+                            pureService._postValidations().forEach(validation ->
+                            {
+                                Assert.assertTrue(executionFunctionType._parameters().size() == validation._parameters().size(),
+                                        () -> "Post validation parameter count '" + validation._parameters().size() + "' does not match with service parameter count '" + executionFunctionType._parameters().size() + "'");
+                            });
+
+                        }
+
+                        if (pureService._execution() instanceof Root_meta_legend_service_metamodel_PureMultiExecution_Impl)
+                        {
+                            FunctionType executionFunctionType = (FunctionType) ((Root_meta_legend_service_metamodel_PureMultiExecution_Impl)pureService._execution())._func()._classifierGenericType()._typeArguments().getFirst()._rawType();
+                            int executionFunctionParamCountWithExecutionKey = executionFunctionType._parameters().size() + 1;
+
+                            pureService._postValidations().forEach(validation ->
+                            {
+                                Assert.assertTrue(executionFunctionParamCountWithExecutionKey == validation._parameters().size(),
+                                        () -> "Post validation parameter count '" + validation._parameters().size() + "' does not match with service parameter count '" + executionFunctionParamCountWithExecutionKey + "'");
+                            });
+                        }
+
+                        //validate post validation function parameter type
+                        if (pureService._execution() instanceof Root_meta_legend_service_metamodel_PureExecution_Impl)
+                        {
+                            FunctionType executionFunctionType = (FunctionType) ((Root_meta_legend_service_metamodel_PureExecution_Impl)pureService._execution())._func()._classifierGenericType()._typeArguments().getFirst()._rawType();
+                            pureService._postValidations().flatCollect(Root_meta_legend_service_metamodel_PostValidation::_assertions).collect(Root_meta_legend_service_metamodel_PostValidationAssertion::_assertion).forEach(assertion ->
+                            {
+                                FunctionType fType = (FunctionType) assertion._classifierGenericType()._typeArguments().getFirst()._rawType();
+                                Assert.assertTrue(fType._parameters() != null && fType._parameters().size() == 1, () -> "Post validation assertion function expects 1 parameter");
+                                Assert.assertTrue(executionFunctionType._returnType().equals(fType._parameters().getFirst()._genericType()) && executionFunctionType._returnMultiplicity().equals(fType._parameters().getAny()._multiplicity()),
+                                        () -> "Post validation assertion function parameter type '" +
+                                                fType._parameters().getFirst()._genericType()._rawType()._name() +
+                                                Multiplicity.print(fType._parameters().getFirst()._multiplicity()) +
+                                                "' does not match with service execution return type '" +
+                                                executionFunctionType._returnType()._rawType()._name() +
+                                                Multiplicity.print(executionFunctionType._returnMultiplicity()) +
+                                                "'"
+                                );
+                            });
+                        }
                     }
                 }));
     }
@@ -150,6 +227,7 @@ public class ServiceCompilerExtensionImpl implements ServiceCompilerExtension
                 {
                     pureServiceTest._serializationFormat(serviceTest.serializationFormat);
                 }
+                pureServiceTest._keysAddAll(Lists.mutable.withAll(serviceTest.keys));
                 if (serviceTest.assertions == null || serviceTest.assertions.isEmpty())
                 {
                     throw new EngineException("Service Tests should have atleast 1 assert", serviceTest.sourceInformation, EngineErrorType.COMPILATION);
@@ -172,5 +250,19 @@ public class ServiceCompilerExtensionImpl implements ServiceCompilerExtension
                 return null;
             }
         });
+    }
+
+    @Override
+    public List<Function<Handlers, List<FunctionHandlerRegistrationInfo>>> getExtraFunctionHandlerRegistrationInfoCollectors()
+    {
+        return Collections.singletonList((handlers) ->
+                org.eclipse.collections.api.factory.Lists.mutable.with(
+                        new FunctionHandlerRegistrationInfo(null,
+                                handlers.h("meta::legend::service::validation::assertCollectionEmpty_Any_MANY__String_1__Boolean_1_", false, ps -> handlers.res("Boolean", "one"))
+                        ),
+                        new FunctionHandlerRegistrationInfo(null,
+                                handlers.h("meta::legend::service::validation::assertTabularDataSetEmpty_TabularDataSet_1__String_1__Boolean_1_", false, ps -> handlers.res("Boolean", "one"))
+                        )
+                ));
     }
 }

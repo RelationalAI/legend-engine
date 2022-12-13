@@ -15,6 +15,7 @@
 package org.finos.legend.engine.plan.execution.stores.relational.connection;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.collections.impl.factory.Maps;
 import org.finos.legend.engine.language.pure.compiler.Compiler;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.HelperValueSpecificationBuilder;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.PureModel;
@@ -52,7 +53,7 @@ import java.util.Enumeration;
 import java.util.Map;
 
 import static org.finos.legend.engine.plan.execution.stores.relational.TestExecutionScope.buildTestExecutor;
-import static org.finos.legend.pure.generated.core_relational_relational_extensions_extension.Root_meta_relational_extension_relationalExtensions__Extension_MANY_;
+import static org.finos.legend.pure.generated.core_relational_java_platform_binding_legendJavaPlatformBinding_relationalLegendJavaPlatformBindingExtension.Root_meta_relational_executionPlan_platformBinding_legendJava_relationalExtensionsWithLegendJavaPlatformBinding__Extension_MANY_;
 
 public abstract class AlloyTestServer
 {
@@ -151,6 +152,11 @@ public abstract class AlloyTestServer
         return executePlan(singleExecutionPlan, Collections.emptyMap());
     }
 
+    protected String executePlan(SingleExecutionPlan plan,String user)
+    {
+        RelationalResult result = (RelationalResult) planExecutor.execute((SingleExecutionPlan) plan, Maps.mutable.empty(), user, null);
+        return result.flush(new RelationalResultToJsonDefaultSerializer(result));
+    }
 
     protected String executePlan(SingleExecutionPlan plan, Map<String, ?> params)
     {
@@ -178,7 +184,7 @@ public abstract class AlloyTestServer
                 "vX_X_X",
                 PlanPlatform.JAVA,
                 null,
-                Root_meta_relational_extension_relationalExtensions__Extension_MANY_(pureModel.getExecutionSupport()),
+                Root_meta_relational_executionPlan_platformBinding_legendJava_relationalExtensionsWithLegendJavaPlatformBinding__Extension_MANY_(pureModel.getExecutionSupport()),
                 LegendPlanTransformers.transformers
         );
 

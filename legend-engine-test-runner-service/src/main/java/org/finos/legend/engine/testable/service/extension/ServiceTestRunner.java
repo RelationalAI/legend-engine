@@ -20,7 +20,6 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.tuple.Pair;
-import org.eclipse.collections.impl.tuple.Tuples;
 import org.eclipse.collections.impl.utility.Iterate;
 import org.eclipse.collections.impl.utility.ListIterate;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.PureModel;
@@ -35,29 +34,16 @@ import org.finos.legend.engine.plan.generation.extension.PlanGeneratorExtension;
 import org.finos.legend.engine.plan.generation.transformers.PlanTransformer;
 import org.finos.legend.engine.plan.platform.PlanPlatform;
 import org.finos.legend.engine.protocol.pure.v1.model.context.PureModelContextData;
-import org.finos.legend.engine.protocol.pure.v1.model.data.DataElementReference;
-import org.finos.legend.engine.protocol.pure.v1.model.data.EmbeddedData;
 import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.ExecutionPlan;
 import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.SingleExecutionPlan;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.PackageableElement;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.connection.Connection;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.data.DataElement;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.runtime.EngineRuntime;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.runtime.IdentifiedConnection;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.runtime.LegacyRuntime;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.runtime.PackageableRuntime;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.runtime.Runtime;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.runtime.RuntimePointer;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.runtime.StoreConnections;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.ConnectionTestData;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.KeyedExecutionParameter;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.ParameterValue;
+import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.ParameterValue;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.PureMultiExecution;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.PureSingleExecution;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.Service;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.ServiceTest;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.ServiceTestSuite;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.TestData;
 import org.finos.legend.engine.protocol.pure.v1.model.test.AtomicTest;
 import org.finos.legend.engine.protocol.pure.v1.model.test.AtomicTestId;
 import org.finos.legend.engine.protocol.pure.v1.model.test.Test;
@@ -69,9 +55,8 @@ import org.finos.legend.engine.protocol.pure.v1.model.test.result.TestFailed;
 import org.finos.legend.engine.protocol.pure.v1.model.test.result.TestPassed;
 import org.finos.legend.engine.protocol.pure.v1.model.test.result.TestResult;
 import org.finos.legend.engine.testable.extension.TestRunner;
-import org.finos.legend.engine.testable.service.assertion.ServiceTestAssertionEvaluator;
-import org.finos.legend.engine.testable.service.connection.TestConnectionBuilder;
-import org.finos.legend.engine.testable.service.helper.PrimitiveValueSpecificationToObjectVisitor;
+import org.finos.legend.engine.testable.assertion.TestAssertionEvaluator;
+import org.finos.legend.engine.testable.helper.PrimitiveValueSpecificationToObjectVisitor;
 import org.finos.legend.engine.testable.service.result.MultiExecutionServiceTestResult;
 import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_Service;
 import org.finos.legend.pure.generated.Root_meta_pure_extension_Extension;
@@ -124,13 +109,17 @@ public class ServiceTestRunner implements TestRunner
 
         Service service = ListIterate.detect(data.getElementsOfType(Service.class), ele -> ele.getPath().equals(getElementFullPath(pureService, pureModel.getExecutionSupport())));
         ServiceTestSuite suite = ListIterate.detect(service.testSuites, ts -> ts.id.equals(testSuite._id()));
-        List<String> testIds = ListIterate.collect(atomicTestIds, testId -> testId.atomicTestId);
 
         if (service.execution instanceof PureMultiExecution)
         {
             Map<String, MultiExecutionServiceTestResult> testResultsByTestId = Maps.mutable.empty();
             for (AtomicTest test : suite.tests)
             {
+                List<String> testIds = Lists.mutable.empty();
+                List<String> allKeys = Lists.mutable.empty();
+                List<KeyedExecutionParameter> allValidKeys = Lists.mutable.empty();
+                testIds.add(test.id);
+
                 MultiExecutionServiceTestResult multiExecutionServiceTestResult = new MultiExecutionServiceTestResult();
                 multiExecutionServiceTestResult.testable = getElementFullPath(pureService, pureModel.getExecutionSupport());
                 multiExecutionServiceTestResult.atomicTestId = new AtomicTestId();
@@ -138,26 +127,35 @@ public class ServiceTestRunner implements TestRunner
                 multiExecutionServiceTestResult.atomicTestId.testSuiteId = suite.id;
 
                 testResultsByTestId.put(test.id, multiExecutionServiceTestResult);
+
+                allKeys.addAll(((ServiceTest)test).keys);
+
+                if (allKeys.isEmpty())
+                {
+                    allValidKeys.addAll(((PureMultiExecution) service.execution).executionParameters);
+                }
+                else
+                {
+                    allValidKeys = ((PureMultiExecution) service.execution).executionParameters.stream().filter(s -> allKeys.contains(s.key)).collect(Collectors.toList());
+                }
+                for (KeyedExecutionParameter param : allValidKeys)
+                {
+                    PureSingleExecution pureSingleExecution = new PureSingleExecution();
+                    pureSingleExecution.func = ((PureMultiExecution) service.execution).func;
+                    pureSingleExecution.mapping = param.mapping;
+                    pureSingleExecution.runtime = param.runtime;
+                    pureSingleExecution.executionOptions = param.executionOptions;
+
+                    List<TestResult> testResultsForKey = executeSingleExecutionTestSuite(pureSingleExecution, suite, testIds, pureModel, data, routerExtensions, planTransformers);
+                    Map<String, TestResult> testResultsForKeyById = Iterate.groupByUniqueKey(testResultsForKey, e -> e.atomicTestId.atomicTestId);
+                    testResultsForKeyById.forEach((key, value) -> testResultsByTestId.get(key).addTestResult(param.key, value));
+                }
             }
-
-            for (KeyedExecutionParameter param : ((PureMultiExecution) service.execution).executionParameters)
-            {
-                PureSingleExecution pureSingleExecution = new PureSingleExecution();
-                pureSingleExecution.func = ((PureMultiExecution) service.execution).func;
-                pureSingleExecution.mapping = param.mapping;
-                pureSingleExecution.runtime = param.runtime;
-                pureSingleExecution.executionOptions = param.executionOptions;
-
-                List<TestResult> testResultsForKey = executeSingleExecutionTestSuite(pureSingleExecution, suite, testIds, pureModel, data, routerExtensions, planTransformers);
-                Map<String, TestResult> testResultsForKeyById = Iterate.groupByUniqueKey(testResultsForKey, e -> e.atomicTestId.atomicTestId);
-
-                testResultsForKeyById.forEach((key, value) -> testResultsByTestId.get(key).addTestResult(param.key, value));
-            }
-
             return new ArrayList<>(testResultsByTestId.values());
         }
         else if (service.execution instanceof PureSingleExecution)
         {
+            List<String> testIds = ListIterate.collect(atomicTestIds, testId -> testId.atomicTestId);
             return executeSingleExecutionTestSuite((PureSingleExecution) service.execution, suite, testIds, pureModel, data, routerExtensions, planTransformers);
         }
         else
@@ -170,13 +168,23 @@ public class ServiceTestRunner implements TestRunner
     {
         List<org.finos.legend.engine.protocol.pure.v1.model.test.result.TestResult> results = Lists.mutable.empty();
         Pair<Runtime, List<Closeable>> runtimeWithCloseables = null;
-
+        PureSingleExecution testPureSingleExecution;
         try
         {
-            runtimeWithCloseables = getTestRuntimeAndClosableResources(execution.runtime, suite.testData, data);
-            Runtime testSuiteRuntime = runtimeWithCloseables.getOne();
-            PureSingleExecution testPureSingleExecution = shallowCopySingleExecution(execution);
-            testPureSingleExecution.runtime = testSuiteRuntime;
+            if (execution.runtime != null)
+            {
+                runtimeWithCloseables = TestRuntimeBuilder.getTestRuntimeAndClosableResources(execution.runtime, suite.testData, data);
+                Runtime testSuiteRuntime = runtimeWithCloseables.getOne();
+                testPureSingleExecution = shallowCopySingleExecution(execution);
+                testPureSingleExecution.runtime = testSuiteRuntime;
+            }
+            else
+            {
+                MutableList<Closeable> closeables = Lists.mutable.empty();
+                execution.func.body.stream().forEach(func -> func.accept(new TestValueSpecificationBuilder(closeables, suite.testData, data)));
+                testPureSingleExecution = execution;
+            }
+
 
             ExecutionPlan executionPlan = ServicePlanGenerator.generateExecutionPlan(testPureSingleExecution, null, pureModel, pureVersion, PlanPlatform.JAVA, null, routerExtensions, planTransformers);
             SingleExecutionPlan singleExecutionPlan = (SingleExecutionPlan) executionPlan;
@@ -219,56 +227,6 @@ public class ServiceTestRunner implements TestRunner
         return results;
     }
 
-    private Pair<Runtime, List<Closeable>> getTestRuntimeAndClosableResources(Runtime runtime, TestData testData, PureModelContextData pureModelContextData)
-    {
-        List<Closeable> closeables = Lists.mutable.empty();
-        EngineRuntime engineRuntime = resolveRuntime(runtime, pureModelContextData);
-
-        EngineRuntime testRuntime = new EngineRuntime();
-        testRuntime.mappings = engineRuntime.mappings;
-        testRuntime.connections = Lists.mutable.empty();
-
-        for (StoreConnections storeConnections : engineRuntime.connections)
-        {
-            StoreConnections testStoreConnections = new StoreConnections();
-            testStoreConnections.store = storeConnections.store;
-            testStoreConnections.storeConnections = Lists.mutable.empty();
-
-            for (IdentifiedConnection identifiedConnection : storeConnections.storeConnections)
-            {
-                ConnectionTestData connectionTestData = ListIterate.detect(testData.connectionsTestData, connectionData -> connectionData.id.equals(identifiedConnection.id));
-
-                EmbeddedData embeddedData = null;
-                if (connectionTestData != null)
-                {
-                    if (connectionTestData.data instanceof DataElementReference)
-                    {
-                        DataElement dataElement = Iterate.detect(pureModelContextData.getElementsOfType(DataElement.class), e -> ((DataElementReference) connectionTestData.data).dataElement.equals(e.getPath()));
-                        embeddedData = dataElement.data;
-                    }
-                    else
-                    {
-                        embeddedData = connectionTestData.data;
-                    }
-                }
-
-                Pair<Connection, List<Closeable>> connectionWithCloseables = identifiedConnection.connection.accept(new TestConnectionBuilder(embeddedData, pureModelContextData));
-
-                closeables.addAll(connectionWithCloseables.getTwo());
-
-                IdentifiedConnection testIdentifiedConnection = new IdentifiedConnection();
-                testIdentifiedConnection.id = identifiedConnection.id;
-                testIdentifiedConnection.connection = connectionWithCloseables.getOne();
-
-                testStoreConnections.storeConnections.add(testIdentifiedConnection);
-            }
-
-            testRuntime.connections.add(testStoreConnections);
-        }
-
-        return Tuples.pair(testRuntime, closeables);
-    }
-
     private org.finos.legend.engine.protocol.pure.v1.model.test.result.TestResult executeServiceTest(ServiceTest serviceTest, SingleExecutionPlan executionPlan)
     {
         AtomicTestId atomicTestId = new AtomicTestId();
@@ -300,7 +258,7 @@ public class ServiceTestRunner implements TestRunner
             List<AssertionStatus> assertionStatusList = Lists.mutable.empty();
             for (TestAssertion assertion : serviceTest.assertions)
             {
-                AssertionStatus status = assertion.accept(new ServiceTestAssertionEvaluator(result, testSerializationFormat));
+                AssertionStatus status = assertion.accept(new TestAssertionEvaluator(result, testSerializationFormat));
                 if (status == null)
                 {
                     throw new RuntimeException("Can't evaluate the test assertion: '" + assertion.id + "'");
@@ -367,28 +325,5 @@ public class ServiceTestRunner implements TestRunner
         shallowCopy.mapping = pureSingleExecution.mapping;
         shallowCopy.runtime = pureSingleExecution.runtime;
         return shallowCopy;
-    }
-
-    private static EngineRuntime resolveRuntime(Runtime runtime, PureModelContextData pureModelContextData)
-    {
-        if (runtime instanceof EngineRuntime)
-        {
-            return (EngineRuntime) runtime;
-        }
-        if (runtime instanceof LegacyRuntime)
-        {
-            return ((LegacyRuntime) runtime).toEngineRuntime();
-        }
-        if (runtime instanceof RuntimePointer)
-        {
-            String runtimeFullPath = ((RuntimePointer) runtime).runtime;
-            PackageableElement found = Iterate.detect(pureModelContextData.getElements(), e -> runtimeFullPath.equals(e.getPath()));
-            if (!(found instanceof PackageableRuntime))
-            {
-                throw new RuntimeException("Can't find runtime '" + runtimeFullPath + "'");
-            }
-            return ((PackageableRuntime) found).runtimeValue;
-        }
-        throw new UnsupportedOperationException("Unsupported runtime type: " + runtime.getClass().getName());
     }
 }

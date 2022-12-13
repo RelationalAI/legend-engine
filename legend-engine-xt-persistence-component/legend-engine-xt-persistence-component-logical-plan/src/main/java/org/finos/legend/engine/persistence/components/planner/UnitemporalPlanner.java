@@ -16,6 +16,7 @@ package org.finos.legend.engine.persistence.components.planner;
 
 import org.finos.legend.engine.persistence.components.common.Datasets;
 import org.finos.legend.engine.persistence.components.common.Resources;
+import org.finos.legend.engine.persistence.components.common.StatisticName;
 import org.finos.legend.engine.persistence.components.ingestmode.transactionmilestoning.BatchIdAbstract;
 import org.finos.legend.engine.persistence.components.ingestmode.transactionmilestoning.BatchIdAndDateTimeAbstract;
 import org.finos.legend.engine.persistence.components.ingestmode.transactionmilestoning.TransactionDateTimeAbstract;
@@ -39,6 +40,7 @@ import org.finos.legend.engine.persistence.components.logicalplan.values.Pair;
 import org.finos.legend.engine.persistence.components.logicalplan.values.SelectValue;
 import org.finos.legend.engine.persistence.components.logicalplan.values.StringValue;
 import org.finos.legend.engine.persistence.components.logicalplan.values.Value;
+import org.finos.legend.engine.persistence.components.logicalplan.values.DiffBinaryValueOperator;
 import org.finos.legend.engine.persistence.components.util.LogicalPlanUtils;
 import org.finos.legend.engine.persistence.components.util.MetadataDataset;
 import org.finos.legend.engine.persistence.components.util.MetadataUtils;
@@ -47,6 +49,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
+import static org.finos.legend.engine.persistence.components.common.StatisticName.ROWS_INSERTED;
+import static org.finos.legend.engine.persistence.components.common.StatisticName.ROWS_UPDATED;
+import static org.finos.legend.engine.persistence.components.common.StatisticName.ROWS_TERMINATED;
 
 abstract class UnitemporalPlanner extends Planner
 {
@@ -139,15 +146,24 @@ abstract class UnitemporalPlanner extends Planner
 
     protected Selection getRowsUpdated(String alias)
     {
-        Dataset sink2 = DatasetDefinition.builder()
-            .database(mainDataset().datasetReference().database())
-            .name(mainDataset().datasetReference().name().orElseThrow(IllegalStateException::new))
-            .alias("sink2")
-            .group(mainDataset().datasetReference().group())
-            .schema(mainDataset().schema())
-            .build();
-
+        Dataset sink2 = getMainDatasetWithProvidedAlias("sink2");
         Condition primaryKeysMatchCondition = LogicalPlanUtils.getPrimaryKeyMatchCondition(sink2, mainDataset(), primaryKeys.toArray(new String[0]));
+        return getRowsUpdated(alias, primaryKeysMatchCondition, sink2);
+    }
+
+    protected DatasetDefinition getMainDatasetWithProvidedAlias(String alias)
+    {
+        return DatasetDefinition.builder()
+                .database(mainDataset().datasetReference().database())
+                .name(mainDataset().datasetReference().name().orElseThrow(IllegalStateException::new))
+                .alias(alias)
+                .group(mainDataset().datasetReference().group())
+                .schema(mainDataset().schema())
+                .build();
+    }
+
+    protected Selection getRowsUpdated(String alias, Condition primaryKeysMatchCondition, Dataset sink2)
+    {
         Condition inCondition = ingestMode().transactionMilestoning().accept(new DetermineRowsAddedInSinkCondition(sink2, mainTableName, metadataUtils, batchStartTimestamp));
         Condition existsCondition = Exists.of(Selection.builder()
             .source(sink2)
@@ -162,7 +178,6 @@ abstract class UnitemporalPlanner extends Planner
         return Selection.builder().source(mainDataset().datasetReference()).condition(whereCondition).addAllFields(fields).build();
     }
 
-
     protected SelectValue getRowsAddedInSink()
     {
         List<Value> fields = Collections.singletonList(FunctionImpl.builder().functionName(FunctionName.COUNT).addValue(All.INSTANCE).build());
@@ -175,6 +190,13 @@ abstract class UnitemporalPlanner extends Planner
         List<Value> fields = Collections.singletonList(FunctionImpl.builder().functionName(FunctionName.COUNT).addValue(All.INSTANCE).build());
         Condition condition = ingestMode().transactionMilestoning().accept(new DetermineRowsInvalidatedInSink(mainDataset(), mainTableName, metadataUtils, batchStartTimestamp));
         return SelectValue.of(Selection.builder().source(mainDataset().datasetReference()).condition(condition).addAllFields(fields).build());
+    }
+
+    protected Selection getRowsInvalidatedInSink(String alias)
+    {
+        List<Value> fields = Collections.singletonList(FunctionImpl.builder().functionName(FunctionName.COUNT).addValue(All.INSTANCE).alias(alias).build());
+        Condition condition = ingestMode().transactionMilestoning().accept(new DetermineRowsInvalidatedInSink(mainDataset(), mainTableName, metadataUtils, batchStartTimestamp));
+        return Selection.builder().source(mainDataset().datasetReference()).condition(condition).addAllFields(fields).build();
     }
 
     // transaction milestoning visitors
@@ -447,5 +469,38 @@ abstract class UnitemporalPlanner extends Planner
         {
             return batchIdAndDateTime.batchIdInName();
         }
+    }
+
+    // Stats related methods
+    @Override
+    protected void addPostRunStatsForRowsTerminated(Map<StatisticName, LogicalPlan> postRunStatisticsResult)
+    {
+        //Rows terminated = Rows invalidated in Sink - Rows updated
+        LogicalPlan rowsTerminatedCountPlan = LogicalPlan.builder()
+                .addOps(Selection.builder()
+                        .addFields(DiffBinaryValueOperator.of(getRowsInvalidatedInSink(), getRowsUpdated()).withAlias(ROWS_TERMINATED.get()))
+                        .build())
+                .build();
+        postRunStatisticsResult.put(ROWS_TERMINATED, rowsTerminatedCountPlan);
+    }
+
+    @Override
+    protected void addPostRunStatsForRowsUpdated(Map<StatisticName, LogicalPlan> postRunStatisticsResult)
+    {
+        //Rows updated (when it is invalidated and a new row for same primary keys is added)
+        LogicalPlan rowsUpdatedCountPlan = LogicalPlan.builder().addOps(getRowsUpdated(ROWS_UPDATED.get())).build();
+        postRunStatisticsResult.put(ROWS_UPDATED, rowsUpdatedCountPlan);
+    }
+
+    @Override
+    protected void addPostRunStatsForRowsInserted(Map<StatisticName, LogicalPlan> postRunStatisticsResult)
+    {
+        //Rows inserted (no previous active row with same primary key) = Rows added in sink - rows updated
+        LogicalPlan rowsInsertedCountPlan = LogicalPlan.builder()
+                .addOps(Selection.builder()
+                        .addFields(DiffBinaryValueOperator.of(getRowsAddedInSink(), getRowsUpdated()).withAlias(ROWS_INSERTED.get()))
+                        .build())
+                .build();
+        postRunStatisticsResult.put(ROWS_INSERTED, rowsInsertedCountPlan);
     }
 }

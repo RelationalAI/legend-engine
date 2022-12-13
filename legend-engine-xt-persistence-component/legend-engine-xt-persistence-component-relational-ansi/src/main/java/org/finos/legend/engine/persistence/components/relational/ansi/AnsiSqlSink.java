@@ -27,6 +27,7 @@ import org.finos.legend.engine.persistence.components.logicalplan.conditions.Not
 import org.finos.legend.engine.persistence.components.logicalplan.conditions.NotEquals;
 import org.finos.legend.engine.persistence.components.logicalplan.conditions.NotIn;
 import org.finos.legend.engine.persistence.components.logicalplan.conditions.Or;
+import org.finos.legend.engine.persistence.components.logicalplan.constraints.CascadeTableConstraint;
 import org.finos.legend.engine.persistence.components.logicalplan.datasets.DataType;
 import org.finos.legend.engine.persistence.components.logicalplan.datasets.DatasetDefinition;
 import org.finos.legend.engine.persistence.components.logicalplan.datasets.DatasetReference;
@@ -60,6 +61,7 @@ import org.finos.legend.engine.persistence.components.logicalplan.values.DiffBin
 import org.finos.legend.engine.persistence.components.logicalplan.values.FieldValue;
 import org.finos.legend.engine.persistence.components.logicalplan.values.FunctionImpl;
 import org.finos.legend.engine.persistence.components.logicalplan.values.HashFunction;
+import org.finos.legend.engine.persistence.components.logicalplan.values.InfiniteBatchIdValue;
 import org.finos.legend.engine.persistence.components.logicalplan.values.NumericalValue;
 import org.finos.legend.engine.persistence.components.logicalplan.values.ObjectValue;
 import org.finos.legend.engine.persistence.components.logicalplan.values.Pair;
@@ -94,6 +96,7 @@ import org.finos.legend.engine.persistence.components.relational.ansi.sql.visito
 import org.finos.legend.engine.persistence.components.relational.ansi.sql.visitors.GreaterThanEqualToVisitor;
 import org.finos.legend.engine.persistence.components.relational.ansi.sql.visitors.GreaterThanVisitor;
 import org.finos.legend.engine.persistence.components.relational.ansi.sql.visitors.HashFunctionVisitor;
+import org.finos.legend.engine.persistence.components.relational.ansi.sql.visitors.InfiniteBatchIdValueVisitor;
 import org.finos.legend.engine.persistence.components.relational.ansi.sql.visitors.InVisitor;
 import org.finos.legend.engine.persistence.components.relational.ansi.sql.visitors.InsertVisitor;
 import org.finos.legend.engine.persistence.components.relational.ansi.sql.visitors.IsNullVisitor;
@@ -121,6 +124,7 @@ import org.finos.legend.engine.persistence.components.relational.ansi.sql.visito
 import org.finos.legend.engine.persistence.components.relational.ansi.sql.visitors.TableModifierVisitor;
 import org.finos.legend.engine.persistence.components.relational.ansi.sql.visitors.TabularValuesVisitor;
 import org.finos.legend.engine.persistence.components.relational.ansi.sql.visitors.TruncateVisitor;
+import org.finos.legend.engine.persistence.components.relational.ansi.sql.visitors.TableConstraintVisitor;
 import org.finos.legend.engine.persistence.components.relational.sqldom.utils.SqlGenUtils;
 import org.finos.legend.engine.persistence.components.transformer.LogicalPlanVisitor;
 import org.finos.legend.engine.persistence.components.util.Capability;
@@ -191,11 +195,13 @@ public class AnsiSqlSink extends RelationalSink
         logicalPlanVisitorByClass.put(DistinctQuantifier.class, new DistinctQuantifierVisitor());
         logicalPlanVisitorByClass.put(IfExistsTableModifier.class, new TableModifierVisitor());
         logicalPlanVisitorByClass.put(IfNotExistsTableModifier.class, new TableModifierVisitor());
+        logicalPlanVisitorByClass.put(CascadeTableConstraint.class, new TableConstraintVisitor());
         logicalPlanVisitorByClass.put(SelectValue.class, new SelectValueVisitor());
         logicalPlanVisitorByClass.put(SumBinaryValueOperator.class, new SumBinaryValueOperatorVisitor());
         logicalPlanVisitorByClass.put(DiffBinaryValueOperator.class, new DiffBinaryValueOperatorVisitor());
         logicalPlanVisitorByClass.put(Show.class, new ShowVisitor());
         logicalPlanVisitorByClass.put(BatchIdValue.class, new BatchIdValueVisitor());
+        logicalPlanVisitorByClass.put(InfiniteBatchIdValue.class, new InfiniteBatchIdValueVisitor());
         LOGICAL_PLAN_VISITOR_BY_CLASS = Collections.unmodifiableMap(logicalPlanVisitorByClass);
 
         INSTANCE = new AnsiSqlSink();

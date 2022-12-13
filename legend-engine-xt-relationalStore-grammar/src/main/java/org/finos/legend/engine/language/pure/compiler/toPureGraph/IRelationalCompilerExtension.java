@@ -23,8 +23,10 @@ import org.eclipse.collections.impl.list.mutable.FastList;
 import org.eclipse.collections.impl.utility.ListIterate;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.extension.CompilerExtension;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.extension.Processor;
+import org.finos.legend.engine.language.pure.compiler.toPureGraph.validator.MappingValidatorContext;
 import org.finos.legend.engine.protocol.pure.v1.model.SourceInformation;
 import org.finos.legend.engine.protocol.pure.v1.model.context.EngineErrorType;
+import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.connection.Connection;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.relational.connection.authentication.AuthenticationStrategy;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.relational.connection.postprocessor.PostProcessor;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.relational.connection.specification.DatasourceSpecification;
@@ -35,8 +37,10 @@ import org.finos.legend.pure.generated.Root_meta_pure_alloy_connections_alloy_sp
 import org.finos.legend.pure.m3.coreinstance.meta.relational.metamodel.Column;
 import org.finos.legend.pure.m3.coreinstance.meta.relational.runtime.PostProcessorWithParameter;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 
 public interface IRelationalCompilerExtension extends CompilerExtension
 {
@@ -55,9 +59,14 @@ public interface IRelationalCompilerExtension extends CompilerExtension
         return process(authenticationStrategy, processors, context, "Authentication Strategy", authenticationStrategy.sourceInformation);
     }
 
-    static Pair<Root_meta_pure_alloy_connections_PostProcessor, PostProcessorWithParameter> process(PostProcessor postProcessor, List<Function2<PostProcessor, CompileContext, Pair<Root_meta_pure_alloy_connections_PostProcessor, PostProcessorWithParameter>>> processors, CompileContext context)
+    static Pair<Root_meta_pure_alloy_connections_PostProcessor, PostProcessorWithParameter> process(Connection connection, PostProcessor postProcessor, List<Function3<Connection, PostProcessor, CompileContext, Pair<Root_meta_pure_alloy_connections_PostProcessor, PostProcessorWithParameter>>> processors, CompileContext context)
     {
-        return process(postProcessor, processors, context, "Post Processor", postProcessor.sourceInformation);
+        SourceInformation srcInfo = postProcessor.sourceInformation;
+        return ListIterate
+                .collect(processors, processor -> processor.value(connection, postProcessor, context))
+                .select(Objects::nonNull)
+                .getFirstOptional()
+                .orElseThrow(() -> new EngineException("Unsupported Post Processor type '" + postProcessor.getClass() + "'", srcInfo, EngineErrorType.COMPILATION));
     }
 
     static PostProcessorWithParameter process(org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.relational.connection.legacy.PostProcessorWithParameter postProcessorWithParameter, List<Function2<org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.relational.connection.legacy.PostProcessorWithParameter, CompileContext, PostProcessorWithParameter>> processors, CompileContext context)
@@ -93,7 +102,7 @@ public interface IRelationalCompilerExtension extends CompilerExtension
         return Lists.immutable.with();
     }
 
-    default List<Function2<PostProcessor, CompileContext, Pair<Root_meta_pure_alloy_connections_PostProcessor, PostProcessorWithParameter>>> getExtraConnectionPostProcessor()
+    default List<Function3<Connection, PostProcessor, CompileContext, Pair<Root_meta_pure_alloy_connections_PostProcessor, PostProcessorWithParameter>>> getExtraConnectionPostProcessor()
     {
         return FastList.newList();
     }
@@ -117,6 +126,5 @@ public interface IRelationalCompilerExtension extends CompilerExtension
     {
         return FastList.newList();
     }
-
 
 }

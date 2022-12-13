@@ -95,47 +95,6 @@ public class IngestModeTest
     Field batchTimeOut = Field.builder().name(batchTimeOutField).type(FieldType.of(DataType.DATETIME, Optional.empty(), Optional.empty())).build();
     Field deleteIndicator = Field.builder().name(deleteIndicatorField).type(FieldType.of(DataType.VARCHAR, Optional.empty(), Optional.empty())).build();
 
-    SchemaDefinition baseTableSchema = SchemaDefinition.builder()
-        .addFields(id)
-        .addFields(name)
-        .addFields(amount)
-        .addFields(bizDate)
-        .build();
-
-    SchemaDefinition baseTableShortenedSchema = SchemaDefinition.builder()
-        .addFields(id)
-        .addFields(name)
-        .addFields(amount)
-        .build();
-
-    SchemaDefinition stagingTableEvolvedSize = SchemaDefinition.builder()
-        .addFields(id)
-        .addFields(nameModified)
-        .addFields(amount)
-        .addFields(bizDate)
-        .build();
-
-    SchemaDefinition stagingTableImplicitDatatypeChange = SchemaDefinition.builder()
-        .addFields(id)
-        .addFields(name)
-        .addFields(floatAmount)
-        .addFields(bizDate)
-        .build();
-
-    SchemaDefinition stagingTableNonBreakingDatatypeChange = SchemaDefinition.builder()
-        .addFields(tinyIntId)
-        .addFields(name)
-        .addFields(amount)
-        .addFields(bizDate)
-        .build();
-
-    SchemaDefinition stagingTableBreakingDatatypeChange = SchemaDefinition.builder()
-        .addFields(tinyIntString)
-        .addFields(name)
-        .addFields(amount)
-        .addFields(bizDate)
-        .build();
-
     SchemaDefinition mainTableSchema = SchemaDefinition.builder()
         .addFields(id)
         .addFields(name)
@@ -208,23 +167,6 @@ public class IngestModeTest
         .addFields(digest)
         .build();
 
-    protected SchemaDefinition baseTableSchemaWithNoPrimaryKeys = SchemaDefinition.builder()
-        .addFields(idNonPrimary)
-        .addFields(nameNonPrimary)
-        .addFields(amount)
-        .addFields(bizDate)
-        .addFields(digest)
-        .build();
-
-    SchemaDefinition baseTableSchemaWithDigestAndUpdateBatchTimeField = SchemaDefinition.builder()
-        .addFields(id)
-        .addFields(name)
-        .addFields(amount)
-        .addFields(bizDate)
-        .addFields(digest)
-        .addFields(batchUpdateTime)
-        .build();
-
     SchemaDefinition stagingTableSchemaWithLimitedColumns = SchemaDefinition.builder()
         .addFields(id)
         .addFields(name)
@@ -241,66 +183,14 @@ public class IngestModeTest
         .addFields(deleteIndicator)
         .build();
 
-    SchemaDefinition bitemporalMainTableSchema = SchemaDefinition.builder()
-        .addFields(id)
-        .addFields(name)
-        .addFields(amount)
-        .addFields(validityFromReference)
-        .addFields(validityThroughReference)
-        .addFields(digest)
-        .addFields(batchIdIn)
-        .addFields(batchIdOut)
-        .addFields(validityFromTarget)
-        .addFields(validityThroughTarget)
-        .build();
-
-    SchemaDefinition bitemporalFromTimeOnlyMainTablSchema = SchemaDefinition.builder()
-        .addFields(id)
-        .addFields(name)
-        .addFields(amount)
-        .addFields(validityFromReference)
-        .addFields(digest)
-        .addFields(batchIdIn)
-        .addFields(batchIdOut)
-        .addFields(validityFromTarget)
-        .addFields(validityThroughTarget)
-        .build();
-
-    SchemaDefinition bitemporalStagingTableSchema = SchemaDefinition.builder()
-        .addFields(id)
-        .addFields(name)
-        .addFields(amount)
-        .addFields(validityFromReference)
-        .addFields(validityThroughReference)
-        .addFields(digest)
-        .build();
-
-    SchemaDefinition bitemporalStagingTableSchemaWithDeleteIndicator = SchemaDefinition.builder()
-        .addFields(id)
-        .addFields(name)
-        .addFields(amount)
-        .addFields(validityFromReference)
-        .addFields(validityThroughReference)
-        .addFields(digest)
-        .addFields(deleteIndicator)
-        .build();
-
-    SchemaDefinition bitemporalFromTimeOnlyStagingTableSchema = SchemaDefinition.builder()
-        .addFields(id)
-        .addFields(name)
-        .addFields(amount)
-        .addFields(validityFromReference)
-        .addFields(digest)
-        .build();
-
-    String expectedMetadataTableCreateQuery = "CREATE TABLE IF NOT EXISTS batch_metadata" +
+    String expectedMetadataTableCreateQuery = "CREATE REFERENCE TABLE IF NOT EXISTS batch_metadata" +
         "(`table_name` VARCHAR(255)," +
         "`batch_start_ts_utc` DATETIME," +
         "`batch_end_ts_utc` DATETIME," +
         "`batch_status` VARCHAR(32)," +
         "`table_batch_id` INTEGER)";
 
-    String expectedMetadataTableCreateQueryWithUpperCase = "CREATE TABLE IF NOT EXISTS BATCH_METADATA" +
+    String expectedMetadataTableCreateQueryWithUpperCase = "CREATE REFERENCE TABLE IF NOT EXISTS BATCH_METADATA" +
         "(`TABLE_NAME` VARCHAR(255)," +
         "`BATCH_START_TS_UTC` DATETIME," +
         "`BATCH_END_TS_UTC` DATETIME," +
@@ -313,9 +203,7 @@ public class IngestModeTest
 
     String expectedStagingCleanupQuery = "DELETE FROM `mydb`.`staging` as stage";
 
-    String expectedDropTableQuery = "DROP TABLE IF EXISTS `mydb`.`staging`";
-
-    String expectedMainTableCreateQuery = "CREATE TABLE IF NOT EXISTS `mydb`.`main`" +
+    String expectedMainTableCreateQuery = "CREATE REFERENCE TABLE IF NOT EXISTS `mydb`.`main`" +
         "(`id` INTEGER," +
         "`name` VARCHAR(256)," +
         "`amount` DOUBLE," +
@@ -327,7 +215,7 @@ public class IngestModeTest
         "`batch_time_out` DATETIME," +
         "PRIMARY KEY (`id`, `name`, `batch_id_in`, `batch_time_in`))";
 
-    String expectedMainTableCreateQueryWithUpperCase = "CREATE TABLE IF NOT EXISTS `MYDB`.`MAIN`" +
+    String expectedMainTableCreateQueryWithUpperCase = "CREATE REFERENCE TABLE IF NOT EXISTS `MYDB`.`MAIN`" +
         "(`ID` INTEGER," +
         "`NAME` VARCHAR(256)," +
         "`AMOUNT` DOUBLE," +
@@ -339,95 +227,21 @@ public class IngestModeTest
         "`BATCH_TIME_OUT` DATETIME," +
         "PRIMARY KEY (`ID`, `NAME`, `BATCH_ID_IN`, `BATCH_TIME_IN`))";
 
-    String expectedMainTableBatchIdBasedCreateQuery = "CREATE TABLE IF NOT EXISTS `mydb`.`main`(" +
+    String expectedMainTableBatchIdBasedCreateQuery = "CREATE REFERENCE TABLE IF NOT EXISTS `mydb`.`main`(" +
         "`id` INTEGER,`name` VARCHAR(256),`amount` DOUBLE,`biz_date` DATE,`digest` VARCHAR(256)," +
         "`batch_id_in` INTEGER,`batch_id_out` INTEGER,PRIMARY KEY (`id`, `name`, `batch_id_in`))";
 
-    String expectedMainTableBatchIdBasedCreateQueryWithUpperCase = "CREATE TABLE IF NOT EXISTS `MYDB`.`MAIN`" +
+    String expectedMainTableBatchIdBasedCreateQueryWithUpperCase = "CREATE REFERENCE TABLE IF NOT EXISTS `MYDB`.`MAIN`" +
         "(`ID` INTEGER,`NAME` VARCHAR(256),`AMOUNT` DOUBLE,`BIZ_DATE` DATE,`DIGEST` VARCHAR(256)," +
         "`BATCH_ID_IN` INTEGER,`BATCH_ID_OUT` INTEGER,PRIMARY KEY (`ID`, `NAME`, `BATCH_ID_IN`))";
 
-    String expectedMainTableTimeBasedCreateQuery = "CREATE TABLE IF NOT EXISTS `mydb`.`main`(" +
+    String expectedMainTableTimeBasedCreateQuery = "CREATE REFERENCE TABLE IF NOT EXISTS `mydb`.`main`(" +
         "`id` INTEGER,`name` VARCHAR(256),`amount` DOUBLE,`biz_date` DATE,`digest` VARCHAR(256)," +
         "`batch_time_in` DATETIME,`batch_time_out` DATETIME,PRIMARY KEY (`id`, `name`, `batch_time_in`))";
 
-    String expectedMainTableTimeBasedCreateQueryWithUpperCase = "CREATE TABLE IF NOT EXISTS `MYDB`.`MAIN`" +
+    String expectedMainTableTimeBasedCreateQueryWithUpperCase = "CREATE REFERENCE TABLE IF NOT EXISTS `MYDB`.`MAIN`" +
         "(`ID` INTEGER,`NAME` VARCHAR(256),`AMOUNT` DOUBLE,`BIZ_DATE` DATE,`DIGEST` VARCHAR(256)," +
         "`BATCH_TIME_IN` DATETIME,`BATCH_TIME_OUT` DATETIME,PRIMARY KEY (`ID`, `NAME`, `BATCH_TIME_IN`))";
-
-    String expectedBaseTableCreateQuery = "CREATE TABLE IF NOT EXISTS `mydb`.`main`(" +
-        "`id` INTEGER," +
-        "`name` VARCHAR(256)," +
-        "`amount` DOUBLE," +
-        "`biz_date` DATE," +
-        "PRIMARY KEY (`id`, `name`))";
-
-    String expectedSchemaEvolutionAddColumn = "ALTER TABLE `mydb`.`main` ADD COLUMN `biz_date` DATE";
-
-    String expectedSchemaEvolutionModifySize = "ALTER TABLE `mydb`.`main` ALTER COLUMN `name` VARCHAR(64) PRIMARY KEY";
-
-    String expectedSchemaNonBreakingChange = "ALTER TABLE `mydb`.`main` ALTER COLUMN `id` TINYINT PRIMARY KEY";
-
-    String expectedBaseTableCreateQueryWithUpperCase = "CREATE TABLE IF NOT EXISTS `MYDB`.`MAIN`" +
-        "(`ID` INTEGER," +
-        "`NAME` VARCHAR(256)," +
-        "`AMOUNT` DOUBLE," +
-        "`BIZ_DATE` DATE," +
-        "PRIMARY KEY (`ID`, `NAME`))";
-
-    String expectedBaseTablePlusDigestCreateQuery = "CREATE TABLE IF NOT EXISTS `mydb`.`main`(" +
-        "`id` INTEGER," +
-        "`name` VARCHAR(256)," +
-        "`amount` DOUBLE," +
-        "`biz_date` DATE," +
-        "`digest` VARCHAR(256)," +
-        "PRIMARY KEY (`id`, `name`))";
-
-    String expectedBaseTablePlusDigestCreateQueryWithUpperCase = "CREATE TABLE IF NOT EXISTS `MYDB`.`MAIN`(" +
-        "`ID` INTEGER," +
-        "`NAME` VARCHAR(256)," +
-        "`AMOUNT` DOUBLE," +
-        "`BIZ_DATE` DATE," +
-        "`DIGEST` VARCHAR(256)," +
-        "PRIMARY KEY (`ID`, `NAME`))";
-
-    String expectedBaseTablePlusDigestPlusUpdateTimestampCreateQuery = "CREATE TABLE IF NOT EXISTS `mydb`.`main`(" +
-        "`id` INTEGER," +
-        "`name` VARCHAR(256)," +
-        "`amount` DOUBLE," +
-        "`biz_date` DATE," +
-        "`digest` VARCHAR(256)," +
-        "`batch_update_time` DATETIME," +
-        "PRIMARY KEY (`id`, `name`))";
-
-    String expectedStagingDigestUpdateQuery = "UPDATE `mydb`.`staging` as stage SET " +
-        "stage.`digest` = MD5(CONCAT(stage.`id`,stage.`name`,stage.`amount`," +
-        "stage.`biz_date`,stage.`digest`))";
-
-    String expectedBitemporalMainTableCreateQuery = "CREATE TABLE IF NOT EXISTS `mydb`.`main`" +
-        "(`id` INTEGER," +
-        "`name` VARCHAR(256)," +
-        "`amount` DOUBLE," +
-        "`validity_from_reference` DATETIME," +
-        "`validity_through_reference` DATETIME," +
-        "`digest` VARCHAR(256)," +
-        "`batch_id_in` INTEGER," +
-        "`batch_id_out` INTEGER," +
-        "`validity_from_target` DATETIME," +
-        "`validity_through_target` DATETIME," +
-        "PRIMARY KEY (`id`, `name`, `validity_from_reference`, `validity_through_reference`, `batch_id_in`))";
-
-    String expectedBitemporalFromTimeOnlyMainTableCreateQuery = "CREATE TABLE IF NOT EXISTS `mydb`.`main`" +
-        "(`id` INTEGER," +
-        "`name` VARCHAR(256)," +
-        "`amount` DOUBLE," +
-        "`validity_from_reference` DATETIME," +
-        "`digest` VARCHAR(256)," +
-        "`batch_id_in` INTEGER," +
-        "`batch_id_out` INTEGER," +
-        "`validity_from_target` DATETIME," +
-        "`validity_through_target` DATETIME," +
-        "PRIMARY KEY (`id`, `name`, `validity_from_reference`, `batch_id_in`))";
 
     public void assertIfListsAreSameIgnoringOrder(List<String> first, List<String> second)
     {

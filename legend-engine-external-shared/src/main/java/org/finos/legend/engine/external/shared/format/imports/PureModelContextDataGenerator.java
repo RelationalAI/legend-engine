@@ -174,7 +174,7 @@ public class PureModelContextDataGenerator
             {
                 if ("vX_X_X".equals(pureVersion))
                 {
-                    return java.lang.Class.forName("org.finos.legend.pure.generated.core_pure_protocol_vX_X_X_transfers_metamodel").getMethod("Root_meta_protocols_pure_" + pureVersion + "_transformation_fromPureGraph_transformFunction_FunctionDefinition_1__Extension_MANY__Function_1_", org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.function.FunctionDefinition.class, RichIterable.class, ExecutionSupport.class);
+                    return java.lang.Class.forName("org.finos.legend.pure.generated.core_pure_protocol_vX_X_X_transfers_metamodel").getMethod("Root_meta_protocols_pure_" + pureVersion + "_transformation_fromPureGraph_transformFunction_ConcreteFunctionDefinition_1__Extension_MANY__Function_1_", org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.function.ConcreteFunctionDefinition.class, RichIterable.class, ExecutionSupport.class);
                 }
                 else
                 {
@@ -277,10 +277,13 @@ public class PureModelContextDataGenerator
         {
             try
             {
-                builder.addElement(objectMapper.readValue(org.finos.legend.pure.generated.core_pure_protocol_protocol.Root_meta_alloy_metadataServer_alloyToJSON_Any_1__String_1_("vX_X_X".equals(pureVersion) ? transformMethod.invoke(null, association, core_pure_extensions_functions.Root_meta_pure_extension_defaultExtensions__Extension_MANY_(compiledExecutionSupport), compiledExecutionSupport) : transformMethod.invoke(null, association, compiledExecutionSupport), compiledExecutionSupport), Association.class));
+                builder.addElement(objectMapper.readValue(org.finos.legend.pure.generated.core_pure_protocol_protocol.Root_meta_alloy_metadataServer_alloyToJSON_Any_1__String_1_(
+                    transformMethod.invoke(null, association, core_pure_extensions_functions.Root_meta_pure_extension_defaultExtensions__Extension_MANY_(compiledExecutionSupport),
+                        compiledExecutionSupport), compiledExecutionSupport), Association.class));
             }
-            catch (Exception ignored)
+            catch (Exception e)
             {
+                throw new RuntimeException(e);
             }
         });
         return builder.build();

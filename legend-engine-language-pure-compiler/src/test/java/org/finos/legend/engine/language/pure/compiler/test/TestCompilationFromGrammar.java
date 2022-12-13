@@ -15,10 +15,12 @@
 package org.finos.legend.engine.language.pure.compiler.test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.tuple.Pair;
 import org.eclipse.collections.impl.tuple.Tuples;
 import org.finos.legend.engine.language.pure.compiler.Compiler;
 import org.finos.legend.engine.language.pure.compiler.toPureGraph.PureModel;
+import org.finos.legend.engine.language.pure.compiler.toPureGraph.Warning;
 import org.finos.legend.engine.language.pure.grammar.from.PureGrammarParser;
 import org.finos.legend.engine.protocol.pure.v1.model.context.PureModelContextData;
 import org.finos.legend.engine.shared.core.ObjectMapperFactory;
@@ -26,6 +28,10 @@ import org.finos.legend.engine.shared.core.deployment.DeploymentMode;
 import org.finos.legend.engine.shared.core.operational.errorManagement.EngineException;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class TestCompilationFromGrammar
 {
@@ -48,6 +54,11 @@ public class TestCompilationFromGrammar
 
         public static Pair<PureModelContextData, PureModel> test(String str, String expectedErrorMsg)
         {
+            return test(str, expectedErrorMsg, null);
+        }
+
+        public static Pair<PureModelContextData, PureModel> test(String str, String expectedErrorMsg, List<String> expectedWarnings)
+        {
             try
             {
                 // do a full re-serialization after parsing to make sure the protocol produced is proper
@@ -60,6 +71,20 @@ public class TestCompilationFromGrammar
                 {
                     Assert.fail("Expected compilation error with message: " + expectedErrorMsg + "; but no error occurred");
                 }
+
+                if (expectedWarnings == null)
+                {
+                    Assert.assertTrue("expected no warnings but found " + pureModel.getWarnings().stream().map(w -> w.buildPrettyWarningMessage()).collect(Collectors.toList()), pureModel.getWarnings().isEmpty());
+                }
+
+                if (expectedWarnings != null)
+                {
+                    List<String> warnings = pureModel.getWarnings().stream().map(w -> w.buildPrettyWarningMessage()).collect(Collectors.toList());
+                    Collections.sort(warnings);
+                    Collections.sort(expectedWarnings);
+                    Assert.assertEquals(expectedWarnings, warnings);
+                }
+
                 return Tuples.pair(modelData, pureModel);
             }
             catch (EngineException e)
@@ -68,7 +93,6 @@ public class TestCompilationFromGrammar
                 {
                     throw e;
                 }
-
                 Assert.assertNotNull("No source information provided in error", e.getSourceInformation());
                 Assert.assertEquals(expectedErrorMsg, EngineException.buildPrettyErrorMessage(e.getMessage(), e.getSourceInformation(), e.getErrorType()));
                 return null;
@@ -188,6 +212,53 @@ public class TestCompilationFromGrammar
 
                 "\n" +
                 ")");
+    }
+
+    @Test
+    public void testCompilationPureDuplicateSetIdError()
+    {
+        TestCompilationFromGrammarTestSuite.test("###Pure\n" +
+                "Class simple::Account\n" +
+                "{\n" +
+                "   id: String[1];   \n" +
+                "}\n" +
+                "\n" +
+                "Class simple::Raw_Account\n" +
+                "{\n" +
+                "   id: String[1];\n" +
+                "}\n" +
+                "\n" +
+                "Class simple::Another extends simple::Account\n" +
+                "{  \n" +
+                "}\n" +
+                "\n" +
+                "###Mapping\n" +
+                "Mapping simple::gen1::map\n" +
+                "(\n" +
+                "   simple::Account[id]: Pure\n" +
+                "   {\n" +
+                "      ~src simple::Raw_Account\n" +
+                "      id: $src.id\n" +
+                "   }\n" +
+                ")\n" +
+                "\n" +
+                "Mapping simple::gen2::map\n" +
+                "(\n" +
+                "   simple::Account[id]: Pure\n" +
+                "   {\n" +
+                "      ~src simple::Raw_Account\n" +
+                "      id: $src.id\n" +
+                "   }\n" +
+                ")\n" +
+                "\n" +
+                "Mapping simple::merged(\n" +
+                "   include simple::gen1::map\n" +
+                "   include simple::gen2::map\n" +
+                "      \n" +
+                "   simple::Another extends [id]: Pure\n" +
+                "   {      \n" +
+                "   }   \n" +
+                ")", "COMPILATION error at [39:4-41:4]: Duplicated class mappings found with ID 'id' in mapping 'simple::merged'; parent mapping for duplicated: 'simple::gen1::map', 'simple::gen2::map'");
     }
 
 

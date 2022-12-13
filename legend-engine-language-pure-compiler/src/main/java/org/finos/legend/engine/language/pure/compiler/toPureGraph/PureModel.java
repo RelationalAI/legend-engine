@@ -290,7 +290,7 @@ public class PureModel implements IPureModel
             new EnumerationValidator().validate(this, pureModelContextData);
             new ClassValidator().validate(this, pureModelContextData);
             new AssociationValidator().validate(this, pureModelContextData);
-            new MappingValidator().validate(this, pureModelContextData);
+            new org.finos.legend.engine.language.pure.compiler.toPureGraph.validator.MappingValidator().validate(this, pureModelContextData, extensions);
             extraPostValidators.forEach(validator -> validator.value(this, pureModelContextData));
             long postValidationFinished = System.currentTimeMillis();
             LOGGER.info(new LogInfo(pm, LoggingEventType.GRAPH_POST_VALIDATION_COMPLETED, (double) postValidationFinished - processingFinished).toString());
@@ -394,11 +394,6 @@ public class PureModel implements IPureModel
                 "execution_StoreQuery_1__RoutedValueSpecification_$0_1$__Mapping_1__Runtime_1__ExecutionContext_1__Extension_MANY__DebugContext_1__Result_1_",
                 "getterOverrideMapped_Any_1__PropertyMapping_1__Any_MANY_",
                 "getterOverrideNonMapped_Any_1__Property_1__Any_MANY_"
-        ));
-        registerElementForPathToElement("meta::pure::store::platform::contract", Lists.mutable.with(
-                "supports_FunctionExpression_1__Boolean_1_",
-                "execution_StoreQuery_1__RoutedValueSpecification_$0_1$__Mapping_$0_1$__Runtime_$0_1$__ExecutionContext_1__Extension_MANY__DebugContext_1__Result_1_",
-                "planExecution_StoreQuery_1__RoutedValueSpecification_$0_1$__Mapping_$0_1$__Runtime_$0_1$__ExecutionContext_1__Extension_MANY__DebugContext_1__ExecutionNode_1_"
         ));
         registerElementForPathToElement("meta::pure::mapping::aggregationAware::contract", Lists.mutable.with(
                 "supports_FunctionExpression_1__Boolean_1_",
@@ -722,6 +717,37 @@ public class PureModel implements IPureModel
             throw new EngineException("Can't find class '" + fullPath + "'", sourceInformation, EngineErrorType.COMPILATION, e);
         }
         return _class;
+    }
+
+    public org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.PropertyOwner getPropertyOwner(String fullPath, SourceInformation sourceInformation)
+    {
+        Type type = getType_safe(fullPath);
+        if (type != null)
+        {
+            org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.type.Class<?> _class;
+            try
+            {
+                _class = (org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.type.Class<?>) type;
+            }
+            catch (ClassCastException e)
+            {
+                throw new EngineException("Can't find property owner '" + fullPath + "'", sourceInformation, EngineErrorType.COMPILATION, e);
+            }
+            return _class;
+        }
+        else
+        {
+            org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.relationship.Association association;
+            try
+            {
+                association = this.getAssociation(fullPath, sourceInformation);
+            }
+            catch (EngineException e)
+            {
+                throw new EngineException("Can't find property owner '" + fullPath + "'", sourceInformation, EngineErrorType.COMPILATION, e);
+            }
+            return association;
+        }
     }
 
     public Enumeration<org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.type.Enum> getEnumeration(String fullPath, SourceInformation sourceInformation)
@@ -1221,7 +1247,7 @@ public class PureModel implements IPureModel
     {
         if (!(f instanceof UserDefinedFunctionHandler))
         {
-            String pkg = HelperModelBuilder.getElementFullPath(f.getFunc()._package(), this.getExecutionSupport());
+            String pkg = HelperModelBuilder.getElementFullPath(((org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.PackageableElement) f.getFunc())._package(), this.getExecutionSupport());
             org.finos.legend.pure.m3.coreinstance.Package n = getOrCreatePackage(root, pkg);
             org.finos.legend.pure.m3.coreinstance.Package o = getPackage((org.finos.legend.pure.m3.coreinstance.Package) METADATA_LAZY.getMetadata(M3Paths.Package, M3Paths.Root), pkg);
             n._childrenAdd(o._children().detect(c -> f.getFunctionSignature().equals(c._name())));

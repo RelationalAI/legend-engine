@@ -74,6 +74,9 @@ class NontemporalDeltaMergeTest extends BaseTest
         // 2. Execute plans and verify results
         Map<String, Object> expectedStats = new HashMap<>();
         expectedStats.put(StatisticName.INCOMING_RECORD_COUNT.name(), 3);
+        expectedStats.put(StatisticName.ROWS_TERMINATED.name(), 0);
+        expectedStats.put(StatisticName.ROWS_DELETED.name(), 0);
+
         executePlansAndVerifyResults(ingestMode, options, datasets, schema, expectedDataPass1, expectedStats);
         // 3. Assert that the staging table is NOT truncated
         List<Map<String, Object>> stagingTableList = h2Sink.executeQuery("select * from \"TEST\".\"staging\"");
@@ -114,6 +117,9 @@ class NontemporalDeltaMergeTest extends BaseTest
         // Execute plans and verify results
         Map<String, Object> expectedStats = new HashMap<>();
         expectedStats.put(StatisticName.INCOMING_RECORD_COUNT.name(), 3);
+        expectedStats.put(StatisticName.ROWS_TERMINATED.name(), 0);
+        expectedStats.put(StatisticName.ROWS_DELETED.name(), 0);
+
         executePlansAndVerifyResults(ingestMode, options, datasets, schema, expectedDataPass1, expectedStats);
 
         // ------------ Perform incremental (delta) milestoning Pass2 ------------------------
@@ -131,7 +137,7 @@ class NontemporalDeltaMergeTest extends BaseTest
     @Test
     void testGeneratePhysicalPlanWithUpdateTimestampColumn() throws Exception
     {
-        DatasetDefinition mainTable = TestUtils.getMainTableWithbatchUpdateTimeField();
+        DatasetDefinition mainTable = TestUtils.getMainTableWithBatchUpdateTimeField();
         DatasetDefinition stagingTable = TestUtils.getBasicStagingTable();
 
         // Create staging table
@@ -156,8 +162,41 @@ class NontemporalDeltaMergeTest extends BaseTest
         // 2. Execute plans and verify results
         Map<String, Object> expectedStats = new HashMap<>();
         expectedStats.put(StatisticName.INCOMING_RECORD_COUNT.name(), 3);
-        expectedStats.put(StatisticName.ROWS_DELETED.name(), 0);
         expectedStats.put(StatisticName.ROWS_TERMINATED.name(), 0);
+        expectedStats.put(StatisticName.ROWS_DELETED.name(), 0);
+        executePlansAndVerifyResults(ingestMode, options, datasets, schema, expectedDataPass1, expectedStats, fixedClock_2000_01_01);
+    }
+
+    @Test
+    void testGeneratePhysicalPlanWithDeleteIndicator() throws Exception
+    {
+        DatasetDefinition mainTable = TestUtils.getMainTableWithBatchUpdateTimeField();
+        DatasetDefinition stagingTable = TestUtils.getBasicStagingTable();
+
+        // Create staging table
+        createStagingTable(stagingTable);
+
+        // Generate the milestoning object
+        NontemporalDelta ingestMode = NontemporalDelta.builder()
+                .digestField(digestName)
+                .auditing(DateTimeAuditing.builder().dateTimeField(batchUpdateTimeName).build())
+                .build();
+
+        PlannerOptions options = PlannerOptions.builder().collectStatistics(true).build();
+        Datasets datasets = Datasets.of(mainTable, stagingTable);
+
+        String[] schema = new String[]{idName, nameName, incomeName, startTimeName, expiryDateName, digestName, batchUpdateTimeName};
+
+        // ------------ Perform incremental (delta) milestoning Pass1 ------------------------
+        String dataPass1 = basePath + "input/with_update_timestamp_field/data_pass1.csv";
+        String expectedDataPass1 = basePath + "expected/with_update_timestamp_field/expected_pass1.csv";
+        // 1. Load staging table
+        loadBasicStagingData(dataPass1);
+        // 2. Execute plans and verify results
+        Map<String, Object> expectedStats = new HashMap<>();
+        expectedStats.put(StatisticName.INCOMING_RECORD_COUNT.name(), 3);
+        expectedStats.put(StatisticName.ROWS_TERMINATED.name(), 0);
+        expectedStats.put(StatisticName.ROWS_DELETED.name(), 0);
         executePlansAndVerifyResults(ingestMode, options, datasets, schema, expectedDataPass1, expectedStats, fixedClock_2000_01_01);
     }
 }

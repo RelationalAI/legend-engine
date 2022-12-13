@@ -38,8 +38,8 @@ abstract class BitemporalPlanner extends UnitemporalPlanner
         super(datasets, bitemporalMilestoned, plannerOptions);
 
         // validate
-        String sourceValidDateTimeFrom = bitemporalMilestoned.validityMilestoning().validityDerivation().accept(EXTRACT_SOURCE_VALID_DATE_TIME_FROM);
-        validatePrimaryKey(datasets.mainDataset().schema().fields(), sourceValidDateTimeFrom);
+        String targetValidDateTimeFrom = bitemporalMilestoned.validityMilestoning().accept(EXTRACT_TARGET_VALID_DATE_TIME_FROM);
+        validatePrimaryKey(datasets.mainDataset().schema().fields(), targetValidDateTimeFrom);
     }
 
     @Override
@@ -53,12 +53,6 @@ abstract class BitemporalPlanner extends UnitemporalPlanner
         List<Value> fieldsToSelect = new ArrayList<>(stagingDataset().schemaReference().fieldValues());
         fieldsToSelect.addAll(transactionMilestoningFieldValues());
 
-        String sourceValidDateTimeFrom = ingestMode().validityMilestoning().validityDerivation().accept(EXTRACT_SOURCE_VALID_DATE_TIME_FROM);
-        Value validFromSourceValue = FieldValue.builder().datasetRef(stagingDataset().datasetReference()).fieldName(sourceValidDateTimeFrom).build();
-        fieldsToSelect.add(validFromSourceValue);
-
-        Value validThruSourceValue = ingestMode().validityMilestoning().validityDerivation().accept(new DetermineValidDateTimeThruValue(ingestMode(), stagingDataset()));
-        fieldsToSelect.add(validThruSourceValue);
         return fieldsToSelect;
     }
 
@@ -67,11 +61,14 @@ abstract class BitemporalPlanner extends UnitemporalPlanner
         List<Value> fieldsToInsert = new ArrayList<>(stagingDataset().schemaReference().fieldValues());
         fieldsToInsert.addAll(transactionMilestoningFields());
 
-        String targetValidDateTimeFrom = ingestMode().validityMilestoning().accept(EXTRACT_TARGET_VALID_DATE_TIME_FROM);
-        fieldsToInsert.add(FieldValue.builder().datasetRef(mainDataset().datasetReference()).fieldName(targetValidDateTimeFrom).build());
+        String sourceValidDateTimeFrom = ingestMode().validityMilestoning().validityDerivation().accept(EXTRACT_SOURCE_VALID_DATE_TIME_FROM);
+        String sourceValidDateTimeThru = ingestMode().validityMilestoning().validityDerivation().accept(EXTRACT_SOURCE_VALID_DATE_TIME_THRU).orElseThrow(IllegalStateException::new);
 
+        String targetValidDateTimeFrom = ingestMode().validityMilestoning().accept(EXTRACT_TARGET_VALID_DATE_TIME_FROM);
         String targetValidDateTimeThru = ingestMode().validityMilestoning().accept(EXTRACT_TARGET_VALID_DATE_TIME_THRU);
-        fieldsToInsert.add(FieldValue.builder().datasetRef(mainDataset().datasetReference()).fieldName(targetValidDateTimeThru).build());
+
+        LogicalPlanUtils.replaceField(fieldsToInsert, sourceValidDateTimeFrom, targetValidDateTimeFrom);
+        LogicalPlanUtils.replaceField(fieldsToInsert, sourceValidDateTimeThru, targetValidDateTimeThru);
 
         return fieldsToInsert;
     }

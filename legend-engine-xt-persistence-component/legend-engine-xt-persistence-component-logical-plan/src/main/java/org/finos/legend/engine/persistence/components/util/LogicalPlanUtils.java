@@ -33,25 +33,22 @@ import org.finos.legend.engine.persistence.components.logicalplan.values.Array;
 import org.finos.legend.engine.persistence.components.logicalplan.values.FieldValue;
 import org.finos.legend.engine.persistence.components.logicalplan.values.FunctionImpl;
 import org.finos.legend.engine.persistence.components.logicalplan.values.FunctionName;
-import org.finos.legend.engine.persistence.components.logicalplan.values.HashFunction;
-import org.finos.legend.engine.persistence.components.logicalplan.values.NumericalValue;
+import org.finos.legend.engine.persistence.components.logicalplan.values.InfiniteBatchIdValue;
 import org.finos.legend.engine.persistence.components.logicalplan.values.ObjectValue;
-import org.finos.legend.engine.persistence.components.logicalplan.values.Pair;
 import org.finos.legend.engine.persistence.components.logicalplan.values.SelectValue;
 import org.finos.legend.engine.persistence.components.logicalplan.values.StringValue;
 import org.finos.legend.engine.persistence.components.logicalplan.values.Value;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class LogicalPlanUtils
 {
-    public static final long INFINITE_BATCH_ID = 999999999L;
     public static final String INFINITE_BATCH_TIME = "9999-12-31 23:59:59";
     public static final String DEFAULT_META_TABLE = "batch_metadata";
     public static final String DATA_SPLIT_LOWER_BOUND_PLACEHOLDER = "{DATA_SPLIT_LOWER_BOUND_PLACEHOLDER}";
@@ -69,9 +66,9 @@ public class LogicalPlanUtils
         return tableName + UNDERSCORE + suffix + UNDERSCORE + uuid;
     }
 
-    public static NumericalValue INFINITE_BATCH_ID()
+    public static Value INFINITE_BATCH_ID()
     {
-        return NumericalValue.of(LogicalPlanUtils.INFINITE_BATCH_ID);
+        return InfiniteBatchIdValue.builder().build();
     }
 
     public static StringValue INFINITE_BATCH_TIME()
@@ -159,9 +156,9 @@ public class LogicalPlanUtils
             FieldValue.builder().datasetRef(stagingDataSet.datasetReference()).fieldName(digestField).build());
     }
 
-    public static Condition getDeleteIndicatorIsSetCondition(Dataset stagingDataSet, String deleteIndicatorField, List<Object> deleteIndicatorValues)
+    public static Condition getDeleteIndicatorIsSetCondition(Dataset stagingDataset, String deleteIndicatorField, List<Object> deleteIndicatorValues)
     {
-        Field deleteIndicator = stagingDataSet.schema().fields().stream()
+        Field deleteIndicator = stagingDataset.schema().fields().stream()
             .filter(field -> field.name().equalsIgnoreCase(deleteIndicatorField))
             .findFirst().orElseThrow(() -> new IllegalArgumentException("Delete indicator [" + deleteIndicatorField + "] not found in staging dataset"));
         boolean isStringDatatype = DataType.isStringDatatype(deleteIndicator.type().dataType());
@@ -170,19 +167,19 @@ public class LogicalPlanUtils
         if (deleteIndicatorValues.size() == 1)
         {
             return Equals.of(
-                FieldValue.builder().datasetRef(stagingDataSet.datasetReference()).fieldName(deleteIndicatorField).build(),
+                FieldValue.builder().datasetRef(stagingDataset.datasetReference()).fieldName(deleteIndicatorField).build(),
                 getDeleteIndicatorValue(deleteIndicatorValues.get(0), isStringDatatype));
         }
 
         // if there are multiple deleteIndicatorValues Use InCondition with String/Object value as needed
         return In.of(
-            FieldValue.builder().datasetRef(stagingDataSet.datasetReference()).fieldName(deleteIndicatorField).build(),
+            FieldValue.builder().datasetRef(stagingDataset.datasetReference()).fieldName(deleteIndicatorField).build(),
             Array.of(deleteIndicatorValues.stream().map(val -> getDeleteIndicatorValue(val, isStringDatatype)).collect(Collectors.toList())));
     }
 
-    public static Condition getDeleteIndicatorIsNotSetCondition(Dataset stagingDataSet, String deleteIndicatorField, List<Object> deleteIndicatorValues)
+    public static Condition getDeleteIndicatorIsNotSetCondition(Dataset stagingDataset, String deleteIndicatorField, List<Object> deleteIndicatorValues)
     {
-        Field deleteIndicator = stagingDataSet.schema().fields().stream()
+        Field deleteIndicator = stagingDataset.schema().fields().stream()
             .filter(field -> field.name().equalsIgnoreCase(deleteIndicatorField))
             .findFirst().orElseThrow(() -> new IllegalArgumentException("Delete indicator [\" + deleteIndicatorField + \"] not found in staging dataset"));
         boolean isStringDatatype = DataType.isStringDatatype(deleteIndicator.type().dataType());
@@ -191,13 +188,13 @@ public class LogicalPlanUtils
         if (deleteIndicatorValues.size() == 1)
         {
             return NotEquals.of(
-                FieldValue.builder().datasetRef(stagingDataSet.datasetReference()).fieldName(deleteIndicatorField).build(),
+                FieldValue.builder().datasetRef(stagingDataset.datasetReference()).fieldName(deleteIndicatorField).build(),
                 getDeleteIndicatorValue(deleteIndicatorValues.get(0), isStringDatatype));
         }
 
         // if there is multiple deleteIndicatorValues Use NotInCondition with String/Object value as needed
         return NotIn.of(
-            FieldValue.builder().datasetRef(stagingDataSet.datasetReference()).fieldName(deleteIndicatorField).build(),
+            FieldValue.builder().datasetRef(stagingDataset.datasetReference()).fieldName(deleteIndicatorField).build(),
             Array.of(deleteIndicatorValues.stream().map(val -> getDeleteIndicatorValue(val, isStringDatatype)).collect(Collectors.toList())));
     }
 
@@ -217,6 +214,17 @@ public class LogicalPlanUtils
         );
     }
 
+    public static void replaceField(List<Value> fieldsList, String oldFieldName, String newFieldName)
+    {
+        fieldsList.forEach(field ->
+        {
+            if (field instanceof FieldValue && ((FieldValue) field).fieldName().equals(oldFieldName))
+            {
+                fieldsList.set(fieldsList.indexOf(field), ((FieldValue) field).withFieldName(newFieldName));
+            }
+        });
+    }
+
     public static Condition getBatchIdEqualsInfiniteCondition(Dataset mainDataSet, String batchIdOutField)
     {
         return Equals.of(
@@ -231,20 +239,21 @@ public class LogicalPlanUtils
             LogicalPlanUtils.INFINITE_BATCH_TIME());
     }
 
-    public static List<Pair<FieldValue, Value>> getDigestUpdatePair(Dataset stagingDataSet, String digestField, HashFunction.HashAlgorithm hashAlgorithm)
-    {
-        List<Value> stagingFields = new ArrayList<>(stagingDataSet.schemaReference().fieldValues());
-        return Collections.singletonList(Pair.of(
-            FieldValue.builder().datasetRef(stagingDataSet.datasetReference()).fieldName(digestField).build(),
-            HashFunction.builder().hashAlgorithm(hashAlgorithm).addAllValue(stagingFields).build()));
-    }
-
     public static Selection getRecordCount(Dataset dataset, String alias)
     {
         return Selection.builder()
             .source(dataset.datasetReference())
             .addFields(FunctionImpl.builder().functionName(FunctionName.COUNT).alias(alias).addValue(All.INSTANCE).build())
             .build();
+    }
+
+    public static Selection getRecordCount(Dataset dataset, String alias, Optional<Condition> condition)
+    {
+        return Selection.builder()
+                .source(dataset.datasetReference())
+                .addFields(FunctionImpl.builder().functionName(FunctionName.COUNT).alias(alias).addValue(All.INSTANCE).build())
+                .condition(condition)
+                .build();
     }
 
     public static Condition getBatchIdEqualityCondition(Dataset dataset, Value batchId, String batchIdField)

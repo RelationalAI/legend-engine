@@ -64,6 +64,8 @@ import org.finos.legend.pure.m3.coreinstance.meta.pure.mapping.SetImplementation
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.function.LambdaFunction;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.valuespecification.ValueSpecification;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.runtime.Connection;
+import org.finos.legend.engine.language.pure.compiler.toPureGraph.validator.MappingValidatorContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 public class CompilerExtensions
@@ -119,6 +122,8 @@ public class CompilerExtensions
     private final ImmutableList<Function3<EmbeddedData, CompileContext, ProcessingContext, Root_meta_pure_data_EmbeddedData>> extraEmbeddedDataProcessors;
     private final ImmutableList<Function3<Test, CompileContext, ProcessingContext, org.finos.legend.pure.m3.coreinstance.meta.pure.test.Test>> extraTestProcessors;
     private final ImmutableList<Function3<TestAssertion, CompileContext, ProcessingContext, Root_meta_pure_test_assertion_TestAssertion>> extraTestAssertionProcessors;
+    private final Map<String, Function3<Object, CompileContext, ProcessingContext, ValueSpecification>> extraClassInstanceProcessors;
+    private final ImmutableList<BiConsumer<PureModel, MappingValidatorContext>> extraMappingPostValidators;
 
     private CompilerExtensions(Iterable<? extends CompilerExtension> extensions)
     {
@@ -146,6 +151,9 @@ public class CompilerExtensions
         this.extraEmbeddedDataProcessors = this.extensions.flatCollect(CompilerExtension::getExtraEmbeddedDataProcessors);
         this.extraTestProcessors = this.extensions.flatCollect(CompilerExtension::getExtraTestProcessors);
         this.extraTestAssertionProcessors = this.extensions.flatCollect(CompilerExtension::getExtraTestAssertionProcessors);
+        this.extraClassInstanceProcessors = Maps.mutable.empty();
+        this.extensions.forEach(e -> extraClassInstanceProcessors.putAll(e.getExtraClassInstanceProcessors()));
+        this.extraMappingPostValidators = this.extensions.flatCollect(CompilerExtension::getExtraMappingPostValidators);
     }
 
     public List<CompilerExtension> getExtensions()
@@ -315,6 +323,11 @@ public class CompilerExtensions
         return this.extraPostValidators.castToList();
     }
 
+    public List<BiConsumer<PureModel, MappingValidatorContext>> getExtraMappingPostValidators()
+    {
+        return this.extraMappingPostValidators.castToList();
+    }
+
     public List<Processor<?>> sortExtraProcessors()
     {
         return sortExtraProcessors(getExtraProcessors(), p -> true, false);
@@ -460,5 +473,10 @@ public class CompilerExtensions
             }
         }
         return index;
+    }
+
+    public Map<String, Function3<Object, CompileContext, ProcessingContext, ValueSpecification>> getExtraClassInstanceProcessors()
+    {
+        return extraClassInstanceProcessors;
     }
 }

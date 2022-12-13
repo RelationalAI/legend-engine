@@ -68,15 +68,27 @@ public class ExecuteInRelationalDb
 
             try
             {
-                Connection jdbcConn =
-                        this.connectionManagerSelector.getDatabaseConnection((MutableList<CommonProfile>) null,
-                                input.connection);
+                Connection jdbcConn = this.connectionManagerSelector.getDatabaseConnection(profiles, input.connection);
 
                 Statement stmt = jdbcConn.createStatement();
 
                 for (String sql : input.sqls)
                 {
-                    stmt.execute(sql);
+                    if (sql.startsWith("["))
+                    {
+                        try
+                        {
+                            stmt.execute(sql.substring(1, sql.length() - 1));
+                        }
+                        catch (SQLException e)
+                        {
+                            LOGGER.warn("sql execution failed", e);
+                        }
+                    }
+                    else
+                    {
+                        stmt.execute(sql);
+                    }
                 }
 
                 return Response.ok().build();
