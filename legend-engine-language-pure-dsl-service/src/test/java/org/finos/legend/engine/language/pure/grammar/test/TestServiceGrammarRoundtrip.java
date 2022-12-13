@@ -99,6 +99,29 @@ public class TestServiceGrammarRoundtrip extends TestGrammarRoundtrip.TestGramma
     }
 
     @Test
+    public void testInlineService()
+    {
+        test("###Service\n" +
+                "Service meta::pure::myServiceSingle\n" +
+                "{\n" +
+                "  pattern: 'url/myUrl/';\n" +
+                "  documentation: 'this is just for context';\n" +
+                "  autoActivateUpdates: false;\n" +
+                "  execution: Single\n" +
+                "  {\n" +
+                "    query: src: meta::transform::tests::Address[1]|$src.a->from(meta::myMapping, meta::myRuntime);\n" +
+                "  }\n" +
+                "  test: Single\n" +
+                "  {\n" +
+                "    data: 'moreThanData';\n" +
+                "    asserts:\n" +
+                "    [\n" +
+                "    ];\n" +
+                "  }\n" +
+                "}\n");
+    }
+
+    @Test
     public void testServiceWithEmbeddedRuntime()
     {
         test("###Service\n" +
@@ -574,6 +597,88 @@ public class TestServiceGrammarRoundtrip extends TestGrammarRoundtrip.TestGramma
                 "      [\n" +
                 "        test1:\n" +
                 "        {\n" +
+                "          asserts:\n" +
+                "          [\n" +
+                "            assert1:\n" +
+                "              EqualToJson\n" +
+                "              #{\n" +
+                "                expected : \n" +
+                "                  ExternalFormat\n" +
+                "                  #{\n" +
+                "                    contentType: 'application/json';\n" +
+                "                    data: '{Age:12, Name:\"dummy\"}';\n" +
+                "                  }#;\n" +
+                "              }#\n" +
+                "          ]\n" +
+                "        }\n" +
+                "      ]\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}\n"
+        );
+
+        //Test Single Execution with Test Assertion containing KeysInScope size() > 1
+        test("###Service\n" +
+                "Service meta::pure::myServiceSingle\n" +
+                "{\n" +
+                "  pattern: 'url/myUrl/';\n" +
+                "  owners:\n" +
+                "  [\n" +
+                "    'ownerName',\n" +
+                "    'ownerName2'\n" +
+                "  ];\n" +
+                "  documentation: 'this is just for context';\n" +
+                "  autoActivateUpdates: true;\n" +
+                "  execution: Multi\n" +
+                "  {\n" +
+                "    query: |model::pure::mapping::modelToModel::test::shared::dest::Product.all()->graphFetchChecked(#{model::pure::mapping::modelToModel::test::shared::dest::Product{name}}#)->serialize(#{model::pure::mapping::modelToModel::test::shared::dest::Product{name}}#);\n" +
+                "    key: 'env';\n" +
+                "    executions['QA']:\n" +
+                "    {\n" +
+                "      mapping: meta::myMapping1;\n" +
+                "      runtime: test::runtime;\n" +
+                "    }\n" +
+                "    executions['UAT']:\n" +
+                "    {\n" +
+                "      mapping: meta::myMapping2;\n" +
+                "      runtime: meta::myRuntime;\n" +
+                "    }\n" +
+                "  }\n" +
+                "  testSuites:\n" +
+                "  [\n" +
+                "    testSuite1:\n" +
+                "    {\n" +
+                "      data:\n" +
+                "      [\n" +
+                "        connections:\n" +
+                "        [\n" +
+                "          connection1:\n" +
+                "            ExternalFormat\n" +
+                "            #{\n" +
+                "              contentType: 'application/x.flatdata';\n" +
+                "              data: 'FIRST_NAME,LAST_NAME\\nFred,Bloggs\\nJane,Doe';\n" +
+                "            }#,\n" +
+                "          connection2:\n" +
+                "            ModelStore\n" +
+                "            #{\n" +
+                "              my::Person:\n" +
+                "                [\n" +
+                "                  ^my::Person(\n" +
+                "                    givenNames = ['Fred', 'William'],\n" +
+                "                    address = ^my::Address(street = 'A Road')\n" +
+                "                  )\n" +
+                "                ]\n" +
+                "            }#\n" +
+                "        ]\n" +
+                "      ]\n" +
+                "      tests:\n" +
+                "      [\n" +
+                "        test1:\n" +
+                "        {\n" +
+                "          keys:\n" +
+                "          [\n" +
+                "            'UAT'\n" +
+                "          ];\n" +
                 "          asserts:\n" +
                 "          [\n" +
                 "            assert1:\n" +
@@ -1183,5 +1288,41 @@ public class TestServiceGrammarRoundtrip extends TestGrammarRoundtrip.TestGramma
                 "  ]\n" +
                 "}\n"
         );
+    }
+
+    @Test
+    public void testBindingWithService()
+    {
+        test("###Service\n" +
+                "Service meta::pure::myServiceSingle\n" +
+                "{\n" +
+                "  pattern: '/showcase/binding';\n" +
+                "  documentation: 'Showcase service with binding';\n" +
+                "  autoActivateUpdates: false;\n" +
+                "  execution: Single\n" +
+                "  {\n" +
+                "    query: data: String[1]|demo::Address->internalize(demo::InternalizeBinding, $data)->externalize(demo::InternalizeBinding, #{demo::Address{street}}#);\n" +
+                "  }\n" +
+                "  testSuites:\n" +
+                "  [\n" +
+                "\n" +
+                "  ]\n" +
+                "}\n");
+
+        test("###Service\n" +
+                "Service meta::pure::myServiceSingle\n" +
+                "{\n" +
+                "  pattern: '/showcase/binding';\n" +
+                "  documentation: 'Showcase service with binding';\n" +
+                "  autoActivateUpdates: false;\n" +
+                "  execution: Single\n" +
+                "  {\n" +
+                "    query: data: ByteStream[1]|demo::Address->internalize(demo::InternalizeBinding, $data)->externalize(demo::InternalizeBinding, #{demo::Address{street}}#);\n" +
+                "  }\n" +
+                "  testSuites:\n" +
+                "  [\n" +
+                "\n" +
+                "  ]\n" +
+                "}\n");
     }
 }

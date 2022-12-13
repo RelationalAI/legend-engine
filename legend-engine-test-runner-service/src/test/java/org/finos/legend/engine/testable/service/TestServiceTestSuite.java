@@ -30,15 +30,18 @@ import org.finos.legend.engine.protocol.pure.v1.model.test.result.TestPassed;
 import org.finos.legend.engine.protocol.pure.v1.model.test.result.TestResult;
 import org.finos.legend.engine.shared.core.deployment.DeploymentMode;
 import org.finos.legend.engine.shared.core.deployment.DeploymentStateAndVersions;
+import org.finos.legend.engine.shared.core.operational.errorManagement.EngineException;
 import org.finos.legend.engine.testable.service.extension.ServiceTestableRunnerExtension;
 import org.finos.legend.engine.testable.service.result.MultiExecutionServiceTestResult;
 import org.finos.legend.pure.generated.Root_meta_legend_service_metamodel_Service;
+import org.h2.engine.Engine;
 import org.hamcrest.MatcherAssert;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 public class TestServiceTestSuite
 {
@@ -1191,6 +1194,73 @@ public class TestServiceTestSuite
         Assert.assertEquals("testServiceStoreTestSuites::TestService", serviceStoreTestResultsWithTestError.get(0).testable);
         Assert.assertEquals("testSuite1", serviceStoreTestResultsWithTestError.get(0).atomicTestId.testSuiteId);
         Assert.assertEquals("test1", serviceStoreTestResultsWithTestError.get(0).atomicTestId.atomicTestId);
+
+        //service store inline service
+        String serviceStoreInlineService =
+                "###Service\n" +
+                        "Service testServiceStoreTestSuites::TestService\n" +
+                        "{\n" +
+                        "  pattern: '/testServiceStoreTestSuites/testService';\n" +
+                        "  owners:\n" +
+                        "  [\n" +
+                        "    'dummy1',\n" +
+                        "    'dummy2'\n" +
+                        "  ];\n" +
+                        "  autoActivateUpdates: true;\n" +
+                        "  documentation: 'Service to test Service testSuite';\n" +
+                        "  execution: Single\n" +
+                        "  {\n" +
+                        "    query: |testServiceStoreTestSuites::Employee.all()->from(testServiceStoreTestSuites::ServiceStoreMapping, testServiceStoreTestSuites::ServiceStoreRuntime)->graphFetch(#{testServiceStoreTestSuites::Employee{kerberos,employeeID,title,firstName,lastName,countryCode}}#)->serialize(#{testServiceStoreTestSuites::Employee{kerberos,employeeID,title,firstName,lastName,countryCode}}#);\n" +
+                        "  }\n" +
+                        "  testSuites:\n" +
+                        "  [\n" +
+                        "    testSuite1:\n" +
+                        "    {\n" +
+                        "      data:\n" +
+                        "      [\n" +
+                        "        connections:\n" +
+                        "        [\n" +
+                        "          connection_1:\n" +
+                        "            Reference \n" +
+                        "            #{ \n" +
+                        "              testServiceStoreTestSuites::TestData \n" +
+                        "            }#\n" +
+                        "        ]\n" +
+                        "      ]\n" +
+                        "      tests:\n" +
+                        "      [\n" +
+                        "        test1:\n" +
+                        "        {\n" +
+                        "          asserts:\n" +
+                        "          [\n" +
+                        "            assert1:\n" +
+                        "              EqualToJson\n" +
+                        "              #{\n" +
+                        "                expected : \n" +
+                        "                  ExternalFormat\n" +
+                        "                  #{\n" +
+                        "                    contentType: 'application/json';\n" +
+                        "                    data: '{\"builder\" : { \"_type\" : \"json\" }, \"values\" : { \"kerberos\": \"dummy kerberos\", \"employeeID\": \"dummy id\", \"title\": \"dummy title\", \"firstName\": \"dummy firstName\", \"lastName\": \"dummy lastname\", \"countryCode\": \"dummy countryCode\" }}';\n" +
+                        "                  }#;\n" +
+                        "              }#\n" +
+                        "          ]\n" +
+                        "        }\n" +
+                        "      ]\n" +
+                        "    }\n" +
+                        "  ]\n" +
+                        "}\n\n\n";
+
+        PureModelContextData modelDataWithInlineService = PureGrammarParser.newInstance().parseModel(serviceStoreInlineService + grammar);
+        PureModel pureModelWithInlineService = Compiler.compile(modelDataWithInlineService, DeploymentMode.TEST, null);
+
+        Root_meta_legend_service_metamodel_Service inlineServiceWithDefaultSerializationFormat = (Root_meta_legend_service_metamodel_Service) pureModelWithInlineService.getPackageableElement("testServiceStoreTestSuites::TestService");
+        List<TestResult> serviceStoreTestResultsForInlineService = serviceTestableRunnerExtension.executeAllTest(inlineServiceWithDefaultSerializationFormat, pureModelWithInlineService, modelDataWithInlineService);
+
+        Assert.assertEquals(1, serviceStoreTestResultsForInlineService.size());
+        Assert.assertTrue(serviceStoreTestResultsForInlineService.get(0) instanceof TestPassed);
+        Assert.assertEquals("testServiceStoreTestSuites::TestService", ((TestPassed) serviceStoreTestResultsForInlineService.get(0)).testable);
+        Assert.assertEquals("testSuite1", ((TestPassed) serviceStoreTestResultsForInlineService.get(0)).atomicTestId.testSuiteId);
+        Assert.assertEquals("test1", ((TestPassed) serviceStoreTestResultsForInlineService.get(0)).atomicTestId.atomicTestId);
     }
 
     @Test
@@ -1381,6 +1451,74 @@ public class TestServiceTestSuite
         Assert.assertEquals("testModelStoreTestSuites::service::DocM2MService", ((TestPassed) serviceStoreTestResults.get(0)).testable);
         Assert.assertEquals("testSuite1", ((TestPassed) serviceStoreTestResults.get(0)).atomicTestId.testSuiteId);
         Assert.assertEquals("test1", ((TestPassed) serviceStoreTestResults.get(0)).atomicTestId.atomicTestId);
+
+        // m2m inline service
+        String inlineService = "###Service\n" +
+                "Service testModelStoreTestSuites::service::DocM2MInlineService\n" +
+                "{\n" +
+                "  pattern: '/testModelStoreTestSuites/service';\n" +
+                "  owners:\n" +
+                "  [\n" +
+                "    'dummy',\n" +
+                "    'dummy1'\n" +
+                "  ];\n" +
+                "  documentation: 'Service to test refiner flow';\n" +
+                "  autoActivateUpdates: true;\n" +
+                "  execution: Single\n" +
+                "  {\n" +
+                "    query: |testModelStoreTestSuites::model::Doc.all()->from(testModelStoreTestSuites::mapping::DocM2MMapping, testModelStoreTestSuites::runtime::DocM2MRuntime)->graphFetchChecked(#{testModelStoreTestSuites::model::Doc{firm_tbl{addressId,firmId,legalName,ceoId},person_tbl{addressId,age,firmId,firstName,id,lastName}}}#)->serialize(#{testModelStoreTestSuites::model::Doc{firm_tbl{addressId,firmId,legalName,ceoId},person_tbl{addressId,age,firmId,firstName,id,lastName}}}#);\n" +
+                "  }\n" +
+                "  testSuites:\n" +
+                "  [\n" +
+                "    testSuite1:\n" +
+                "    {\n" +
+                "      data:\n" +
+                "      [\n" +
+                "        connections:\n" +
+                "        [\n" +
+                "          connection_1:\n" +
+                "            Reference \n" +
+                "            #{ \n" +
+                "              testServiceStoreTestSuites::TestData \n" +
+                "            }#\n" +
+                "        ]\n" +
+                "      ]\n" +
+                "      tests:\n" +
+                "      [\n" +
+                "        test1:\n" +
+                "        {\n" +
+                "          serializationFormat: PURE;\n" +
+                "          asserts:\n" +
+                "          [\n" +
+                "            assert1:\n" +
+                "              EqualToJson\n" +
+                "              #{\n" +
+                "                expected : \n" +
+                "                  ExternalFormat\n" +
+                "                  #{\n" +
+                "                    contentType: 'application/json';\n" +
+                "                    data: '{\"defects\":[],\"source\":{\"defects\":[],\"source\":{\"number\":1,\"record\":\"{\\\\\"sFirm_tbl\\\\\":{\\\\\"legalName\\\\\":\\\\\"legalName 18\\\\\",\\\\\"firmId\\\\\":22,\\\\\"ceoId\\\\\":49,\\\\\"addressId\\\\\":88,\\\\\"employees\\\\\":{\\\\\"firstName\\\\\":\\\\\"firstName 69\\\\\",\\\\\"lastName\\\\\":\\\\\"lastName 2\\\\\",\\\\\"age\\\\\":14,\\\\\"id\\\\\":52,\\\\\"addressId\\\\\":83,\\\\\"firmId\\\\\":73}},\\\\\"sPerson_tbl\\\\\":{\\\\\"firstName\\\\\":\\\\\"firstName 69\\\\\",\\\\\"lastName\\\\\":\\\\\"lastName 4\\\\\",\\\\\"age\\\\\":98,\\\\\"id\\\\\":87,\\\\\"addressId\\\\\":46,\\\\\"firmId\\\\\":26}}\"},\"value\":{\"sFirm_tbl\":{\"addressId\":88,\"firmId\":22,\"legalName\":\"legalName 18\",\"ceoId\":49},\"sPerson_tbl\":{\"addressId\":46,\"age\":98,\"firmId\":26,\"firstName\":\"firstName 69\",\"id\":87,\"lastName\":\"lastName 4\"}}},\"value\":{\"firm_tbl\":{\"addressId\":88,\"firmId\":22,\"legalName\":\"legalName 18\",\"ceoId\":49},\"person_tbl\":{\"addressId\":46,\"age\":98,\"firmId\":26,\"firstName\":\"firstName 69\",\"id\":87,\"lastName\":\"lastName 4\"}}}';\n" +
+                "                  }#;\n" +
+                "              }#\n" +
+                "          ]\n" +
+                "        }\n" +
+                "      ]\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}\n" +
+                "\n" +
+                "\n";
+        PureModelContextData modelDataWithInlineService = PureGrammarParser.newInstance().parseModel(grammar + inlineService);
+        PureModel pureModelWithInlineService = Compiler.compile(modelDataWithInlineService, DeploymentMode.TEST, null);
+
+        Root_meta_legend_service_metamodel_Service serviceWithInlineService = (Root_meta_legend_service_metamodel_Service) pureModelWithInlineService.getPackageableElement("testModelStoreTestSuites::service::DocM2MInlineService");
+        List<TestResult> inlineServiceStoreTestResults = serviceTestableRunnerExtension.executeAllTest(serviceWithInlineService, pureModelWithInlineService, modelDataWithInlineService);
+
+        Assert.assertEquals(1, inlineServiceStoreTestResults.size());
+        Assert.assertTrue(inlineServiceStoreTestResults.get(0) instanceof TestPassed);
+        Assert.assertEquals("testModelStoreTestSuites::service::DocM2MInlineService", ((TestPassed) inlineServiceStoreTestResults.get(0)).testable);
+        Assert.assertEquals("testSuite1", ((TestPassed) inlineServiceStoreTestResults.get(0)).atomicTestId.testSuiteId);
+        Assert.assertEquals("test1", ((TestPassed) inlineServiceStoreTestResults.get(0)).atomicTestId.atomicTestId);
     }
 
     @Test
@@ -1982,7 +2120,7 @@ public class TestServiceTestSuite
                 "  ];\n" +
                 "}\n";
 
-        // Service With All Env Test Passing        
+        // Service With All Env Test Passing
         String serviceGrammarWithAllTestPassing = "###Service\n" +
                 "Service testModelStoreTestSuites::service::DocM2MService\n" +
                 "{\n" +
@@ -2074,7 +2212,7 @@ public class TestServiceTestSuite
         Assert.assertEquals("testSuite1", qaTestResult.atomicTestId.testSuiteId);
         Assert.assertEquals("test1", qaTestResult.atomicTestId.atomicTestId);
 
-        // Multi execution Service with different connections 
+        // Multi execution Service with different connections
         String serviceGrammarWithDifferentConnections = "###Service\n" +
                 "Service testModelStoreTestSuites::service::DocM2MService\n" +
                 "{\n" +
@@ -2356,16 +2494,70 @@ public class TestServiceTestSuite
                 "}", ((EqualToJsonAssertFail) ((TestFailed) uatTestResultWithTestFailing).assertStatuses.get(0)).expected);
     }
 
+    @Test(expected = EngineException.class)
+    public void testFailsWithKeysInSingleExec()
+    {
+        List<TestResult> SingleExecWithKeysTestResult = executeServiceTest("testable/service/", "serviceGrammarForFailedTestModel.pure","serviceGrammarWithFailedServiceTestKeys.pure", "testServiceStoreTestSuites::TestService");
+    }
+
+    @Test
+    public void testServiceTestKeysWithMultipleTestBlocks()
+    {
+        List<TestResult> MultiKeyTestResult = executeServiceTest("testable/service/","serviceGrammarModel.pure","serviceGrammarWithTestKeys1.pure", "testModelStoreTestSuites::service::DocM2MService");
+        Assert.assertEquals(2, MultiKeyTestResult.size());
+        Assert.assertTrue(MultiKeyTestResult.get(0) instanceof MultiExecutionServiceTestResult);
+        Assert.assertEquals("testModelStoreTestSuites::service::DocM2MService", MultiKeyTestResult.get(0).testable);
+        Assert.assertEquals("testSuite1", MultiKeyTestResult.get(0).atomicTestId.testSuiteId);
+        Assert.assertEquals("test1", MultiKeyTestResult.get(0).atomicTestId.atomicTestId);
+
+        Map<String, TestResult> KeysInScopeTestResults = ((MultiExecutionServiceTestResult) MultiKeyTestResult.get(0)).getKeyIndexedTestResults();
+        KeysInScopeTestResults.forEach((key, value) ->
+        {
+            Assert.assertTrue(value instanceof TestPassed);
+            Assert.assertEquals("testModelStoreTestSuites::service::DocM2MService", value.testable);
+            Assert.assertEquals("testSuite1", value.atomicTestId.testSuiteId);
+            Assert.assertEquals("test1", value.atomicTestId.atomicTestId);
+
+        });
+
+        Map<String, TestResult> KeysInScopeTestResults2 = ((MultiExecutionServiceTestResult) MultiKeyTestResult.get(1)).getKeyIndexedTestResults();
+        KeysInScopeTestResults2.forEach((key, value) ->
+        {
+            Assert.assertTrue(value instanceof TestPassed);
+            Assert.assertEquals("testModelStoreTestSuites::service::DocM2MService", value.testable);
+            Assert.assertEquals("testSuite1", value.atomicTestId.testSuiteId);
+            Assert.assertEquals("test2", value.atomicTestId.atomicTestId);
+
+        });
+    }
+
+    @Test
+    public void testServiceTestKeysWithMultipleAsserts()
+    {
+        List<TestResult> serviceStoreTestResults = executeServiceTest("testable/service/","serviceGrammarModel.pure","serviceGrammarWithServiceTestKeys2.pure", "testModelStoreTestSuites::service::DocM2MService2");
+        Assert.assertEquals(serviceStoreTestResults.size(), 1);
+        Assert.assertTrue(serviceStoreTestResults.get(0) instanceof MultiExecutionServiceTestResult);
+        Assert.assertEquals("testModelStoreTestSuites::service::DocM2MService2", serviceStoreTestResults.get(0).testable);
+        Assert.assertEquals("testSuite1", serviceStoreTestResults.get(0).atomicTestId.testSuiteId);
+        Assert.assertEquals("test1", serviceStoreTestResults.get(0).atomicTestId.atomicTestId);
+
+        Map<String, TestResult> KeysInScopeTestResults = ((MultiExecutionServiceTestResult) serviceStoreTestResults.get(0)).getKeyIndexedTestResults();
+        Assert.assertEquals("test1", serviceStoreTestResults.get(0).atomicTestId.atomicTestId);
+        Assert.assertEquals(KeysInScopeTestResults.size(),2);
+        KeysInScopeTestResults.forEach((key, value) ->
+        {
+            Assert.assertTrue(value instanceof TestPassed);
+            Assert.assertEquals("testModelStoreTestSuites::service::DocM2MService2", value.testable);
+            Assert.assertEquals("testSuite1", value.atomicTestId.testSuiteId);
+            Assert.assertEquals("test1", value.atomicTestId.atomicTestId);
+        });
+    }
+
     @Test
     public void testFailingRelationalServiceSuite()
     {
         // setup
-        ServiceTestableRunnerExtension serviceTestableRunnerExtension = new ServiceTestableRunnerExtension();
-        String pureModelString = getFullPureModelGrammar("testable/relational/", "legend-testable-relational-model.pure", "legend-testable-relational-service-simple-fail.pure");
-        PureModelContextData pureModelContextData = PureGrammarParser.newInstance().parseModel(pureModelString);
-        PureModel pureModel = Compiler.compile(pureModelContextData, DeploymentMode.TEST, null);
-        Root_meta_legend_service_metamodel_Service serviceWithTestFailing = (Root_meta_legend_service_metamodel_Service) pureModel.getPackageableElement("service::SimpleRelationalPassFailing");
-        List<TestResult> relationalTestResult = serviceTestableRunnerExtension.executeAllTest(serviceWithTestFailing, pureModel, pureModelContextData);
+        List<TestResult> relationalTestResult = executeServiceTest("testable/relational/","legend-testable-relational-model.pure","legend-testable-relational-service-simple-fail.pure", "service::SimpleRelationalPassFailing");
         // Assertions
         Assert.assertEquals(relationalTestResult.size(), 1);
         TestResult testResult = relationalTestResult.get(0);
@@ -2418,17 +2610,68 @@ public class TestServiceTestSuite
         MatcherAssert.assertThat(expected_Actual, JsonMatchers.jsonEquals(jsonAssertFail.actual));
     }
 
+    @Test
+    public void testFailingRelationalInlineServiceSuite()
+    {
+        // setup
+        List<TestResult> relationalTestResult = executeServiceTest("testable/relational/","legend-testable-relational-model.pure", "legend-testable-relational-service-simple-fail.pure", "service::SimpleRelationalPassFailing");
+        // Assertions
+        Assert.assertEquals(relationalTestResult.size(), 1);
+        TestResult testResult = relationalTestResult.get(0);
+        Assert.assertEquals(testResult.testable, "service::SimpleRelationalPassFailing");
+        Assert.assertTrue(testResult instanceof TestFailed);
+        TestFailed failedResult = (TestFailed) testResult;
+        AtomicTestId atomicTestId = failedResult.atomicTestId;
+        Assert.assertEquals(atomicTestId.atomicTestId, "test1");
+        Assert.assertEquals(atomicTestId.testSuiteId, "testSuite1");
+        List<AssertionStatus> statuses = failedResult.assertStatuses;
+        Assert.assertEquals(statuses.size(), 2);
+        // pass assertion
+        AssertionStatus status1 = statuses.stream().filter(t -> t.id.equals("shouldPass")).findFirst().get();
+        Assert.assertEquals(status1.id, "shouldPass");
+        Assert.assertTrue(status1 instanceof AssertPass);
+        // fail assertion
+        AssertionStatus failStatus = statuses.stream().filter(t -> t.id.equals("shouldFail")).findFirst().get();
+        Assert.assertTrue(failStatus instanceof EqualToJsonAssertFail);
+        EqualToJsonAssertFail jsonAssertFail = (EqualToJsonAssertFail) failStatus;
+        Assert.assertEquals("Actual result does not match Expected result", jsonAssertFail.message);
+        String expected_Expected =
+                "[ {\n" +
+                        "  \"Employees/First Name\" : \"JohnDIFF\",\n" +
+                        "  \"Employees/Last Name\" : \"Doe\",\n" +
+                        "  \"Legal Name\" : \"Finos\"\n" +
+                        "}, {\n" +
+                        "  \"Employees/First Name\" : \"Nicole\",\n" +
+                        "  \"Employees/Last Name\" : \"Smith\",\n" +
+                        "  \"Legal Name\" : \"Finos\"\n" +
+                        "}, {\n" +
+                        "  \"Employees/First Name\" : \"Time\",\n" +
+                        "  \"Employees/Last Name\" : \"Smith\",\n" +
+                        "  \"Legal Name\" : \"Apple\"\n" +
+                        "} ]";
+        String expected_Actual = "[ {\n" +
+                "  \"Employees/First Name\" : \"John\",\n" +
+                "  \"Employees/Last Name\" : \"Doe\",\n" +
+                "  \"Legal Name\" : \"Finos\"\n" +
+                "}, {\n" +
+                "  \"Employees/First Name\" : \"Nicole\",\n" +
+                "  \"Employees/Last Name\" : \"Smith\",\n" +
+                "  \"Legal Name\" : \"Finos\"\n" +
+                "}, {\n" +
+                "  \"Employees/First Name\" : \"Time\",\n" +
+                "  \"Employees/Last Name\" : \"Smith\",\n" +
+                "  \"Legal Name\" : \"Apple\"\n" +
+                "} ]";
+
+        MatcherAssert.assertThat(expected_Expected, JsonMatchers.jsonEquals(jsonAssertFail.expected));
+        MatcherAssert.assertThat(expected_Actual, JsonMatchers.jsonEquals(jsonAssertFail.actual));
+    }
 
     @Test
     public void testPassingRelationalWithParams()
     {
         // setup
-        ServiceTestableRunnerExtension serviceTestableRunnerExtension = new ServiceTestableRunnerExtension();
-        String pureModelString = getFullPureModelGrammar("testable/relational/", "legend-testable-relational-model.pure", "legend-testable-relational-service-parameters.pure");
-        PureModelContextData pureModelContextData = PureGrammarParser.newInstance().parseModel(pureModelString);
-        PureModel pureModel = Compiler.compile(pureModelContextData, DeploymentMode.TEST, null);
-        Root_meta_legend_service_metamodel_Service serviceWithTestFailing = (Root_meta_legend_service_metamodel_Service) pureModel.getPackageableElement("service::RelationalServiceWithParams");
-        List<TestResult> relationalTestResult = serviceTestableRunnerExtension.executeAllTest(serviceWithTestFailing, pureModel, pureModelContextData);
+        List<TestResult> relationalTestResult = executeServiceTest("testable/relational/", "legend-testable-relational-model.pure","legend-testable-relational-service-parameters.pure", "service::RelationalServiceWithParams");
         // Assertions
         Assert.assertEquals(relationalTestResult.size(), 1);
         TestResult testResult = relationalTestResult.get(0);
@@ -2441,16 +2684,22 @@ public class TestServiceTestSuite
     }
 
     @Test
+    public void testPassingRelationalWithEnumParams()
+    {
+        // setup
+        List<TestResult> relationalTestResult = executeServiceTest("testable/relational/", "legend-testable-relational-model.pure","legend-testable-relational-service-enum-parameters.pure", "service::RelationalServiceWithEnumParams");
+        // Assertions
+        Assert.assertEquals(relationalTestResult.size(), 1);
+        TestResult testResult = relationalTestResult.get(0);
+        Assert.assertEquals(testResult.testable, "service::RelationalServiceWithEnumParams");
+        Assert.assertTrue(testResult instanceof TestPassed);
+    }
+
+    @Test
     public void testPassingRelationalWithSpecialEmbeddedData()
     {
         // setup
-        ServiceTestableRunnerExtension serviceTestableRunnerExtension = new ServiceTestableRunnerExtension();
-        String pureModelString = getFullPureModelGrammar("testable/relational/", "legend-testable-relational-model.pure", "legend-testable-relational-service-embeddedData.pure");
-
-        PureModelContextData pureModelContextData = PureGrammarParser.newInstance().parseModel(pureModelString);
-        PureModel pureModel = Compiler.compile(pureModelContextData, DeploymentMode.TEST, null);
-        Root_meta_legend_service_metamodel_Service serviceWithTestFailing = (Root_meta_legend_service_metamodel_Service) pureModel.getPackageableElement("service::SimpleRelationalPassWithSpecialEmbeddedData");
-        List<TestResult> relationalTestResult = serviceTestableRunnerExtension.executeAllTest(serviceWithTestFailing, pureModel, pureModelContextData);
+        List<TestResult> relationalTestResult = executeServiceTest("testable/relational/","legend-testable-relational-model.pure","legend-testable-relational-service-embeddedData.pure", "service::SimpleRelationalPassWithSpecialEmbeddedData");
         // Assertions
         Assert.assertEquals(relationalTestResult.size(), 1);
         TestResult testResult = relationalTestResult.get(0);
@@ -2471,11 +2720,21 @@ public class TestServiceTestSuite
         Assert.assertEquals(atomicTestId.testSuiteId, "testSuite1");
     }
 
+    private List<TestResult> executeServiceTest(String basePath, String grammar, String service, String fullPath)
+    {
+        ServiceTestableRunnerExtension serviceTestableRunnerExtension = new ServiceTestableRunnerExtension();
+        String pureModelString = getFullPureModelGrammar(basePath, grammar, service);
+        PureModelContextData pureModelContextData = PureGrammarParser.newInstance().parseModel(pureModelString);
+        PureModel pureModel = Compiler.compile(pureModelContextData, DeploymentMode.TEST, null);
+        Root_meta_legend_service_metamodel_Service serviceWithTest = (Root_meta_legend_service_metamodel_Service) pureModel.getPackageableElement(fullPath);
+        return serviceTestableRunnerExtension.executeAllTest(serviceWithTest, pureModel, pureModelContextData);
+    }
+
     private String getResourceAsString(String path)
     {
         try
         {
-            URL infoURL = DeploymentStateAndVersions.class.getClassLoader().getResource(path);
+            URL infoURL = TestServiceTestSuite.class.getClassLoader().getResource(path);
             if (infoURL != null)
             {
                 java.util.Scanner scanner = new java.util.Scanner(infoURL.openStream()).useDelimiter("\\A");

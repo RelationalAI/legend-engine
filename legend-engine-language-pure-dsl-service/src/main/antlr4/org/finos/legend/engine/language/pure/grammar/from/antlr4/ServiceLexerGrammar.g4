@@ -33,8 +33,13 @@ SERVICE_TEST_TESTS:                 'tests';
 SERVICE_TEST_ASSERTS:               'asserts';
 SERVICE_TEST_SERIALIZATION_FORMAT:  'serializationFormat';
 SERVICE_TEST_PARAMETERS:            'parameters';
-
+ASSERT_FOR_KEYS:                    'keys';
 PARAM_GROUP:                        'list';
+
+SERVICE_POST_VALIDATION:            'postValidations';
+SERVICE_POST_VALIDATION_DESCRIPTION:'description';
+SERVICE_POST_VALIDATION_PARAMETERS: 'params';
+SERVICE_POST_VALIDATION_ASSERTIONS: 'assertions';
 
 // -------------------------------------- LEGACY --------------------------------------
 

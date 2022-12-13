@@ -378,6 +378,43 @@ public class TestServiceGrammarParser extends TestGrammarParser.TestGrammarParse
     }
 
     @Test
+    public void testFaultyServiceWithMissingAttributes()
+    {
+        test("###Service\n" +
+                "Service meta::pure::myServiceSingle\n" +
+                "{\n" +
+                "  pattern: 'url/myUrl/';\n" +
+                "  documentation: 'this is just for context';\n" +
+                "  execution: Single\n" +
+                "  {\n" +
+                "    query: src: meta::transform::tests::Address[1]|$src.a;\n" +
+                "    mapping: meta::myMapping;\n" +
+                "  }\n" +
+                "  test: Single\n" +
+                "  {\n" +
+                "    data: 'moreThanData';\n" +
+                "    asserts: [];\n" +
+                "  }\n" +
+                "}\n", "PARSER error at [6:14-10:3]: Field 'runtime' is required");
+        test("###Service\n" +
+                "Service meta::pure::myServiceSingle\n" +
+                "{\n" +
+                "  pattern: 'url/myUrl/';\n" +
+                "  documentation: 'this is just for context';\n" +
+                "  execution: Single\n" +
+                "  {\n" +
+                "    query: src: meta::transform::tests::Address[1]|$src.a;\n" +
+                "    runtime: meta::myRuntime;\n" +
+                "  }\n" +
+                "  test: Single\n" +
+                "  {\n" +
+                "    data: 'moreThanData';\n" +
+                "    asserts: [];\n" +
+                "  }\n" +
+                "}\n", "PARSER error at [6:14-10:3]: Field 'mapping' is required");
+    }
+
+    @Test
     public void testServiceWithMultiExecution()
     {
         // Missing fields
@@ -955,6 +992,88 @@ public class TestServiceGrammarParser extends TestGrammarParser.TestGrammarParse
                 "PARSER error at [22:7-42:7]: Field 'connections' should be specified only once"
         );
 
+        //assert keys should have atleast one element
+        test("###Service\n" +
+                "Service meta::pure::myServiceSingle\n" +
+                "{\n" +
+                "  pattern: 'url/myUrl/';\n" +
+                "  owners:\n" +
+                "  [\n" +
+                "    'ownerName',\n" +
+                "    'ownerName2'\n" +
+                "  ];\n" +
+                "  documentation: 'this is just for context';\n" +
+                "  autoActivateUpdates: true;\n" +
+                "  execution: Multi\n" +
+                "  {\n" +
+                "    query: |model::pure::mapping::modelToModel::test::shared::dest::Product.all()->graphFetchChecked(#{model::pure::mapping::modelToModel::test::shared::dest::Product{name}}#)->serialize(#{model::pure::mapping::modelToModel::test::shared::dest::Product{name}}#);\n" +
+                "    key: 'env';\n" +
+                "    executions['QA']:\n" +
+                "    {\n" +
+                "      mapping: meta::myMapping1;\n" +
+                "      runtime: test::runtime;\n" +
+                "    }\n" +
+                "    executions['UAT']:\n" +
+                "    {\n" +
+                "      mapping: meta::myMapping2;\n" +
+                "      runtime: meta::myRuntime;\n" +
+                "    }\n" +
+                "  }\n" +
+                "  testSuites:\n" +
+                "  [\n" +
+                "    testSuite1:\n" +
+                "    {\n" +
+                "      data:\n" +
+                "      [\n" +
+                "        connections:\n" +
+                "        [\n" +
+                "          connection1:\n" +
+                "            ExternalFormat\n" +
+                "            #{\n" +
+                "              contentType: 'application/x.flatdata';\n" +
+                "              data: 'FIRST_NAME,LAST_NAME\\nFred,Bloggs\\nJane,Doe';\n" +
+                "            }#,\n" +
+                "          connection2:\n" +
+                "            ModelStore\n" +
+                "            #{\n" +
+                "              my::Person:\n" +
+                "                [\n" +
+                "                  ^my::Person(\n" +
+                "                    givenNames = ['Fred', 'William'],\n" +
+                "                    address = ^my::Address(street = 'A Road')\n" +
+                "                  )\n" +
+                "                ]\n" +
+                "            }#\n" +
+                "        ]\n" +
+                "      ]\n" +
+                "      tests:\n" +
+                "      [\n" +
+                "        test1:\n" +
+                "        {\n" +
+                "          keys:\n" +
+                "          [\n" +
+                "          ];\n" +
+                "          asserts:\n" +
+                "          [\n" +
+                "            assert1:\n" +
+                "              EqualToJson\n" +
+                "              #{\n" +
+                "                expected : \n" +
+                "                  ExternalFormat\n" +
+                "                  #{\n" +
+                "                    contentType: 'application/json';\n" +
+                "                    data: '{Age:12, Name:\"dummy\"}';\n" +
+                "                  }#;\n" +
+                "              }#\n" +
+                "          ]\n" +
+                "        }\n" +
+                "      ]\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}\n",
+                "PARSER error at [60:11]: Unexpected token"
+        );
+
         //Unknown assert type
         test("###Service\n" +
                         "Service meta::pure::myServiceSingle\n" +
@@ -1123,5 +1242,80 @@ public class TestServiceGrammarParser extends TestGrammarParser.TestGrammarParse
                         "}\n",
                 "PARSER error at [43:17-22]: Unexpected token 'actual'"
         );
+    }
+
+    @Test
+    public void testServiceWithPostValidation()
+    {
+        // Missing fields
+        test("###Service \n" +
+                "Service test::Service \n" +
+                "{ \n" +
+                "  pattern: 'url/myUrl'; \n" +
+                "  owners: ['ownerName']; \n" +
+                "  documentation: 'test'; \n" +
+                "  autoActivateUpdates: true; \n" +
+                "  execution: Single \n" +
+                "  { \n" +
+                "    query: |test::class.all()->project([col(p|$p.prop1, 'prop1')]); \n" +
+                "    mapping: test::mapping; \n" +
+                "    runtime: test::runtime; \n" +
+                "  }\n" +
+                "  postValidations:\n" +
+                "  [\n" +
+                "    {\n" +
+                "      params: [];\n" +
+                "      assertions: [\n" +
+                "          testAssert: tds: TabularDataSet[1]|$tds->filter(row|$row.getString('firstName')->startsWith('T'))->meta::legend::service::validation::assertTabularDataSetEmpty('Expected no first names to begin with the letter T');\n" +
+                "      ];\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}", "PARSER error at [16:5-21:5]: Field 'description' is required");
+
+        test("###Service \n" +
+                "Service test::Service \n" +
+                "{ \n" +
+                "  pattern: 'url/myUrl'; \n" +
+                "  owners: ['ownerName']; \n" +
+                "  documentation: 'test'; \n" +
+                "  autoActivateUpdates: true; \n" +
+                "  execution: Single \n" +
+                "  { \n" +
+                "    query: |test::class.all()->project([col(p|$p.prop1, 'prop1')]); \n" +
+                "    mapping: test::mapping; \n" +
+                "    runtime: test::runtime; \n" +
+                "  }\n" +
+                "  postValidations:\n" +
+                "  [\n" +
+                "    {\n" +
+                "      description: 'A good description of the validation';\n" +
+                "      assertions: [\n" +
+                "          testAssert: tds: TabularDataSet[1]|$tds->filter(row|$row.getString('firstName')->startsWith('T'))->meta::legend::service::validation::assertTabularDataSetEmpty('Expected no first names to begin with the letter T');\n" +
+                "      ];\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}", "PARSER error at [16:5-21:5]: Field 'params' is required");
+
+        test("###Service \n" +
+                "Service test::Service \n" +
+                "{ \n" +
+                "  pattern: 'url/myUrl'; \n" +
+                "  owners: ['ownerName']; \n" +
+                "  documentation: 'test'; \n" +
+                "  autoActivateUpdates: true; \n" +
+                "  execution: Single \n" +
+                "  { \n" +
+                "    query: |test::class.all()->project([col(p|$p.prop1, 'prop1')]); \n" +
+                "    mapping: test::mapping; \n" +
+                "    runtime: test::runtime; \n" +
+                "  }\n" +
+                "  postValidations:\n" +
+                "  [\n" +
+                "    {\n" +
+                "      description: 'A good description of the validation';\n" +
+                "      params: [];\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}", "PARSER error at [16:5-19:5]: Field 'assertions' is required");
     }
 }

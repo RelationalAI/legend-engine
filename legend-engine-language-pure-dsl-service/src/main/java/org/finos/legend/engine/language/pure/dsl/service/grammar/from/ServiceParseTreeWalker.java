@@ -27,6 +27,7 @@ import org.finos.legend.engine.language.pure.grammar.from.domain.DomainParser;
 import org.finos.legend.engine.language.pure.grammar.from.runtime.RuntimeParser;
 import org.finos.legend.engine.language.pure.grammar.from.test.assertion.HelperTestAssertionGrammarParser;
 import org.finos.legend.engine.protocol.pure.v1.model.SourceInformation;
+import org.finos.legend.engine.protocol.pure.v1.model.context.EngineErrorType;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.PackageableElement;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.StereotypePtr;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.TagPtr;
@@ -39,7 +40,9 @@ import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.KeyedExecutionParameter;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.KeyedSingleExecutionTest;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.MultiExecutionTest;
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.ParameterValue;
+import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.ParameterValue;
+import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.PostValidation;
+import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.PostValidationAssertion;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.PureMultiExecution;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.PureSingleExecution;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.Service;
@@ -51,8 +54,10 @@ import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.service.TestData;
 import org.finos.legend.engine.protocol.pure.v1.model.test.assertion.TestAssertion;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.ValueSpecification;
+import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.ClassInstance;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.Lambda;
-import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.PureList;
+import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.PureList;
+import org.finos.legend.engine.shared.core.operational.errorManagement.EngineException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -118,6 +123,12 @@ public class ServiceParseTreeWalker
         if (testContext != null)
         {
             service.test = this.visitTest(testContext);
+        }
+        // post validation
+        ServiceParserGrammar.ServicePostValidationsContext postValidationsContext = PureGrammarParserUtility.validateAndExtractOptionalField(ctx.servicePostValidations(), "postValidation", service.sourceInformation);
+        if (postValidationsContext != null)
+        {
+            service.postValidations = ListIterate.collect(postValidationsContext.postValidation(), this::visitPostValidation);
         }
         return service;
     }
@@ -189,6 +200,10 @@ public class ServiceParseTreeWalker
             serviceTest.parameters = ListIterate.collect(testParametersContext.serviceTestParameter(), this::visitServiceTestParameter);
         }
 
+        //keys
+        ServiceParserGrammar.KeysContext scopeContext = PureGrammarParserUtility.validateAndExtractOptionalField(ctx.keys(), "keys", serviceTest.sourceInformation);
+        serviceTest.keys = scopeContext != null && scopeContext.STRING() != null ? ListIterate.collect(scopeContext.STRING(), keyInScopeCtx -> PureGrammarParserUtility.fromGrammarString(keyInScopeCtx.getText(), true)) : new ArrayList<>();
+
         // asserts
         ServiceParserGrammar.ServiceTestAssertsContext testAssertsContext = PureGrammarParserUtility.validateAndExtractRequiredField(ctx.serviceTestAsserts(), "asserts", serviceTest.sourceInformation);
         serviceTest.assertions = ListIterate.collect(testAssertsContext.serviceTestAssert(), this::visitServiceTestAsserts);
@@ -255,12 +270,32 @@ public class ServiceParseTreeWalker
             ServiceParserGrammar.ServiceFuncContext funcContext = PureGrammarParserUtility.validateAndExtractRequiredField(pureSingleExecContext.serviceFunc(), "query", pureSingleExecution.sourceInformation);
             pureSingleExecution.func = visitLambda(funcContext.combinedExpression());
             // mapping
-            ServiceParserGrammar.ServiceMappingContext mappingContext = PureGrammarParserUtility.validateAndExtractRequiredField(pureSingleExecContext.serviceMapping(), "mapping", pureSingleExecution.sourceInformation);
-            pureSingleExecution.mapping = PureGrammarParserUtility.fromQualifiedName(mappingContext.qualifiedName().packagePath() == null ? Collections.emptyList() : mappingContext.qualifiedName().packagePath().identifier(), mappingContext.qualifiedName().identifier());
-            pureSingleExecution.mappingSourceInformation = walkerSourceInformation.getSourceInformation(mappingContext.qualifiedName());
+            ServiceParserGrammar.ServiceMappingContext mappingContext = PureGrammarParserUtility.validateAndExtractOptionalField(pureSingleExecContext.serviceMapping(), "mapping", pureSingleExecution.sourceInformation);
+
             // runtime
-            ServiceParserGrammar.ServiceRuntimeContext runtimeContext = PureGrammarParserUtility.validateAndExtractRequiredField(pureSingleExecContext.serviceRuntime(), "runtime", pureSingleExecution.sourceInformation);
-            pureSingleExecution.runtime = this.visitRuntime(runtimeContext);
+            ServiceParserGrammar.ServiceRuntimeContext runtimeContext = PureGrammarParserUtility.validateAndExtractOptionalField(pureSingleExecContext.serviceRuntime(), "runtime", pureSingleExecution.sourceInformation);
+            if (mappingContext != null && runtimeContext != null)
+            {
+                pureSingleExecution.mapping = PureGrammarParserUtility.fromQualifiedName(mappingContext.qualifiedName().packagePath() == null ? Collections.emptyList() : mappingContext.qualifiedName().packagePath().identifier(), mappingContext.qualifiedName().identifier());
+                pureSingleExecution.mappingSourceInformation = walkerSourceInformation.getSourceInformation(mappingContext.qualifiedName());
+                pureSingleExecution.runtime = this.visitRuntime(runtimeContext);
+            }
+            else if (mappingContext == null && runtimeContext == null)
+            {
+                pureSingleExecution.mapping = null;
+                pureSingleExecution.runtime = null;
+            }
+            else
+            {
+                if (mappingContext == null)
+                {
+                    throw new EngineException("Field 'mapping' is required", pureSingleExecution.sourceInformation, EngineErrorType.PARSER);
+                }
+                else
+                {
+                    throw new EngineException("Field 'runtime' is required", pureSingleExecution.sourceInformation, EngineErrorType.PARSER);
+                }
+            }
             return pureSingleExecution;
         }
         else if (ctx.multiExec() != null)
@@ -382,7 +417,7 @@ public class ServiceParseTreeWalker
                 PureList param = new PureList();
                 param.values = paramValues;
                 param.sourceInformation = walkerSourceInformation.getSourceInformation(ctx.testListValueParam());
-                return param;
+                return new ClassInstance("listInstance", param);
             }
             else if (ctx.testSingleValueParam() != null)
             {
@@ -441,5 +476,28 @@ public class ServiceParseTreeWalker
         lambda.body.add(valueSpecification);
         lambda.parameters = new ArrayList<>();
         return lambda;
+    }
+
+    private PostValidation visitPostValidation(ServiceParserGrammar.PostValidationContext ctx)
+    {
+        PostValidation postValidation = new PostValidation();
+        postValidation.sourceInformation = walkerSourceInformation.getSourceInformation(ctx);
+        // description
+        ServiceParserGrammar.PostValidationDescriptionContext descriptionContext = PureGrammarParserUtility.validateAndExtractRequiredField(ctx.postValidationDescription(), "description", postValidation.sourceInformation);
+        postValidation.description = PureGrammarParserUtility.fromGrammarString(descriptionContext.STRING().getText(), true);
+        // parameters
+        postValidation.parameters = ListIterate.collect(PureGrammarParserUtility.validateAndExtractRequiredField(ctx.postValidationParameters(), "params", postValidation.sourceInformation).combinedExpression(), this::visitLambda);
+        // assertions
+        postValidation.assertions = ListIterate.collect(PureGrammarParserUtility.validateAndExtractRequiredField(ctx.postValidationAssertions(), "assertions", postValidation.sourceInformation).postValidationAssertion(), this::visitPostValidationAssertion);
+        return postValidation;
+    }
+
+    private PostValidationAssertion visitPostValidationAssertion(ServiceParserGrammar.PostValidationAssertionContext ctx)
+    {
+        PostValidationAssertion postValidationAssertion = new PostValidationAssertion();
+        postValidationAssertion.sourceInformation = walkerSourceInformation.getSourceInformation(ctx);
+        postValidationAssertion.id = PureGrammarParserUtility.fromIdentifier(ctx.identifier());
+        postValidationAssertion.assertion = visitLambda(ctx.combinedExpression());
+        return postValidationAssertion;
     }
 }
