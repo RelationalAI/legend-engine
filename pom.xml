@@ -212,6 +212,7 @@
         <module>legend-engine-xt-serviceStore-javaPlatformBinding-pure</module>
         <module>legend-engine-pure-code-compiled-core-configuration</module>
         <module>legend-engine-xt-relationalStore-dbExtension-archetype</module>
+        <module>legend-engine-xt-relationalai-pure</module>
     </modules>
 
     <properties>
@@ -804,6 +805,11 @@
             <dependency>
                 <groupId>org.finos.legend.engine</groupId>
                 <artifactId>legend-engine-xt-relationalStore-postgres-execution-tests</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.finos.legend.engine</groupId>
+                <artifactId>legend-engine-xt-relationalai-pure</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
