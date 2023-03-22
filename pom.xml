@@ -260,6 +260,8 @@
         <module>legend-engine-xt-nonrelationalStore-mongodb-protocol</module>
         <module>legend-engine-xt-nonrelationalStore-mongodb-grammar-integration</module>
 
+        <module>legend-engine-xt-relationalai-pure</module>
+
         <!-- NOTE: Do not change the ordering of this block, we want to build these modules last -->
         <module>legend-engine-test-reports</module>
         <module>legend-engine-server</module>
@@ -272,7 +274,7 @@
 
     <properties>
         <!-- Legend -->
-        <legend.pure.version>4.3.2</legend.pure.version>
+        <legend.pure.version>4.3.3-SNAPSHOT</legend.pure.version>
         <legend.shared.version>0.23.3</legend.shared.version>
 
         <!-- SONAR -->
@@ -1969,6 +1971,11 @@
             </dependency>
             <dependency>
                 <groupId>org.finos.legend.pure</groupId>
+                <artifactId>legend-pure-runtime-java-extension-store-rai</artifactId>
+                <version>${legend.pure.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.finos.legend.pure</groupId>
                 <artifactId>legend-pure-m2-functions-pure</artifactId>
                 <version>${legend.pure.version}</version>
             </dependency>
@@ -2633,6 +2640,12 @@
                         <artifactId>jaxb-api</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.finos.legend.engine</groupId>
+                <artifactId>legend-engine-xt-relationalai-pure</artifactId>
+                <version>${project.version}</version>
             </dependency>
 
             <!-- Amazon AWS SDK Versioning -->

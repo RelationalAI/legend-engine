@@ -84,6 +84,8 @@ public class PureIDELight extends PureIDEServer
                 .with(this.buildCore("legend-engine-xt-elasticsearch/legend-engine-xt-elasticsearch-pure-specification-metamodel", "elasticsearch_specification_metamodel"))
                 .with(this.buildCore("legend-engine-xt-elasticsearch/legend-engine-xt-elasticsearch-V7-pure-metamodel", "elasticsearch_seven_metamodel"))
                 .with(this.buildCore("legend-engine-xt-nonrelationalStore-mongodb-pure","nonrelational-mongodb"))
+                .with(this.buildCore("legend-engine-xt-relationalai-pure", "relationalai"))
+                .with(new MutableFSCodeStorage(new LibCodeRepository("scratch"), Paths.get(String.format("%s/scratch", sourceLocationConfiguration.welcomeFileDirectory))))
                 ;
     }
 
