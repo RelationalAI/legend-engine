@@ -21,6 +21,7 @@ import io.opentracing.Span;
 import io.opentracing.util.GlobalTracer;
 import org.apache.commons.lang3.ClassUtils;
 import org.eclipse.collections.api.block.function.Function2;
+import org.eclipse.collections.api.block.function.Function3;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.tuple.Pair;
@@ -32,13 +33,7 @@ import org.finos.legend.engine.plan.dependencies.domain.graphFetch.IGraphInstanc
 import org.finos.legend.engine.plan.dependencies.store.relational.IRelationalCreateAndPopulateTempTableExecutionNodeSpecifics;
 import org.finos.legend.engine.plan.dependencies.store.relational.IRelationalResult;
 import org.finos.legend.engine.plan.dependencies.store.relational.classResult.IRelationalClassInstantiationNodeExecutor;
-import org.finos.legend.engine.plan.dependencies.store.relational.graphFetch.IRelationalChildGraphNodeExecutor;
-import org.finos.legend.engine.plan.dependencies.store.relational.graphFetch.IRelationalClassQueryTempTableGraphFetchExecutionNodeSpecifics;
-import org.finos.legend.engine.plan.dependencies.store.relational.graphFetch.IRelationalCrossRootGraphNodeExecutor;
-import org.finos.legend.engine.plan.dependencies.store.relational.graphFetch.IRelationalCrossRootQueryTempTableGraphFetchExecutionNodeSpecifics;
-import org.finos.legend.engine.plan.dependencies.store.relational.graphFetch.IRelationalPrimitiveQueryGraphFetchExecutionNodeSpecifics;
-import org.finos.legend.engine.plan.dependencies.store.relational.graphFetch.IRelationalRootGraphNodeExecutor;
-import org.finos.legend.engine.plan.dependencies.store.relational.graphFetch.IRelationalRootQueryTempTableGraphFetchExecutionNodeSpecifics;
+import org.finos.legend.engine.plan.dependencies.store.relational.graphFetch.*;
 import org.finos.legend.engine.plan.dependencies.store.shared.IReferencedObject;
 import org.finos.legend.engine.plan.execution.cache.ExecutionCache;
 import org.finos.legend.engine.plan.execution.cache.graphFetch.GraphFetchCacheByEqualityKeys;
@@ -50,8 +45,7 @@ import org.finos.legend.engine.plan.execution.nodes.helpers.platform.ExecutionNo
 import org.finos.legend.engine.plan.execution.nodes.helpers.platform.JavaHelper;
 import org.finos.legend.engine.plan.execution.nodes.state.ExecutionState;
 import org.finos.legend.engine.plan.execution.nodes.state.GraphExecutionState;
-import org.finos.legend.engine.plan.execution.result.ConstantResult;
-import org.finos.legend.engine.plan.execution.result.Result;
+import org.finos.legend.engine.plan.execution.result.*;
 import org.finos.legend.engine.plan.execution.result.builder._class.ClassBuilder;
 import org.finos.legend.engine.plan.execution.result.graphFetch.GraphFetchResult;
 import org.finos.legend.engine.plan.execution.result.graphFetch.GraphObjectsBatch;
@@ -60,51 +54,15 @@ import org.finos.legend.engine.plan.execution.stores.StoreType;
 import org.finos.legend.engine.plan.execution.stores.relational.RelationalDatabaseCommandsVisitorBuilder;
 import org.finos.legend.engine.plan.execution.stores.relational.RelationalExecutor;
 import org.finos.legend.engine.plan.execution.stores.relational.activity.AggregationAwareActivity;
+import org.finos.legend.engine.plan.execution.stores.relational.activity.RelationalExecutionActivity;
 import org.finos.legend.engine.plan.execution.stores.relational.blockConnection.BlockConnection;
 import org.finos.legend.engine.plan.execution.stores.relational.blockConnection.BlockConnectionContext;
 import org.finos.legend.engine.plan.execution.stores.relational.connection.driver.DatabaseManager;
 import org.finos.legend.engine.plan.execution.stores.relational.connection.driver.commands.RelationalDatabaseCommands;
-import org.finos.legend.engine.plan.execution.stores.relational.result.FunctionHelper;
-import org.finos.legend.engine.plan.execution.stores.relational.result.PreparedTempTableResult;
-import org.finos.legend.engine.plan.execution.stores.relational.result.RealizedRelationalResult;
-import org.finos.legend.engine.plan.execution.stores.relational.result.RelationalResult;
-import org.finos.legend.engine.plan.execution.stores.relational.result.ResultColumn;
-import org.finos.legend.engine.plan.execution.stores.relational.result.ResultInterpreterExtension;
-import org.finos.legend.engine.plan.execution.stores.relational.result.SQLExecutionResult;
-import org.finos.legend.engine.plan.execution.stores.relational.result.TempTableStreamingResult;
+import org.finos.legend.engine.plan.execution.stores.relational.result.*;
 import org.finos.legend.engine.plan.execution.stores.relational.result.graphFetch.RelationalGraphObjectsBatch;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.AggregationAwareExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.AllocationExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.ConstantExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.CreateAndPopulateTempTableExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.ErrorExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.ExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.ExecutionNodeVisitor;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.FreeMarkerConditionalExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.FunctionParametersValidationNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.GraphFetchM2MExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.JavaPlatformImplementation;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.MultiResultSequenceExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.PureExpressionPlatformExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.RelationalBlockExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.RelationalClassInstantiationExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.RelationalDataTypeInstantiationExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.RelationalExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.RelationalRelationDataInstantiationExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.RelationalTdsInstantiationExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.SQLExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.SequenceExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.GlobalGraphFetchExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.GraphFetchExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.LocalGraphFetchExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.RelationalClassQueryTempTableGraphFetchExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.RelationalCrossRootGraphFetchExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.RelationalCrossRootQueryTempTableGraphFetchExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.RelationalGraphFetchExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.RelationalPrimitiveQueryGraphFetchExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.RelationalRootGraphFetchExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.RelationalRootQueryTempTableGraphFetchExecutionNode;
-import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.RelationalTempTableGraphFetchExecutionNode;
+import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.*;
+import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.*;
 import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.store.inMemory.InMemoryCrossStoreGraphFetchExecutionNode;
 import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.store.inMemory.InMemoryPropertyGraphFetchExecutionNode;
 import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.graphFetch.store.inMemory.InMemoryRootGraphFetchExecutionNode;
@@ -123,17 +81,7 @@ import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.ServiceLoader;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -152,7 +100,7 @@ public class RelationalExecutionNodeExecutor implements ExecutionNodeVisitor<Res
     {
         this.executionState = executionState;
         this.profiles = profiles;
-        this.resultInterpreterExtensions = Iterate.addAllTo(ServiceLoader.load(ResultInterpreterExtension.class), Lists.mutable.empty()).collect(ResultInterpreterExtension::additionalResultBuilder);
+        this.resultInterpreterExtensions = Iterate.addAllTo(ResultInterpreterExtensionLoader.extensions(), Lists.mutable.empty()).collect(ResultInterpreterExtension::additionalResultBuilder);
     }
 
     @Override
@@ -163,14 +111,33 @@ public class RelationalExecutionNodeExecutor implements ExecutionNodeVisitor<Res
             RelationalBlockExecutionNode relationalBlockExecutionNode = (RelationalBlockExecutionNode) executionNode;
             ExecutionState connectionAwareState = new ExecutionState(this.executionState);
             ((RelationalStoreExecutionState) connectionAwareState.getStoreExecutionState(StoreType.Relational)).setRetainConnection(true);
+            Result res = null;
             try
             {
-                Result res = new ExecutionNodeExecutor(this.profiles, connectionAwareState).visit((SequenceExecutionNode) relationalBlockExecutionNode);
-                ((RelationalStoreExecutionState) connectionAwareState.getStoreExecutionState(StoreType.Relational)).getBlockConnectionContext().unlockAllBlockConnections();
+                res = new ExecutionNodeExecutor(this.profiles, connectionAwareState).visit((SequenceExecutionNode) relationalBlockExecutionNode);
+
+                if (!relationalBlockExecutionNode.finallyExecutionNodes.isEmpty())
+                {
+                    res.setPropertyChangeListeners(buildOnClosedResultExecutionNodeExecutor(relationalBlockExecutionNode.finallyExecutionNodes, connectionAwareState));
+                    res.activities.addAll(buildFinallyExecutionNodeActivities(relationalBlockExecutionNode, connectionAwareState));
+                }
+                else
+                {
+                    ((RelationalStoreExecutionState) connectionAwareState.getStoreExecutionState(StoreType.Relational)).getBlockConnectionContext().unlockAllBlockConnections();
+                }
+
                 return res;
             }
             catch (Exception e)
             {
+                if (res != null)
+                {
+                    res.close();
+                }
+                else
+                {
+                    relationalBlockExecutionNode.finallyExecutionNodes.forEach(fn -> new ExecutionNodeExecutor(this.profiles, new ExecutionState(connectionAwareState)).visit(fn));
+                }
                 ((RelationalStoreExecutionState) connectionAwareState.getStoreExecutionState(StoreType.Relational)).getBlockConnectionContext().unlockAllBlockConnections();
                 ((RelationalStoreExecutionState) connectionAwareState.getStoreExecutionState(StoreType.Relational)).getBlockConnectionContext().closeAllBlockConnections();
                 throw e;
@@ -286,6 +253,7 @@ public class RelationalExecutionNodeExecutor implements ExecutionNodeVisitor<Res
             try (Scope scope = GlobalTracer.get().buildSpan("Relational DB Execution").startActive(true))
             {
                 scope.span().setTag("databaseType", SQLExecutionNode.getDatabaseTypeName());
+                scope.span().setTag("executionTraceID", this.executionState.execID);
                 scope.span().setTag("sql", SQLExecutionNode.sqlQuery());
                 Result result = ((RelationalStoreExecutionState) executionState.getStoreExecutionState(StoreType.Relational)).getRelationalExecutor().execute(SQLExecutionNode, profiles, executionState);
                 if (result instanceof SQLExecutionResult)
@@ -753,6 +721,46 @@ public class RelationalExecutionNodeExecutor implements ExecutionNodeVisitor<Res
         throw new RuntimeException("Not implemented!");
     }
 
+    private ResultIsClosedListener buildOnClosedResultExecutionNodeExecutor(List<ExecutionNode> executionNodes, ExecutionState state)
+    {
+        Consumer<Boolean> executeFinallyNodes = isClosed ->
+        {
+            if (isClosed)
+            {
+                executionNodes.forEach(n -> n.accept(new ExecutionNodeExecutor(this.profiles, state)));
+                ((RelationalStoreExecutionState) state.getStoreExecutionState(StoreType.Relational)).getBlockConnectionContext().unlockAllBlockConnections();
+            }
+        };
+        return new ResultIsClosedListener(executeFinallyNodes);
+    }
+
+    private List<ExecutionActivity> buildFinallyExecutionNodeActivities(RelationalBlockExecutionNode relationalBlockExecutionNode, ExecutionState state)
+    {
+        ExecutionState stateWithModifiedExecutors = new ExecutionState(state);
+        stateWithModifiedExecutors.extraNodeExecutors.clear();
+        stateWithModifiedExecutors.extraNodeExecutors.add((Function3<ExecutionNode, MutableList<CommonProfile>, ExecutionState, Result>) (executionNode, commonProfiles, executionState) ->
+        {
+            if (executionNode instanceof SQLExecutionNode)
+            {
+                SQLExecutionNode sqlNode = (SQLExecutionNode) executionNode;
+                return new Result("", Lists.mutable.of(new RelationalExecutionActivity(sqlNode.sqlQuery, "")))
+                {
+                    @Override
+                    public <T> T accept(ResultVisitor<T> resultVisitor)
+                    {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+            }
+            else
+            {
+                return null;
+            }
+        });
+        ExecutionNodeExecutor ex = new ExecutionNodeExecutor(this.profiles, stateWithModifiedExecutors);
+        return relationalBlockExecutionNode.finallyExecutionNodes.stream().map(n -> n.accept(ex)).filter(Result.class::isInstance).map(Result.class::cast).flatMap(r -> r.activities.stream()).collect(Collectors.toList());
+    }
+
     private void executeRelationalChildren(RelationalGraphFetchExecutionNode node, String tempTableNameFromNode, RealizedRelationalResult realizedRelationalResult, DatabaseConnection databaseConnection, String databaseType, String databaseTimeZone, DoubleStrategyHashMap<Object, Object, SQLExecutionResult> parentMap, List<Method> parentKeyGetters)
     {
         try (Scope ignored1 = GlobalTracer.get().buildSpan("Graph Query Relational: Execute Children").startActive(true))
@@ -938,7 +946,7 @@ public class RelationalExecutionNodeExecutor implements ExecutionNodeVisitor<Res
     }
 
     @Override
-    public Result visit(GlobalGraphFetchExecutionNode globalGraphFetchExecutionNode)
+    public Result visit(StoreMappingGlobalGraphFetchExecutionNode storeMappingGlobalGraphFetchExecutionNode)
     {
         throw new RuntimeException("Not implemented!");
     }
@@ -1227,7 +1235,7 @@ public class RelationalExecutionNodeExecutor implements ExecutionNodeVisitor<Res
                     long currentBatch = batchIndex.incrementAndGet();
                     try (Scope ignored = GlobalTracer.get().buildSpan("graph fetch batch").withTag("storeType", "relational").withTag("batchIndex", currentBatch).withTag("class", ((RootGraphFetchTree) node.graphFetchTree)._class).asChildOf(graphFetchSpan).startActive(true))
                     {
-                        RelationalGraphObjectsBatch relationalGraphObjectsBatch = new RelationalGraphObjectsBatch(currentBatch);
+                        RelationalGraphObjectsBatch relationalGraphObjectsBatch = new RelationalGraphObjectsBatch(currentBatch, executionState.getGraphFetchBatchMemoryLimit());
 
                         List<Object> resultObjects = new ArrayList<>();
                         List<Pair<IGraphInstance<? extends IReferencedObject>, ExecutionCache<GraphFetchCacheKey, Object>>> instancesToDeepFetchAndCache = new ArrayList<>();

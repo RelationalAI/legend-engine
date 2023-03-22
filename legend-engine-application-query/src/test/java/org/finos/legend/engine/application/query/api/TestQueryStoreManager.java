@@ -19,10 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.eclipse.collections.api.block.function.Function0;
 import org.eclipse.collections.api.factory.Lists;
-import org.finos.legend.engine.application.query.model.Query;
-import org.finos.legend.engine.application.query.model.QueryEvent;
-import org.finos.legend.engine.application.query.model.QueryProjectCoordinates;
-import org.finos.legend.engine.application.query.model.QuerySearchSpecification;
+import org.finos.legend.engine.application.query.model.*;
 import org.finos.legend.engine.application.query.utils.TestMongoClientProvider;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.StereotypePtr;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.domain.TagPtr;
@@ -328,6 +325,28 @@ public class TestQueryStoreManager
             "\"taggedValues\":null," +
             "\"versionId\":\"0.0.0\"" +
             "}", objectMapper.writeValueAsString(queries.get(0)));
+    }
+
+
+    @Test
+    public void testGetQueryStats() throws Exception
+    {
+        String currentUser = "testUser";
+        Assert.assertEquals(Long.valueOf(0),  this.queryStoreManager.getQueryStoreStats().getQueryCount());
+        queryStoreManager.createQuery(TestQueryBuilder.create("1", "query1", currentUser).build(), currentUser);
+        queryStoreManager.createQuery(TestQueryBuilder.create("2", "query2", currentUser).build(), currentUser);
+        Assert.assertEquals(Long.valueOf(2),  this.queryStoreManager.getQueryStoreStats().getQueryCount());
+    }
+
+    @Test
+    public void testGetQueryStatsWithDataSpaceQueryCount() throws Exception
+    {
+        String currentUser = "testUser";
+        TaggedValue taggedValue1 = createTestTaggedValue("meta::pure::profiles::query", "dataSpace", "value1");
+        Assert.assertEquals(Long.valueOf(0),  this.queryStoreManager.getQueryStoreStats().getQueryCount());
+        queryStoreManager.createQuery(TestQueryBuilder.create("1", "query1", currentUser).withTaggedValues(Lists.fixedSize.of(taggedValue1)).build(), currentUser);
+        queryStoreManager.createQuery(TestQueryBuilder.create("2", "query2", currentUser).build(), currentUser);
+        Assert.assertEquals(Long.valueOf(1),  this.queryStoreManager.getQueryStoreStats().getQueryCreatedFromDataSpaceCount());
     }
 
     @Test

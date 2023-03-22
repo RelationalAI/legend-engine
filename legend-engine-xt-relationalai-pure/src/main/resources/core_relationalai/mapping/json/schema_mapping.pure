@@ -1,0 +1,310 @@
+import meta::rel::mapping::json::*;
+import meta::rel::utils::*;
+import meta::rel::utils::lang::*;
+import meta::rel::utils::meta::*;
+import meta::rel::utils::collection::*;
+import meta::rel::metamodel::*;
+
+
+Class meta::rel::mapping::json::ExpansionState<T|m> {
+  values: T[m];
+  visited: Map<Any, Any>[1];
+}
+
+function meta::rel::mapping::json::ExpansionState<T|m>(values: T[m]): ExpansionState<T|m>[1] {
+  ^ExpansionState<T|m>(visited=^Map<Any,Any>(), values=$values);
+}
+
+function meta::rel::mapping::json::visit<T|m>(
+  state: ExpansionState<T|m>[1],
+  object: Any[1]
+): ExpansionState<T|m>[1] {
+  ^$state(
+    visited=$state.visited->put($object, 1)
+  );
+}
+
+function meta::rel::mapping::json::with<T|m>(
+  state: ExpansionState<T|m>[1], 
+  values: T[*]
+): ExpansionState<T|m>[1] {
+  ^$state(
+    values=$state.values->concatenate($values)
+  );
+}
+
+function meta::rel::mapping::json::hasVisited<T|m>(state: ExpansionState<T|m>[1], object: Any[1]): Boolean[1] {
+  !$state.visited->get($object)->isEmpty();
+}
+
+Class meta::rel::mapping::json::JSONMapping {
+  program: Program[1];
+}
+
+function meta::rel::mapping::json::JSONMapping(program: Program[1]): JSONMapping[1] {
+  ^JSONMapping(program=$program);
+}
+
+Class meta::rel::mapping::json::Signature {
+  properties: Property<Nil, Any|*>[*];
+  classes: Class<Any>[*];
+  inherits: Pair<Class<Any>,Class<Any>>[*];
+}
+
+function meta::rel::mapping::json::merge(signature: Signature[1], other: Signature[1]): Signature[1] {
+  $signature
+    ->withProperties($other.properties)
+    ->withClasses($other.classes)
+    ->withInheritances($other.inherits);
+}
+
+function meta::rel::mapping::json::withProperties(signature: Signature[1], props: Property<Nil, Any|*>[*]): Signature[1] {
+  ^$signature(properties=$signature.properties->concatenate($props));
+}
+
+function meta::rel::mapping::json::withClasses(signature: Signature[1], classes: Class<Any>[*]): Signature[1] {
+  ^$signature(classes=$signature.classes->concatenate($classes));
+}
+
+function meta::rel::mapping::json::withInheritances(signature: Signature[1], inherits: Pair<Class<Any>, Class<Any>>[*]): Signature[1] {
+  ^$signature(inherits=$signature.inherits->concatenate($inherits));
+}
+
+function meta::rel::mapping::json::deriveRules(
+  class: Class<Any>[1], 
+  state: ExpansionState<Rule|*>[1]
+): ExpansionState<Rule|*>[1] {
+  if (!$state->hasVisited($class), {|
+    // Generate rules for class
+    let entity = $class.name->toOne();
+
+    let classRule = 
+      def(
+        rel('mapped')
+          ->appl(label($entity)), 
+        const(1)
+      );
+
+    let props = $class
+      ->primitiveProperties()
+      ->fold({prop, accum | 
+        let attr = $prop.name->toOne();
+
+        $accum
+          ->concatenate(
+            def(
+              rel('mapped')
+                ->appl([label($entity), label($attr)]),
+              const(2)
+            )
+          );
+      }, $classRule);
+    
+    let nextState = $state
+      ->with($props)
+      ->visit($class);
+
+    $class
+      ->complexProperties()
+      ->filter({prop | 
+        $prop
+          .genericType
+          .rawType
+          ->toOne()
+          ->cast(@Class<Any>) != Any
+      })
+      ->fold({prop, accum |
+        let type = $prop
+          .genericType
+          .rawType
+          ->toOne()
+          ->cast(@Class<Any>);
+
+        let propName = $prop.name->toOne();
+
+        let rule =
+          def(
+            rel('mapped')
+              ->appl([label($entity), label($propName)]),
+            const(1)
+          );
+
+        $type
+          ->allSpecializations()
+          ->fold({subclass, accum |
+            $subclass
+              ->deriveRules($accum);
+          }, $accum)
+          ->with($rule);
+      }, $nextState);
+  }, {| $state});
+}
+
+function <<access.private>> meta::rel::mapping::json::rename(x: String[1]): String[1] {
+  if (!$x->startsWith('Super'), | $x->substring(1), | $x);
+}
+
+function meta::rel::mapping::json::derive(
+  class: Class<Any>[1], 
+  state: ExpansionState<Signature|1>[1]
+): ExpansionState<Signature|1>[1] {
+
+  if (!$state->hasVisited($class), {|
+    let props = $class
+      ->primitiveProperties();
+
+    let nextState = 
+      ^$state(
+        values=$state.values
+          ->withProperties($props)
+          ->withClasses($class)
+      )
+      ->visit($class);
+
+    $class
+      ->complexProperties()
+      ->filter({prop | 
+        $prop
+          .genericType
+          .rawType
+          ->toOne()
+          ->cast(@Class<Any>) != Any
+      })
+      ->fold({prop, accum |
+        let type = $prop
+          .genericType
+          .rawType
+          ->toOne()
+          ->cast(@Class<Any>);
+
+        let s = $type
+          ->allSpecializations()
+          ->fold({subclass, accum |
+            let s = $subclass
+              ->derive($accum);
+
+            if ($subclass != $type, {| 
+              ^$s(
+                values=$s.values
+                  ->withInheritances(pair($type, $subclass))
+              );
+            }, | $s);
+          }, $accum);
+
+        ^$s(values=$s.values->withProperties($prop));
+      }, $nextState);
+  }, {| $state});
+}
+
+function meta::rel::mapping::json::deriveRules(roots: Class<Any>[*]): JSONMapping[1] {
+    let state = 
+    $roots
+      ->fold({root, accum | 
+        deriveRules($root, $accum);
+      }, ^ExpansionState<Rule|*>(visited=^Map<Any,Any>(), values=[]));
+
+    JSONMapping(program($state.values));
+}
+
+function meta::rel::mapping::json::derive(roots: Class<Any>[*]): JSONMapping[1] {
+  let state = 
+    $roots
+      ->fold({root, accum | 
+        derive($root, $accum);
+      }, ExpansionState(^Signature()));
+
+  let classes = 
+    def(
+      rel('classes'), 
+      union(
+        if ($state.values.classes->isEmpty(), 
+          | relfalse(), 
+          | $state
+              .values
+              .classes
+              ->toOneMany()
+              ->map(c | const($c.name->toOne()->rename()))
+        )
+      )
+    )
+    ->concatenate(
+      $state.values.classes
+        ->map({c | 
+          let name = $c.name->toOne();
+
+          rule(format('def %s(x) = mapped("%s", x)', [$name, $name->rename()]));
+        })
+    );
+
+  let inheritances =
+    def(
+      rel('inheritances'),
+      union(
+        if ($state.values.inherits->isEmpty(), 
+          | relfalse(), 
+          | $state
+              .values
+              .inherits
+              ->toOneMany()
+              ->map(i | product([const($i.first.name->toOne()->rename()), const($i.second.name->toOne()->rename())]))
+        )
+      )
+    );
+
+  let properties =
+    def(
+      rel('properties'),
+      union(
+        if ($state.values.properties->isEmpty(), 
+          | relfalse(), 
+          | $state
+              .values
+              .properties
+              ->toOneMany()
+              ->map({prop | 
+                let owner = $prop.owner;
+                let name = $prop.name->toOne();
+
+                let mult = 
+                  switch([
+                    case($prop.multiplicity == PureOne, {| '1'}),
+                    case($prop.multiplicity == OneMany, {| '1..*'}),
+                    case($prop.multiplicity == PureZero, {| '0'}),
+                    case($prop.multiplicity == ZeroMany, {| '*'}),
+                    case($prop.multiplicity == ZeroOne, {| '0..1'})
+                  ], {| fail('Unknown multiplicity')});
+
+                let type = 
+                  $prop
+                    .genericType
+                    .rawType
+                    .name
+                    ->toOne();
+
+
+                product([
+                  const($owner.name->toOne()->rename()), 
+                  const($name->rename()), 
+                  const(
+                    $prop
+                      .genericType
+                      .rawType
+                      ->match([
+                        pt:PrimitiveType[1]    | $type, 
+                        et:Enumeration<Any>[1] | $type, 
+                        a:Class<Any>[1]        | $type->rename(),
+                        u: Unit[1]             | $type,
+                        m: Measure[1]          | $type
+                      ])
+                  ), 
+                  const($mult)
+                ]);
+              })
+        )
+      )
+    );
+
+
+  JSONMapping(program($classes->concatenate([$inheritances, $properties])));
+}
+

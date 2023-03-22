@@ -61,7 +61,12 @@
     },
     "alloy" : {
       "host": "127.0.0.1",
-      "port": 8075
+      "port": 6200,
+      "prefix": "/depot/api"
+    },
+    "sdlc": {
+      "host": "localhost",
+      "port": 6100
     }
   },
   "temporarytestdb": {

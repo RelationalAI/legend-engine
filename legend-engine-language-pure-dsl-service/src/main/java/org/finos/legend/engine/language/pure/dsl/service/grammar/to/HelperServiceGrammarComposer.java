@@ -74,14 +74,20 @@ public class HelperServiceGrammarComposer
             StringBuilder builder = new StringBuilder().append("Multi\n");
             appendTabString(builder, baseIndentation).append("{\n");
             appendTabString(builder, baseIndentation + 1).append("query: ").append(pureMultiExecution.func.accept(DEPRECATED_PureGrammarComposerCore.Builder.newInstance(context).build())).append(";\n");
-            appendTabString(builder, baseIndentation + 1).append("key: ").append(convertString(pureMultiExecution.executionKey, true)).append(";\n");
-            builder.append(LazyIterate.collect(pureMultiExecution.executionParameters, executionParameter -> renderKeyedExecutionParameter(executionParameter, context)).makeString("\n"));
-            return builder.append("\n").append(getTabString(baseIndentation)).append("}\n").toString();
+            if (pureMultiExecution.executionKey != null)
+            {
+                appendTabString(builder, baseIndentation + 1).append("key: ").append(convertString(pureMultiExecution.executionKey, true)).append(";\n");
+            }
+            if (pureMultiExecution.executionParameters != null && !pureMultiExecution.executionParameters.isEmpty())
+            {
+                builder.append(LazyIterate.collect(pureMultiExecution.executionParameters, executionParameter -> renderKeyedExecutionParameter(executionParameter, context)).makeString("\n")).append("\n");
+            }
+            return builder.append(getTabString(baseIndentation)).append("}\n").toString();
         }
         return unsupported(execution.getClass());
     }
 
-    private static String renderServiceExecutionRuntime(Runtime runtime, int baseIndentation, PureGrammarComposerContext context)
+    protected static String renderServiceExecutionRuntime(Runtime runtime, int baseIndentation, PureGrammarComposerContext context)
     {
         if (runtime instanceof LegacyRuntime)
         {
@@ -214,6 +220,19 @@ public class HelperServiceGrammarComposer
         str.append(parameterValue.value.accept(DEPRECATED_PureGrammarComposerCore.Builder.newInstance(context).build()));
 
         return str.toString();
+    }
+
+    public static boolean isServiceTestEmpty(ServiceTest_Legacy serviceTest)
+    {
+        if (serviceTest instanceof SingleExecutionTest)
+        {
+            return ((SingleExecutionTest) serviceTest).asserts == null || ((SingleExecutionTest) serviceTest).asserts.isEmpty();
+        }
+        else if (serviceTest instanceof MultiExecutionTest)
+        {
+            return ListIterate.allSatisfy(((MultiExecutionTest) serviceTest).tests, k -> k.asserts == null || k.asserts.isEmpty());
+        }
+        return false;
     }
 
     public static String renderServiceTest(ServiceTest_Legacy serviceTest, PureGrammarComposerContext context)

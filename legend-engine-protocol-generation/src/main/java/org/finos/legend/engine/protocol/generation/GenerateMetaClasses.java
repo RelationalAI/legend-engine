@@ -28,25 +28,28 @@ public class GenerateMetaClasses extends GenerateJavaProject
 {
     public static void main(String[] args)
     {
-        List<String> elementsToBeExcluded = args.length == 4 ? Arrays.asList(args[3].split(",")) : Collections.emptyList();
-        new GenerateMetaClasses(args[0], args[1], args[2], elementsToBeExcluded).execute();
+        List<String> elementsToBeExcluded = args.length >= 4 && args[3] != null ? Arrays.asList(args[3].split(",")) : Collections.emptyList();
+        String generatorExtension = args.length >= 5 ? args[4] : null;
+        new GenerateMetaClasses(args[0], args[1], args[2], elementsToBeExcluded, generatorExtension).execute();
     }
 
     private final String fromPurePackage;
     private final String toJavaPackage;
     private final List<String> elementsToBeExcluded;
+    private final String generatorExtension;
 
-    protected GenerateMetaClasses(String fromPurePackage, String toJavaPackage, String outputDirectory, List<String> elementsToBeExcluded)
+    protected GenerateMetaClasses(String fromPurePackage, String toJavaPackage, String outputDirectory, List<String> elementsToBeExcluded, String generatorExtension)
     {
         super(outputDirectory);
         this.fromPurePackage = fromPurePackage;
         this.toJavaPackage = toJavaPackage;
         this.elementsToBeExcluded = elementsToBeExcluded;
+        this.generatorExtension = generatorExtension;
     }
 
     @Override
     protected Root_meta_external_language_java_metamodel_project_Project doExecute(CompiledExecutionSupport executionSupport)
     {
-        return core_external_language_java_protocol_generation_generation.Root_meta_protocols_generation_java_generateProtocolClasses_String_1__String_1__String_MANY__Project_1_(fromPurePackage, toJavaPackage, Lists.mutable.withAll(elementsToBeExcluded), executionSupport);
+        return core_external_language_java_protocol_generation_generation.Root_meta_protocols_generation_java_generateProtocolClasses_String_1__String_1__String_MANY__String_$0_1$__Project_1_(fromPurePackage, toJavaPackage, Lists.mutable.withAll(elementsToBeExcluded), generatorExtension, executionSupport);
     }
 }

@@ -20,14 +20,11 @@ import org.finos.legend.engine.pure.runtime.compiler.interpreted.natives.LegendC
 import org.finos.legend.pure.ide.light.PureIDECodeRepository;
 import org.finos.legend.pure.ide.light.PureIDEServer;
 import org.finos.legend.pure.ide.light.SourceLocationConfiguration;
-import org.finos.legend.pure.m3.serialization.filesystem.repository.CodeRepository;
 import org.finos.legend.pure.m3.serialization.filesystem.repository.GenericCodeRepository;
 import org.finos.legend.pure.m3.serialization.filesystem.usercodestorage.RepositoryCodeStorage;
-import org.finos.legend.pure.m3.serialization.filesystem.usercodestorage.classpath.ClassLoaderCodeStorage;
 import org.finos.legend.pure.m3.serialization.filesystem.usercodestorage.fs.MutableFSCodeStorage;
 import org.finos.legend.pure.runtime.java.interpreted.FunctionExecutionInterpreted;
 
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Optional;
 
@@ -35,62 +32,77 @@ public class PureIDELight extends PureIDEServer
 {
     public static void main(String[] args) throws Exception
     {
-        new PureIDELight().run(args.length == 0 ? new String[] {"server", "legend-engine-pure-ide-light/src/main/resources/ideLightConfig.json"} : args);
+        new PureIDELight().run(args.length == 0 ? new String[]{"server", "legend-engine-pure-ide-light/src/main/resources/ideLightConfig.json"} : args);
     }
 
-    public MutableList<RepositoryCodeStorage> buildRepositories(SourceLocationConfiguration sourceLocationConfiguration)
+    @Override
+    protected MutableList<RepositoryCodeStorage> buildRepositories(SourceLocationConfiguration sourceLocationConfiguration)
     {
-        try
-        {
-            String ideFilesLocation = Optional.ofNullable(sourceLocationConfiguration)
-                    .flatMap(s -> Optional.ofNullable(s.ideFilesLocation))
-                    .orElse("legend-engine-pure-ide-light/src/main/resources/pure_ide");
-
-            return Lists.mutable
-                    .<RepositoryCodeStorage>with(new ClassLoaderCodeStorage(CodeRepository.newPlatformCodeRepository()))
-                    .with(this.buildCore("legend-engine-xt-persistence-pure", "persistence"))
-                    .with(this.buildCore("legend-engine-xt-mastery-pure", "mastery"))
-                    .with(this.buildCore("legend-engine-xt-relationalStore-pure", "relational"))
-                    .with(this.buildCore("legend-engine-xt-relationalStore-sqlserver-pure", "relational_sqlserver"))
-                    .with(this.buildCore("legend-engine-xt-relationalStore-bigquery-pure", "relational_bigquery"))
-                    .with(this.buildCore("legend-engine-xt-serviceStore-pure", "servicestore"))
-                    .with(this.buildCore("legend-engine-xt-text-pure", "text"))
-                    .with(this.buildCore("legend-engine-xt-data-space-pure", "data-space"))
-                    .with(this.buildCore("legend-engine-xt-diagram-pure", "diagram"))
-                    .with(this.buildCore("legend-engine-xt-flatdata-pure", "external-format-flatdata"))
-                    .with(this.buildCore("legend-engine-xt-json-pure", "external-format-json"))
-                    .with(this.buildCore("legend-engine-xt-xml-pure", "external-format-xml"))
-                    .with(this.buildCore("legend-engine-xt-graphQL-pure", "external-query-graphql"))
-                    .with(this.buildCore("legend-engine-xt-graphQL-pure-metamodel", "external-query-graphql-metamodel"))
-                    .with(this.buildCore("legend-engine-xt-protobuf-pure", "external-format-protobuf"))
-                    .with(this.buildCore("legend-engine-xt-avro-pure", "external-format-avro"))
-                    .with(this.buildCore("legend-engine-xt-rosetta-pure", "external-format-rosetta"))
-                    .with(this.buildCore("legend-engine-xt-morphir-pure", "external-language-morphir"))
-                    .with(this.buildCore("legend-engine-pure-ide-light-metadata-pure", "ide_metadata"))
-                    .with(this.buildCore("legend-engine-pure-code-compiled-core", ""))
-                    .with(this.buildCore("legend-engine-xt-analytics-mapping-pure", "analytics-mapping"))
-                    .with(new MutableFSCodeStorage(new PureIDECodeRepository(), Paths.get(ideFilesLocation)));
-        }
-        catch (IOException e)
-        {
-            throw new RuntimeException(e);
-        }
+        return Lists.mutable.<RepositoryCodeStorage>empty()
+                .with(this.buildCore("legend-engine-xt-persistence-pure", "persistence"))
+                .with(this.buildCore("legend-engine-xt-mastery-pure", "mastery"))
+                .with(this.buildCore("legend-engine-xt-relationalStore-pure", "relational"))
+                .with(this.buildCore("legend-engine-xt-relationalStore-sqlserver-pure", "relational_sqlserver"))
+                .with(this.buildCore("legend-engine-xt-relationalStore-bigquery-pure", "relational_bigquery"))
+                .with(this.buildCore("legend-engine-xt-relationalStore-spanner-pure", "relational_spanner"))
+                .with(this.buildCore("legend-engine-xt-relationalStore-athena-pure", "relational_athena"))
+                .with(this.buildCore("legend-engine-xt-serviceStore-pure", "servicestore"))
+                .with(this.buildCore("legend-engine-xt-text-pure-metamodel", "text-metamodel"))
+                .with(this.buildCore("legend-engine-xt-data-space-pure-metamodel", "data-space-metamodel"))
+                .with(this.buildCore("legend-engine-xt-data-space-pure", "data-space"))
+                .with(this.buildCore("legend-engine-xt-diagram-pure-metamodel", "diagram-metamodel"))
+                .with(this.buildCore("legend-engine-xt-diagram-pure", "diagram"))
+                .with(this.buildCore("legend-engine-xt-flatdata-pure", "external-format-flatdata"))
+                .with(this.buildCore("legend-engine-xt-json-pure", "external-format-json"))
+                .with(this.buildCore("legend-engine-xt-xml-pure", "external-format-xml"))
+                .with(this.buildCore("legend-engine-xt-graphQL-pure", "external-query-graphql"))
+                .with(this.buildCore("legend-engine-xt-graphQL-pure-metamodel", "external-query-graphql-metamodel"))
+                .with(this.buildCore("legend-engine-xt-protobuf-pure", "external-format-protobuf"))
+                .with(this.buildCore("legend-engine-xt-avro-pure", "external-format-avro"))
+                .with(this.buildCore("legend-engine-xt-rosetta-pure", "external-format-rosetta"))
+                .with(this.buildCore("legend-engine-xt-morphir-pure", "external-language-morphir"))
+                .with(this.buildCore("legend-engine-xt-haskell-pure", "external-language-haskell"))
+                .with(this.buildCore("legend-engine-xt-daml-pure", "external-language-daml"))
+                .with(this.buildCore("legend-engine-pure-ide-light-metadata-pure", "ide_metadata"))
+                .with(this.buildCore("legend-engine-pure-code-compiled-core", ""))
+                .with(this.buildCore("legend-engine-xt-changetoken-pure", "pure-changetoken"))
+                .with(this.buildCore("legend-engine-xt-analytics-mapping-pure", "analytics-mapping"))
+                .with(this.buildCore("legend-engine-xt-analytics-lineage-pure", "analytics-lineage"))
+                .with(this.buildCore("legend-engine-xt-analytics-search-pure", "analytics-search"))
+                .with(this.buildCore("legend-engine-xt-javaGeneration-pure", "external-language-java"))
+                .with(this.buildCore("legend-engine-xt-javaGeneration-featureBased-pure", "external-language-java-feature-based-generation"))
+                .with(this.buildCore("legend-engine-xt-javaPlatformBinding-pure", "java-platform-binding"))
+                .with(this.buildCore("legend-engine-xt-flatdata-javaPlatformBinding-pure", "external-format-flatdata-java-platform-binding"))
+                .with(this.buildCore("legend-engine-xt-json-javaPlatformBinding-pure", "external-format-json-java-platform-binding"))
+                .with(this.buildCore("legend-engine-xt-xml-javaPlatformBinding-pure", "external-format-xml-java-platform-binding"))
+                .with(this.buildCore("legend-engine-xt-relationalStore-javaPlatformBinding-pure", "relational-java-platform-binding"))
+                .with(this.buildCore("legend-engine-xt-serviceStore-javaPlatformBinding-pure", "servicestore-java-platform-binding"))
+                .with(this.buildCore("legend-engine-pure-code-compiled-core-configuration", "configuration"))
+                .with(this.buildCore("legend-engine-xt-sql-pure-metamodel", "external-query-sql-metamodel"))
+                .with(this.buildCore("legend-engine-xt-sql-pure", "external-query-sql"))
+                .with(this.buildCore("legend-engine-xt-authentication-pure", "authentication"))
+                .with(this.buildCore("legend-engine-xt-elasticsearch/legend-engine-xt-elasticsearch-pure-specification-metamodel", "elasticsearch_specification_metamodel"))
+                .with(this.buildCore("legend-engine-xt-elasticsearch/legend-engine-xt-elasticsearch-V7-pure-metamodel", "elasticsearch_seven_metamodel"))
+                .with(this.buildCore("legend-engine-xt-nonrelationalStore-mongodb-pure","nonrelational-mongodb"))
+                .with(this.buildCore("legend-engine-xt-relationalai-pure", "relationalai"))
+                .with(new MutableFSCodeStorage(new LibCodeRepository("scratch"), Paths.get(String.format("%s/scratch", sourceLocationConfiguration.welcomeFileDirectory))))
+                ;
     }
 
     @Override
     protected void postInit()
     {
-        FunctionExecutionInterpreted fe = (FunctionExecutionInterpreted)this.getPureSession().getFunctionExecution();
+        FunctionExecutionInterpreted fe = (FunctionExecutionInterpreted) this.getPureSession().getFunctionExecution();
         fe.setProcessorSupport(new LegendCompileMixedProcessorSupport(fe.getRuntime().getContext(), fe.getRuntime().getModelRepository(), fe.getProcessorSupport()));
     }
 
-    protected MutableFSCodeStorage buildCore(String path, String module) throws IOException
+    protected MutableFSCodeStorage buildCore(String path, String module)
     {
-        String resources = path + "/src/main/resources";
-        String moduleName = "core" + (module.equals("") ? "" : "_" + module);
+        String resourceDir = path + "/src/main/resources/";
+        String moduleName = "".equals(module) ? "core" : ("core_" + module.replace("-", "_"));
         return new MutableFSCodeStorage(
-                GenericCodeRepository.build(Paths.get(resources + "/" + moduleName.replace("-", "_") + ".definition.json")),
-                Paths.get(resources + "/" + moduleName.replace("-", "_"))
+                GenericCodeRepository.build(Paths.get(resourceDir + moduleName + ".definition.json")),
+                Paths.get(resourceDir + moduleName)
         );
     }
 }

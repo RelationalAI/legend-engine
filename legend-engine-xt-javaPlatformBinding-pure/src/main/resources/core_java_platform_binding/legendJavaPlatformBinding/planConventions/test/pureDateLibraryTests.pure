@@ -15,13 +15,12 @@
 import meta::external::language::java::factory::*;
 import meta::external::language::java::serialization::*;
 import meta::external::language::java::transform::*;
-import meta::pure::executionPlan::engine::*;
-import meta::pure::executionPlan::engine::java::*;
-import meta::pure::executionPlan::engine::java::tests::*;
+import meta::pure::executionPlan::platformBinding::legendJava::*;
+import meta::pure::executionPlan::platformBinding::legendJava::tests::utils::*;
 
 function <<meta::pure::profiles::test.Test, meta::pure::profiles::test.AlloyOnly>> 
 {  meta::pure::executionPlan::profiles::serverVersion.start='v1_11_0' }
-meta::pure::executionPlan::engine::java::tests::testPureDateLiteral() : Boolean[1]
+meta::pure::executionPlan::platformBinding::legendJava::library::pureDate::tests::testPureDateLiteral() : Boolean[1]
 {
    let conventions = engineConventions([]);
    javaExpressionTests($conventions)
@@ -32,7 +31,7 @@ meta::pure::executionPlan::engine::java::tests::testPureDateLiteral() : Boolean[
 
 function <<meta::pure::profiles::test.Test, meta::pure::profiles::test.AlloyOnly>> 
 {  meta::pure::executionPlan::profiles::serverVersion.start='v1_11_0' }
-meta::pure::executionPlan::engine::java::tests::testPureDateGetUnits() : Boolean[1]
+meta::pure::executionPlan::platformBinding::legendJava::library::pureDate::tests::testPureDateGetUnits() : Boolean[1]
 {
    javaExpressionTests(engineConventions([]))
       ->addTest('Year', {| %2018-12-31->year()}, '(long) org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2018-12-31").getYear()', javaLong())
@@ -44,7 +43,7 @@ meta::pure::executionPlan::engine::java::tests::testPureDateGetUnits() : Boolean
 
 function <<meta::pure::profiles::test.Test, meta::pure::profiles::test.AlloyOnly>> 
 {  meta::pure::executionPlan::profiles::serverVersion.start='v1_11_0' }
-meta::pure::executionPlan::engine::java::tests::testPureDateCompare() : Boolean[1]
+meta::pure::executionPlan::platformBinding::legendJava::library::pureDate::tests::testPureDateCompare() : Boolean[1]
 {
    javaExpressionTests(engineConventions([]))
       ->addTest('Greater Than', {| %2019-12-31 > %2018-12-31}, 'org.finos.legend.engine.plan.dependencies.util.Library.greaterThan(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2019-12-31"), org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2018-12-31"))', javaBoolean())
@@ -68,7 +67,7 @@ meta::pure::executionPlan::engine::java::tests::testPureDateCompare() : Boolean[
 
 function <<meta::pure::profiles::test.Test, meta::pure::profiles::test.AlloyOnly>> 
 {  meta::pure::executionPlan::profiles::serverVersion.start='v1_11_0' }
-meta::pure::executionPlan::engine::java::tests::testPureDateDerivations() : Boolean[1]
+meta::pure::executionPlan::platformBinding::legendJava::library::pureDate::tests::testPureDateDerivations() : Boolean[1]
 {
    let conventions = engineConventions([]);
    javaExpressionTests($conventions)
@@ -80,40 +79,40 @@ meta::pure::executionPlan::engine::java::tests::testPureDateDerivations() : Bool
          ->assert('%s == 1')
       ->addTest('Week of Year', {| %1973-02-01->weekOfYear()}, 'org.finos.legend.engine.plan.dependencies.util.Library.weekOfYear(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("1973-02-01"))', javaLong())
          ->assert('%s == 5')
-      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Monday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Monday)', $conventions->className(PureDate))
+      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Monday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Monday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,13))')
-      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Tuesday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Tuesday)', $conventions->className(PureDate))
+      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Tuesday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Tuesday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,7))')
-      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Wednesday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Wednesday)', $conventions->className(PureDate))
+      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Wednesday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Wednesday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,8))')
-      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Thursday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Thursday)', $conventions->className(PureDate))
+      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Thursday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Thursday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,9))')
-      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Friday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Friday)', $conventions->className(PureDate))
+      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Friday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Friday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,10))')
-      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Saturday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Saturday)', $conventions->className(PureDate))
+      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Saturday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Saturday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,11))')
-      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Sunday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Sunday)', $conventions->className(PureDate))
+      ->addTest('Most Recent Day of week', {| %2015-04-13->mostRecentDayOfWeek(DayOfWeek.Sunday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.mostRecentDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Sunday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,12))')
-      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Monday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Monday)', $conventions->className(PureDate))
+      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Monday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Monday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,6))')
-      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Tuesday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Tuesday)', $conventions->className(PureDate))
+      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Tuesday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Tuesday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,7))')
-      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Wednesday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Wednesday)', $conventions->className(PureDate))
+      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Wednesday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Wednesday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,8))')
-      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Thursday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Thursday)', $conventions->className(PureDate))
+      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Thursday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Thursday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,9))')
-      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Friday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Friday)', $conventions->className(PureDate))
+      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Friday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Friday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,10))')
-      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Saturday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Saturday)', $conventions->className(PureDate))
+      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Saturday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Saturday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,11))')
-      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Sunday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.Sunday)', $conventions->className(PureDate))
+      ->addTest('Previous Day of week', {| %2015-04-13->previousDayOfWeek(DayOfWeek.Sunday)}, 'org.finos.legend.engine.plan.dependencies.util.Library.previousDayOfWeek(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.parsePureDate("2015-04-13"), org.finos.legend.engine.plan.dependencies.domain.date.DayOfWeek.getEnumFromPureName("Sunday"))', $conventions->className(PureDate))
          ->assert('%s.equals(org.finos.legend.engine.plan.dependencies.domain.date.PureDate.newPureDate(2015,4,12))')
       ->runTests();
 }
 
 function <<meta::pure::profiles::test.Test, meta::pure::profiles::test.AlloyOnly>> 
 {  meta::pure::executionPlan::profiles::serverVersion.start='v1_11_0' }
-meta::pure::executionPlan::engine::java::tests::testPureDateToday() : Boolean[1]
+meta::pure::executionPlan::platformBinding::legendJava::library::pureDate::tests::testPureDateToday() : Boolean[1]
 {
    let conventions = engineConventions([]);
    let today = today();
@@ -128,9 +127,9 @@ meta::pure::executionPlan::engine::java::tests::testPureDateToday() : Boolean[1]
 
 function <<meta::pure::profiles::test.Test, meta::pure::profiles::test.AlloyOnly>>
 {  meta::pure::executionPlan::profiles::serverVersion.start='v1_11_0' }
-meta::pure::executionPlan::engine::java::tests::testPureDateRunPureTests() : Boolean[1]
+meta::pure::executionPlan::platformBinding::legendJava::library::pureDate::tests::testPureDateRunPureTests() : Boolean[1]
 {
-   javaPureTests(meta::pure::executionPlan::engine::java::engineConventions([]), [
+   javaPureTests(engineConventions([]), [
       meta::pure::functions::date::tests::testDateDiffYears__Boolean_1_,
       meta::pure::functions::date::tests::testDateDiffMonths__Boolean_1_,
       meta::pure::functions::date::tests::testDateDiffWeeks__Boolean_1_,

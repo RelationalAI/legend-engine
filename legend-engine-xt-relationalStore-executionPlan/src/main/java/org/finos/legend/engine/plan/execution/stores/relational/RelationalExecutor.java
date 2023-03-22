@@ -44,12 +44,7 @@ import org.finos.legend.engine.plan.execution.stores.relational.config.Temporary
 import org.finos.legend.engine.plan.execution.stores.relational.connection.driver.DatabaseManager;
 import org.finos.legend.engine.plan.execution.stores.relational.connection.manager.ConnectionManagerSelector;
 import org.finos.legend.engine.plan.execution.stores.relational.plugin.RelationalStoreExecutionState;
-import org.finos.legend.engine.plan.execution.stores.relational.result.PreparedTempTableResult;
-import org.finos.legend.engine.plan.execution.stores.relational.result.RealizedRelationalResult;
-import org.finos.legend.engine.plan.execution.stores.relational.result.RelationalResult;
-import org.finos.legend.engine.plan.execution.stores.relational.result.ResultInterpreterExtension;
-import org.finos.legend.engine.plan.execution.stores.relational.result.SQLExecutionResult;
-import org.finos.legend.engine.plan.execution.stores.relational.result.VoidRelationalResult;
+import org.finos.legend.engine.plan.execution.stores.relational.result.*;
 import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.ExecutionNode;
 import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.RelationalExecutionNode;
 import org.finos.legend.engine.protocol.pure.v1.model.executionPlan.nodes.SQLExecutionNode;
@@ -108,7 +103,7 @@ public class RelationalExecutor
         this.flowProviderHolder = flowProviderHolder;
         this.connectionManager = new ConnectionManagerSelector(temporarytestdb, relationalExecutionConfiguration.oauthProfiles, flowProviderHolder);
         this.relationalExecutionConfiguration = relationalExecutionConfiguration;
-        this.resultInterpreterExtensions = Iterate.addAllTo(ServiceLoader.load(ResultInterpreterExtension.class), Lists.mutable.empty()).collect(ResultInterpreterExtension::additionalResultBuilder);
+        this.resultInterpreterExtensions = Iterate.addAllTo(ResultInterpreterExtensionLoader.extensions(), Lists.mutable.empty()).collect(ResultInterpreterExtension::additionalResultBuilder);
     }
 
     public RelationalExecutionConfiguration getRelationalExecutionConfiguration()
@@ -141,7 +136,7 @@ public class RelationalExecutor
         {
             if ((ExecutionNodeTDSResultHelper.isResultTDS(node) || (ExecutionNodeResultHelper.isResultSizeRangeSet(node) && !ExecutionNodeResultHelper.isSingleRecordResult(node))) && !executionState.realizeInMemory)
             {
-                return new RelationalResult(executionState.activities, node, node.resultColumns, databaseTypeName, databaseTimeZone, connectionManagerConnection, profiles, tempTableList, executionState.topSpan);
+                return new RelationalResult(executionState.activities, node, node.resultColumns, databaseTypeName, databaseTimeZone, connectionManagerConnection, profiles, tempTableList, executionState.topSpan, executionState.getSessionID());
             }
             else if (node.isResultVoid())
             {
@@ -150,7 +145,7 @@ public class RelationalExecutor
             else
             {
                 // Refactor and clean up the flush to Constant
-                RelationalResult result = new RelationalResult(executionState.activities, node, node.resultColumns, databaseTypeName, databaseTimeZone, connectionManagerConnection, profiles, tempTableList, executionState.topSpan);
+                RelationalResult result = new RelationalResult(executionState.activities, node, node.resultColumns, databaseTypeName, databaseTimeZone, connectionManagerConnection, profiles, tempTableList, executionState.topSpan, executionState.getSessionID());
 
                 if (node.isResultPrimitiveType())
                 {
@@ -205,7 +200,7 @@ public class RelationalExecutor
         }
         else
         {
-            return new RelationalResult(executionState.activities, node, node.resultColumns, databaseTypeName, databaseTimeZone, connectionManagerConnection, profiles, tempTableList, executionState.topSpan);
+            return new RelationalResult(executionState.activities, node, node.resultColumns, databaseTypeName, databaseTimeZone, connectionManagerConnection, profiles, tempTableList, executionState.topSpan, executionState.getSessionID());
         }
     }
 
@@ -243,14 +238,16 @@ public class RelationalExecutor
             return new VoidRelationalResult(executionState.activities, connectionManagerConnection, profiles);
         }
 
-        return new SQLExecutionResult(executionState.activities, node, databaseType, databaseTimeZone, connectionManagerConnection, profiles, tempTableList, executionState.topSpan);
+        return new SQLExecutionResult(executionState.activities, node, databaseType, databaseTimeZone, connectionManagerConnection, profiles, tempTableList, executionState.topSpan, executionState.getSessionID());
     }
 
     private void prepareForSQLExecution(ExecutionNode node, Connection connection, String databaseTimeZone, String databaseTypeName, List<String> tempTableList, MutableList<CommonProfile> profiles, ExecutionState executionState)
     {
         String sqlQuery;
+        String sqlComment;
 
         sqlQuery = node instanceof RelationalExecutionNode ? ((RelationalExecutionNode) node).sqlQuery() : ((SQLExecutionNode) node).sqlQuery();
+        sqlComment = node instanceof RelationalExecutionNode ? ((RelationalExecutionNode) node).sqlComment() : ((SQLExecutionNode) node).sqlComment();
 
         DatabaseManager databaseManager = DatabaseManager.fromString(databaseTypeName);
         for (Map.Entry<String, Result> var : executionState.getResults().entrySet())
@@ -284,6 +281,7 @@ public class RelationalExecutor
 
         try
         {
+            sqlComment = sqlComment != null ? FreeMarkerExecutor.process(sqlComment, executionState, databaseTypeName, databaseTimeZone) : null;
             sqlQuery = FreeMarkerExecutor.process(sqlQuery, executionState, databaseTypeName, databaseTimeZone);
             Span span = GlobalTracer.get().activeSpan();
             if (span != null)
@@ -298,7 +296,7 @@ public class RelationalExecutor
 
         LOGGER.info(new LogInfo(profiles, LoggingEventType.EXECUTION_RELATIONAL_REPROCESS_SQL, "Reprocessing sql with vars " + executionState.getResults().keySet() + ": " + sqlQuery).toString());
 
-        executionState.activities.add(new RelationalExecutionActivity(sqlQuery));
+        executionState.activities.add(new RelationalExecutionActivity(sqlQuery, sqlComment));
     }
 
     private void prepareTempTable(Connection connectionManagerConnection, StreamingResult res, String tempTableName, String databaseTypeName, String databaseTimeZone, List<String> tempTableList)

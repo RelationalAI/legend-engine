@@ -14,6 +14,11 @@
 
 package org.finos.legend.engine.language.pure.grammar.test;
 
+import org.finos.legend.engine.language.pure.grammar.from.PureGrammarParser;
+import org.finos.legend.engine.language.pure.grammar.to.PureGrammarComposer;
+import org.finos.legend.engine.language.pure.grammar.to.PureGrammarComposerContext;
+import org.finos.legend.engine.protocol.pure.v1.model.context.PureModelContextData;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestServiceGrammarRoundtrip extends TestGrammarRoundtrip.TestGrammarRoundtripTestSuite
@@ -111,13 +116,10 @@ public class TestServiceGrammarRoundtrip extends TestGrammarRoundtrip.TestGramma
                 "  {\n" +
                 "    query: src: meta::transform::tests::Address[1]|$src.a->from(meta::myMapping, meta::myRuntime);\n" +
                 "  }\n" +
-                "  test: Single\n" +
-                "  {\n" +
-                "    data: 'moreThanData';\n" +
-                "    asserts:\n" +
-                "    [\n" +
-                "    ];\n" +
-                "  }\n" +
+                "  testSuites:\n" +
+                "  [\n" +
+                "\n" +
+                "  ]\n" +
                 "}\n");
     }
 
@@ -1291,8 +1293,249 @@ public class TestServiceGrammarRoundtrip extends TestGrammarRoundtrip.TestGramma
     }
 
     @Test
+    public void testExecutionEnvironment()
+    {
+        test("###Service\n" +
+                "ExecutionEnvironment test::executionEnvironment\n" +
+                "{\n" +
+                "  executions:\n" +
+                "  [\n" +
+                "    UAT:\n" +
+                "    {\n" +
+                "      mapping: test::myMapping1;\n" +
+                "      runtime: test::myRuntime1;\n" +
+                "    },\n" +
+                "    PROD:\n" +
+                "    {\n" +
+                "      mapping: test::myMapping2;\n" +
+                "      runtime: test::myRuntime2;\n" +
+                "    }\n" +
+                "  ];\n" +
+                "}\n");
+
+        test("###Service\n" +
+                "ExecutionEnvironment test::executionEnvironment\n" +
+                "{\n" +
+                "  executions:\n" +
+                "  [\n" +
+                "    UAT:\n" +
+                "    [\n" +
+                "      abc:\n" +
+                "      {\n" +
+                "        mapping: test::myMapping1;\n" +
+                "        runtime: test::myRuntime1;\n" +
+                "      },\n" +
+                "      xyz:\n" +
+                "      {\n" +
+                "        mapping: test::myMapping2;\n" +
+                "        runtime: test::myRuntime2;\n" +
+                "      }\n" +
+                "    ],\n" +
+                "    PROD:\n" +
+                "    [\n" +
+                "      abc:\n" +
+                "      {\n" +
+                "        mapping: test::myMapping3;\n" +
+                "        runtime: test::myRuntime3;\n" +
+                "      },\n" +
+                "      xyz:\n" +
+                "      {\n" +
+                "        mapping: test::myMapping4;\n" +
+                "        runtime:\n" +
+                "        #{\n" +
+                "          connections:\n" +
+                "          [\n" +
+                "            ModelStore:\n" +
+                "            [\n" +
+                "              id1: test::myConnection,\n" +
+                "              id2:\n" +
+                "              #{\n" +
+                "                JsonModelConnection\n" +
+                "                {\n" +
+                "                  class: meta::mySimpleClass;\n" +
+                "                  url: 'my_url';\n" +
+                "                }\n" +
+                "              }#,\n" +
+                "              id3:\n" +
+                "              #{\n" +
+                "                JsonModelConnection\n" +
+                "                {\n" +
+                "                  class: meta::mySimpleClass;\n" +
+                "                  url: 'my_url';\n" +
+                "                }\n" +
+                "              }#\n" +
+                "            ]\n" +
+                "          ];\n" +
+                "        }#;\n" +
+                "      }\n" +
+                "    ]\n" +
+                "  ];\n" +
+                "}\n");
+    }
+
+    @Test
+    public void testExecutionEnvironmentInMultiExecService()
+    {
+        test("###Service\n" +
+                "Service meta::pure::myServiceMulti\n" +
+                "{\n" +
+                "  pattern: 'url/myUrl/{env}';\n" +
+                "  owners:\n" +
+                "  [\n" +
+                "    'ownerName'\n" +
+                "  ];\n" +
+                "  documentation: 'this is just for context';\n" +
+                "  autoActivateUpdates: true;\n" +
+                "  execution: Multi\n" +
+                "  {\n" +
+                "    query: env: String[1]|model::pure::mapping::modelToModel::test::shared::dest::Product.all()->from(test::executionEnvironment->get($env, 'abc'))->graphFetchChecked(#{model::pure::mapping::modelToModel::test::shared::dest::Product{name}}#)->serialize(#{model::pure::mapping::modelToModel::test::shared::dest::Product{name}}#);\n" +
+                "  }\n" +
+                "  test: Multi\n" +
+                "  {\n" +
+                "    tests['QA']:\n" +
+                "    {\n" +
+                "      data: 'moreData';\n" +
+                "      asserts:\n" +
+                "      [\n" +
+                "        { [], res: Result<Any|*>[1]|$res.values->cast(@TabularDataSet).rows->size() == 1 },\n" +
+                "        { [], res: Result<Any|*>[1]|$res.values->cast(@TabularDataSet).rows->size() == 1 }\n" +
+                "      ];\n" +
+                "    }\n" +
+                "    tests['UAT']:\n" +
+                "    {\n" +
+                "      data: 'moreData';\n" +
+                "      asserts:\n" +
+                "      [\n" +
+                "        { [], res: Result<Any|*>[1]|$res.values->cast(@TabularDataSet).rows->size() == 1 },\n" +
+                "        { [], res: Result<Any|*>[1]|$res.values->cast(@TabularDataSet).rows->size() == 1 }\n" +
+                "      ];\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n" +
+                "\n" +
+                "ExecutionEnvironment test::executionEnvironment\n" +
+                "{\n" +
+                "  executions:\n" +
+                "  [\n" +
+                "    UAT:\n" +
+                "    [\n" +
+                "      abc:\n" +
+                "      {\n" +
+                "        mapping: test::myMapping1;\n" +
+                "        runtime: test::myRuntime1;\n" +
+                "      },\n" +
+                "      xyz:\n" +
+                "      {\n" +
+                "        mapping: test::myMapping2;\n" +
+                "        runtime: test::myRuntime2;\n" +
+                "      }\n" +
+                "    ],\n" +
+                "    PROD:\n" +
+                "    [\n" +
+                "      abc:\n" +
+                "      {\n" +
+                "        mapping: test::myMapping3;\n" +
+                "        runtime: test::myRuntime3;\n" +
+                "      },\n" +
+                "      xyz:\n" +
+                "      {\n" +
+                "        mapping: test::myMapping4;\n" +
+                "        runtime:\n" +
+                "        #{\n" +
+                "          connections:\n" +
+                "          [\n" +
+                "            ModelStore:\n" +
+                "            [\n" +
+                "              id1: test::myConnection,\n" +
+                "              id2:\n" +
+                "              #{\n" +
+                "                JsonModelConnection\n" +
+                "                {\n" +
+                "                  class: meta::mySimpleClass;\n" +
+                "                  url: 'my_url';\n" +
+                "                }\n" +
+                "              }#,\n" +
+                "              id3:\n" +
+                "              #{\n" +
+                "                JsonModelConnection\n" +
+                "                {\n" +
+                "                  class: meta::mySimpleClass;\n" +
+                "                  url: 'my_url';\n" +
+                "                }\n" +
+                "              }#\n" +
+                "            ]\n" +
+                "          ];\n" +
+                "        }#;\n" +
+                "      }\n" +
+                "    ]\n" +
+                "  ];\n" +
+                "}\n"
+        );
+    }
+
+    @Test
+    public void testExecutionEnvironmentInSingleExecService()
+    {
+        test("###Service\n" +
+                "Service meta::pure::myServiceMulti\n" +
+                "{\n" +
+                "  pattern: 'url/myUrl/{env}';\n" +
+                "  owners:\n" +
+                "  [\n" +
+                "    'ownerName'\n" +
+                "  ];\n" +
+                "  documentation: 'this is just for context';\n" +
+                "  autoActivateUpdates: true;\n" +
+                "  execution: Multi\n" +
+                "  {\n" +
+                "    query: env: String[1]|model::pure::mapping::modelToModel::test::shared::dest::Product.all()->from(test::executionEnvironment->get($env))->graphFetchChecked(#{model::pure::mapping::modelToModel::test::shared::dest::Product{name}}#)->serialize(#{model::pure::mapping::modelToModel::test::shared::dest::Product{name}}#);\n" +
+                "  }\n" +
+                "  test: Multi\n" +
+                "  {\n" +
+                "    tests['QA']:\n" +
+                "    {\n" +
+                "      data: 'moreData';\n" +
+                "      asserts:\n" +
+                "      [\n" +
+                "        { [], res: Result<Any|*>[1]|$res.values->cast(@TabularDataSet).rows->size() == 1 },\n" +
+                "        { [], res: Result<Any|*>[1]|$res.values->cast(@TabularDataSet).rows->size() == 1 }\n" +
+                "      ];\n" +
+                "    }\n" +
+                "    tests['UAT']:\n" +
+                "    {\n" +
+                "      data: 'moreData';\n" +
+                "      asserts:\n" +
+                "      [\n" +
+                "        { [], res: Result<Any|*>[1]|$res.values->cast(@TabularDataSet).rows->size() == 1 },\n" +
+                "        { [], res: Result<Any|*>[1]|$res.values->cast(@TabularDataSet).rows->size() == 1 }\n" +
+                "      ];\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n" +
+                "\n" +
+                "ExecutionEnvironment test::executionEnvironment\n" +
+                "{\n" +
+                "  executions:\n" +
+                "  [\n" +
+                "    UAT:\n" +
+                "    {\n" +
+                "      mapping: test::myMapping1;\n" +
+                "      runtime: test::myRuntime1;\n" +
+                "    },\n" +
+                "    PROD:\n" +
+                "    {\n" +
+                "      mapping: test::myMapping2;\n" +
+                "      runtime: test::myRuntime2;\n" +
+                "    }\n" +
+                "  ];\n" +
+                "}\n"
+        );
+    }
+
+    @Test
     public void testBindingWithService()
     {
+        // Tests with empty test suites
         test("###Service\n" +
                 "Service meta::pure::myServiceSingle\n" +
                 "{\n" +
@@ -1324,5 +1567,200 @@ public class TestServiceGrammarRoundtrip extends TestGrammarRoundtrip.TestGramma
                 "\n" +
                 "  ]\n" +
                 "}\n");
+
+        // Test with test suites
+        test("###Service\n" +
+                "Service meta::pure::myServiceSingle\n" +
+                "{\n" +
+                "  pattern: '/showcase/binding';\n" +
+                "  documentation: 'Showcase service with binding';\n" +
+                "  autoActivateUpdates: false;\n" +
+                "  execution: Single\n" +
+                "  {\n" +
+                "    query: data: String[1]|demo::Address->internalize(demo::InternalizeBinding, $data)->externalize(demo::InternalizeBinding, #{demo::Address{street}}#);\n" +
+                "  }\n" +
+                "  testSuites:\n" +
+                "  [\n" +
+                "    testSuite1:\n" +
+                "    {\n" +
+                "      tests:\n" +
+                "      [\n" +
+                "        test1:\n" +
+                "        {\n" +
+                "          parameters:\n" +
+                "          [\n" +
+                "            data = '[{\"street\":\"street A\"}]'\n" +
+                "          ]\n" +
+                "          asserts:\n" +
+                "          [\n" +
+                "            assert1:\n" +
+                "              EqualToJson\n" +
+                "              #{\n" +
+                "                expected : \n" +
+                "                  ExternalFormat\n" +
+                "                  #{\n" +
+                "                    contentType: 'application/json';\n" +
+                "                    data: '[{\"street\":\"street A\"}]';\n" +
+                "                  }#;\n" +
+                "              }#\n" +
+                "          ]\n" +
+                "        }\n" +
+                "      ]\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}\n");
+
+        test("###Service\n" +
+                "Service meta::pure::myServiceSingle\n" +
+                "{\n" +
+                "  pattern: '/showcase/binding';\n" +
+                "  documentation: 'Showcase service with binding';\n" +
+                "  autoActivateUpdates: false;\n" +
+                "  execution: Single\n" +
+                "  {\n" +
+                "    query: data: ByteStream[1]|demo::Address->internalize(demo::InternalizeBinding, $data)->externalize(demo::InternalizeBinding, #{demo::Address{street}}#);\n" +
+                "  }\n" +
+                "  testSuites:\n" +
+                "  [\n" +
+                "    testSuite1:\n" +
+                "    {\n" +
+                "      tests:\n" +
+                "      [\n" +
+                "        test1:\n" +
+                "        {\n" +
+                "          parameters:\n" +
+                "          [\n" +
+                "            data = byteStream('[{\"street\":\"street A\"}]')\n" +
+                "          ]\n" +
+                "          asserts:\n" +
+                "          [\n" +
+                "            assert1:\n" +
+                "              EqualToJson\n" +
+                "              #{\n" +
+                "                expected : \n" +
+                "                  ExternalFormat\n" +
+                "                  #{\n" +
+                "                    contentType: 'application/json';\n" +
+                "                    data: '[{\"street\":\"street A\"}]';\n" +
+                "                  }#;\n" +
+                "              }#\n" +
+                "          ]\n" +
+                "        }\n" +
+                "      ]\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}\n");
+    }
+
+    @Test
+    public void testDeletionOfEmptyTests()
+    {
+        testComposedGrammar("###Service\n" +
+                "Service meta::pure::myServiceSingle\n" +
+                "{\n" +
+                "  pattern: 'url/myUrl/';\n" +
+                "  documentation: 'this is just for context';\n" +
+                "  autoActivateUpdates: false;\n" +
+                "  execution: Single\n" +
+                "  {\n" +
+                "    query: src: meta::transform::tests::Address[1]|$src.a->from(meta::myMapping, meta::myRuntime);\n" +
+                "  }\n" +
+                "  test: Single\n" +
+                "  {\n" +
+                "    data: 'moreThanData';\n" +
+                "    asserts:\n" +
+                "    [\n" +
+                "    ];\n" +
+                "  }\n" +
+                "}\n",
+                "###Service\n" +
+                "Service meta::pure::myServiceSingle\n" +
+                "{\n" +
+                "  pattern: 'url/myUrl/';\n" +
+                "  documentation: 'this is just for context';\n" +
+                "  autoActivateUpdates: false;\n" +
+                "  execution: Single\n" +
+                "  {\n" +
+                "    query: src: meta::transform::tests::Address[1]|$src.a->from(meta::myMapping, meta::myRuntime);\n" +
+                "  }\n" +
+                "}\n");
+
+        testComposedGrammar("###Service\n" +
+                "Service meta::pure::myServiceMulti\n" +
+                "{\n" +
+                "  pattern: 'url/myUrl/';\n" +
+                "  owners:\n" +
+                "  [\n" +
+                "    'ownerName'\n" +
+                "  ];\n" +
+                "  documentation: 'this is just for context';\n" +
+                "  autoActivateUpdates: true;\n" +
+                "  execution: Multi\n" +
+                "  {\n" +
+                "    query: |model::pure::mapping::modelToModel::test::shared::dest::Product.all()->graphFetchChecked(#{model::pure::mapping::modelToModel::test::shared::dest::Product{name}}#)->serialize(#{model::pure::mapping::modelToModel::test::shared::dest::Product{name}}#);\n" +
+                "    key: 'env';\n" +
+                "    executions['QA']:\n" +
+                "    {\n" +
+                "      mapping: meta::myMapping1;\n" +
+                "      runtime: test::runtime;\n" +
+                "    }\n" +
+                "    executions['UAT']:\n" +
+                "    {\n" +
+                "      mapping: meta::myMapping2;\n" +
+                "      runtime: meta::myRuntime;\n" +
+                "    }\n" +
+                "  }\n" +
+                "  test: Multi\n" +
+                "  {\n" +
+                "    tests['QA']:\n" +
+                "    {\n" +
+                "      data: 'moreData';\n" +
+                "      asserts:\n" +
+                "      [\n" +
+                "      ];\n" +
+                "    }\n" +
+                "    tests['UAT']:\n" +
+                "    {\n" +
+                "      data: 'moreData';\n" +
+                "      asserts:\n" +
+                "      [\n" +
+                "      ];\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n",
+                "###Service\n" +
+                "Service meta::pure::myServiceMulti\n" +
+                "{\n" +
+                "  pattern: 'url/myUrl/';\n" +
+                "  owners:\n" +
+                "  [\n" +
+                "    'ownerName'\n" +
+                "  ];\n" +
+                "  documentation: 'this is just for context';\n" +
+                "  autoActivateUpdates: true;\n" +
+                "  execution: Multi\n" +
+                "  {\n" +
+                "    query: |model::pure::mapping::modelToModel::test::shared::dest::Product.all()->graphFetchChecked(#{model::pure::mapping::modelToModel::test::shared::dest::Product{name}}#)->serialize(#{model::pure::mapping::modelToModel::test::shared::dest::Product{name}}#);\n" +
+                "    key: 'env';\n" +
+                "    executions['QA']:\n" +
+                "    {\n" +
+                "      mapping: meta::myMapping1;\n" +
+                "      runtime: test::runtime;\n" +
+                "    }\n" +
+                "    executions['UAT']:\n" +
+                "    {\n" +
+                "      mapping: meta::myMapping2;\n" +
+                "      runtime: meta::myRuntime;\n" +
+                "    }\n" +
+                "  }\n" +
+                "}\n");
+    }
+
+    private void testComposedGrammar(String input, String result)
+    {
+        PureModelContextData modelData = null;
+        modelData = PureGrammarParser.newInstance().parseModel(input, "", 0, 0, false);
+        PureGrammarComposer grammarTransformer = PureGrammarComposer.newInstance(PureGrammarComposerContext.Builder.newInstance().build());
+        Assert.assertEquals(result, grammarTransformer.renderPureModelContextData(modelData));
     }
 }
