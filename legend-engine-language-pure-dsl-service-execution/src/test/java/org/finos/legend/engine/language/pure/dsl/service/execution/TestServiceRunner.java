@@ -272,7 +272,7 @@ public class TestServiceRunner
                 .withSerializationFormat(SerializationFormat.PURE);
 
         String result = serviceRunnerWithLetVariablePureExpression.run(serviceRunnerInput);
-        Assert.assertEquals("[{\"firstName\":\"Peter\",\"lastName\":\"Smith\"},{\"firstName\":\"John\",\"lastName\":\"Johnson\"},{\"firstName\":\"Bob\",\"lastName\":\"Stevens\"}]", result);
+        Assert.assertEquals("{\"firstName\":\"Peter\",\"lastName\":\"Smith\"}", result);
     }
 
     @Test
@@ -285,7 +285,7 @@ public class TestServiceRunner
                 .withSerializationFormat(SerializationFormat.PURE);
 
         String result = serviceRunnerWithLetVariablePureExpression.run(serviceRunnerInput);
-        Assert.assertEquals("[{\"firstName\":\"Peter\",\"lastName\":\"Smith\"},{\"firstName\":\"John\",\"lastName\":\"Johnson\"},{\"firstName\":\"Bob\",\"lastName\":\"Stevens\"}]", result);
+        Assert.assertEquals("{\"firstName\":\"John\",\"lastName\":\"Johnson\"}", result);
     }
 
     @Test
@@ -422,6 +422,7 @@ public class TestServiceRunner
     public void testServiceWithEnumParamEqualOpFilter()
     {
         this.testServiceExecutionWithEnumParam("test::EnumParamEqualOpFilter_EmployeeType_1__TabularDataSet_1_", "eType", "FULL_TIME", "{\"columns\":[{\"name\":\"ID\",\"type\":\"Integer\"},{\"name\":\"Name\",\"type\":\"String\"},{\"name\":\"Employee Type\",\"type\":\"test::EmployeeType\"}],\"rows\":[{\"values\":[102,\"Bob\",\"FULL_TIME\"]}]}");
+        this.testServiceExecutionWithEnumParam("test::EnumParamEqualOpFilterGraphFetch_YesNo_1__String_1_", "yesOrNo", "YES", "[{\"id\":102,\"name\":\"Bob\",\"active\":\"YES\"},{\"id\":104,\"name\":\"Bob\",\"active\":\"YES\"}]");
     }
 
     @Test
@@ -478,8 +479,11 @@ public class TestServiceRunner
     @Test
     public void testServiceWithCollectionEnumParam()
     {
-        Exception e = Assert.assertThrows(RuntimeException.class, () -> buildPlanForFetchFunction("/org/finos/legend/engine/pure/dsl/service/execution/test/enumServiceParameter.pure", "test::CollectionEnumParam_EmployeeType_MANY__TabularDataSet_1_"));
-        e.getMessage().contains("Collection of Enums is not supported as service parameter [eType]");
+        Exception e1 = Assert.assertThrows(RuntimeException.class, () -> buildPlanForFetchFunction("/org/finos/legend/engine/pure/dsl/service/execution/test/enumServiceParameter.pure", "test::CollectionEnumParam_EmployeeType_MANY__TabularDataSet_1_"));
+        e1.getMessage().contains("Collection of Enums is not supported as service parameter [eType]");
+
+        Exception e2 = Assert.assertThrows(RuntimeException.class, () -> buildPlanForFetchFunction("/org/finos/legend/engine/pure/dsl/service/execution/test/enumServiceParameter.pure", "test::CollectionEnumParamGraphFetch_EmployeeType_MANY__String_1_"));
+        e2.getMessage().contains("Collection of Enums is not supported as service parameter [eType]");
     }
 
     private static class EnumMultipleParamServiceRunner extends AbstractServicePlanExecutor
@@ -521,6 +525,7 @@ public class TestServiceRunner
     public void testServiceWithEnumParamStringParamFilters()
     {
         this.testServiceExecutionWithMultipleEnumParam("test::EnumParamStringParamFilters_EmployeeType_1__String_1__TabularDataSet_1_", "eType", "eName", Arrays.asList("CONTRACT", "Alice"), "{\"columns\":[{\"name\":\"ID\",\"type\":\"Integer\"},{\"name\":\"Name\",\"type\":\"String\"},{\"name\":\"Employee Type\",\"type\":\"test::EmployeeType\"}],\"rows\":[{\"values\":[101,\"Alice\",\"CONTRACT\"]}]}");
+        this.testServiceExecutionWithMultipleEnumParam("test::EnumParamStringParamFiltersGraphFetch_EmployeeType_1__String_1__String_1_", "eType", "eName", Arrays.asList("CONTRACT", "Alice"), "{\"id\":101,\"name\":\"Alice\",\"employeeType\":\"CONTRACT\"}");
     }
 
     @Test
@@ -533,6 +538,7 @@ public class TestServiceRunner
     public void testServiceWithMultipleEnumParamsNotInOPEqualOpFilter()
     {
         this.testServiceExecutionWithMultipleEnumParam("test::MultipleEnumParamsNotInOPEqualOpFilter_EmployeeType_1__YesNo_1__TabularDataSet_1_", "eType", "yesOrNo", Arrays.asList("FULL_TIME", "YES"), "{\"columns\":[{\"name\":\"ID\",\"type\":\"Integer\"}],\"rows\":[{\"values\":[104]}]}");
+        this.testServiceExecutionWithMultipleEnumParam("test::MultipleEnumParamsNotInOPEqualOpFilterGraphFetch_EmployeeType_1__YesNo_1__String_1_", "eType", "yesOrNo", Arrays.asList("FULL_TIME", "YES"), "{\"id\":104}");
     }
 
     @Test
@@ -711,6 +717,42 @@ public class TestServiceRunner
     }
 
     @Test
+    public void testServiceRunnerGraphFetchBatchMemoryLimitForRelational()
+    {
+        ServiceRunnerInput serviceRunnerInput = ServiceRunnerInput
+                .newInstance()
+                .withSerializationFormat(SerializationFormat.PURE);
+
+        // Service with default batch size - 1000 (for relational)
+        SimpleRelationalServiceRunnerWithDefaultBatchSize simpleRelationalServiceRunner = new SimpleRelationalServiceRunnerWithDefaultBatchSize();
+
+        simpleRelationalServiceRunner.setGraphFetchBatchMemoryLimit(1);
+        Exception e1 = Assert.assertThrows(RuntimeException.class, () -> simpleRelationalServiceRunner.run(serviceRunnerInput));
+        Assert.assertEquals("Maximum memory reached when processing the graphFetch. Try reducing batch size of graphFetch fetch operation.", e1.getMessage());
+
+        simpleRelationalServiceRunner.setGraphFetchBatchMemoryLimit(300);
+        Exception e2 = Assert.assertThrows(RuntimeException.class, () -> simpleRelationalServiceRunner.run(serviceRunnerInput));
+        Assert.assertEquals("Maximum memory reached when processing the graphFetch. Try reducing batch size of graphFetch fetch operation.", e2.getMessage());
+
+        simpleRelationalServiceRunner.setGraphFetchBatchMemoryLimit(700);
+        Assert.assertEquals("[{\"firstName\":\"Peter\",\"lastName\":\"Smith\",\"employmentDateTime\":\"2012-05-20T13:10:52.501000000\"},{\"firstName\":\"John\",\"lastName\":\"Johnson\",\"employmentDateTime\":\"2005-03-15T18:47:52.000000000\"},{\"firstName\":\"Bob\",\"lastName\":\"Stevens\",\"employmentDateTime\":null}]", simpleRelationalServiceRunner.run(serviceRunnerInput));
+
+
+        // Service which has graph fetch batch size set - 1
+        SimpleRelationalServiceWithBatchSizeRunner simpleRelationalServiceWithBatchSizeRunner = new SimpleRelationalServiceWithBatchSizeRunner();
+
+        simpleRelationalServiceWithBatchSizeRunner.setGraphFetchBatchMemoryLimit(1);
+        Exception e3 = Assert.assertThrows(RuntimeException.class, () -> simpleRelationalServiceWithBatchSizeRunner.run(serviceRunnerInput));
+        Assert.assertEquals("Maximum memory reached when processing the graphFetch. Try reducing batch size of graphFetch fetch operation.", e3.getMessage());
+
+        simpleRelationalServiceWithBatchSizeRunner.setGraphFetchBatchMemoryLimit(300);
+        Assert.assertEquals("[{\"firstName\":\"Peter\",\"lastName\":\"Smith\",\"employmentDateTime\":\"2012-05-20T13:10:52.501000000\"},{\"firstName\":\"John\",\"lastName\":\"Johnson\",\"employmentDateTime\":\"2005-03-15T18:47:52.000000000\"},{\"firstName\":\"Bob\",\"lastName\":\"Stevens\",\"employmentDateTime\":null}]", simpleRelationalServiceWithBatchSizeRunner.run(serviceRunnerInput));
+
+        simpleRelationalServiceWithBatchSizeRunner.setGraphFetchBatchMemoryLimit(700);
+        Assert.assertEquals("[{\"firstName\":\"Peter\",\"lastName\":\"Smith\",\"employmentDateTime\":\"2012-05-20T13:10:52.501000000\"},{\"firstName\":\"John\",\"lastName\":\"Johnson\",\"employmentDateTime\":\"2005-03-15T18:47:52.000000000\"},{\"firstName\":\"Bob\",\"lastName\":\"Stevens\",\"employmentDateTime\":null}]", simpleRelationalServiceWithBatchSizeRunner.run(serviceRunnerInput));
+    }
+
+    @Test
     public void testSimpleRelationalServiceWithUserId()
     {
         SimpleRelationalServiceWithUserRunner simpleRelationalServiceWithUserRunner = new SimpleRelationalServiceWithUserRunner();
@@ -788,6 +830,34 @@ public class TestServiceRunner
         public List<ServiceVariable> getServiceVariables()
         {
             return Collections.singletonList(new ServiceVariable("input", String.class, Multiplicity.PURE_ONE));
+        }
+    }
+
+    private static class SimpleRelationalServiceRunnerWithDefaultBatchSize extends AbstractServicePlanExecutor
+    {
+        SimpleRelationalServiceRunnerWithDefaultBatchSize()
+        {
+            super("test::Service", buildPlanForFetchFunction("/org/finos/legend/engine/pure/dsl/service/execution/test/simpleRelationalService.pure", "test::graphFetchWithBatchMemoryLimit__String_1_"), true);
+        }
+
+        @Override
+        public List<ServiceVariable> getServiceVariables()
+        {
+            return Collections.emptyList();
+        }
+    }
+
+    private static class SimpleRelationalServiceWithBatchSizeRunner extends AbstractServicePlanExecutor
+    {
+        SimpleRelationalServiceWithBatchSizeRunner()
+        {
+            super("test::Service", buildPlanForFetchFunction("/org/finos/legend/engine/pure/dsl/service/execution/test/simpleRelationalService.pure", "test::graphFetchWithBatchMemoryLimitAndBatchSize__String_1_"), true);
+        }
+
+        @Override
+        public List<ServiceVariable> getServiceVariables()
+        {
+            return Collections.emptyList();
         }
     }
 

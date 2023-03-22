@@ -23,6 +23,7 @@ import meta::protocols::pure::vX_X_X::invocation::execution::execute::*;
 import meta::relational::mapping::*;
 import meta::pure::mapping::*;
 import meta::protocols::pure::vX_X_X::transformation::fromPureGraph::*;
+import meta::relational::metamodel::*;
 
 function meta::protocols::pure::vX_X_X::extension::getRelationalExtension(type:String[1]):meta::pure::extension::SerializerExtension[1]
 {
@@ -81,13 +82,15 @@ function meta::protocols::pure::vX_X_X::extension::getRelationalExtension():meta
           [
                      rb:meta::pure::executionPlan::RelationalBlockExecutionNode[1]|
                                ^meta::protocols::pure::vX_X_X::metamodel::executionPlan::RelationalBlockExecutionNode( _type = 'relationalBlock',
-                                                                                                                       resultType = $rb.resultType->meta::protocols::pure::vX_X_X::transformation::fromPureGraph::executionPlan::transformResultType($mapping, $extensions)),
+                                                                                                                       resultType = $rb.resultType->meta::protocols::pure::vX_X_X::transformation::fromPureGraph::executionPlan::transformResultType($mapping, $extensions),
+                                                                                                                       finallyExecutionNodes = $rb.finallyExecutionNodes->map(n|$n->meta::protocols::pure::vX_X_X::transformation::fromPureGraph::executionPlan::transformNode($mapping, $extensions)));,
                      rel:meta::relational::mapping::SQLExecutionNode[1]|
                         ^meta::protocols::pure::vX_X_X::metamodel::executionPlan::SQLExecutionNode(
                            _type = 'sql',
                            resultType = $rel.resultType->meta::protocols::pure::vX_X_X::transformation::fromPureGraph::executionPlan::transformResultType($mapping, $extensions),
                            resultSizeRange = $rel.resultSizeRange->isEmpty()->if(|[],|$rel.resultSizeRange->toOne()->meta::protocols::pure::vX_X_X::transformation::fromPureGraph::domain::transformMultiplicity()),
                            resultColumns = $rel.resultColumns->map(c | $c->meta::protocols::pure::vX_X_X::transformation::fromPureGraph::executionPlan::transformResultColumn()),
+                           sqlComment = $rel.sqlComment,
                            sqlQuery = $rel.sqlQuery,
                            onConnectionCloseCommitQuery = $rel.onConnectionCloseCommitQuery,
                            onConnectionCloseRollbackQuery = $rel.onConnectionCloseRollbackQuery,
@@ -189,7 +192,7 @@ function meta::protocols::pure::vX_X_X::extension::getRelationalExtension():meta
                                                                                                     name = $c.name,
                                                                                                     doc = $c.documentation,
                                                                                                     type = $c.type->toOne()->elementToPath(),
-                                                                                                    enumMapping = if($c.enumMappingId->isEmpty(),|[],|meta::protocols::pure::vX_X_X::transformation::fromPureGraph::executionPlan::transformEnumMapping($mapping.enumerationMappingByName($c.enumMappingId->toOne())->toOne())),
+                                                                                                    enumMapping = if($c.enumMappingId->isEmpty(),|[],|meta::protocols::pure::vX_X_X::transformation::fromPureGraph::executionPlan::transformEnumMapping($mapping->enumerationMappingByName($c.enumMappingId->toOne())->toOne())),
                                                                                                     relationalType = $c.sourceDataType->match(
                                                                                                        [
                                                                                                           d:meta::relational::metamodel::datatype::DataType[0]|[],
@@ -216,9 +219,9 @@ function meta::protocols::pure::vX_X_X::extension::getRelationalExtension():meta
                                                    rsi: RootRelationalInstanceSetImplementation[1] |
                                                                      // Main Store
                                                                      let mainTableAlias = $rsi.mainTableAlias;
-                                                                     let mainStore = if ($mainTableAlias.database->isEmpty(), | $rsi.mainTable.schema.database, | $mainTableAlias.database->toOne());
+                                                                     let mainStore = if ($mainTableAlias.database->isEmpty(), | $rsi->mainTable().schema.database, | $mainTableAlias.database->toOne());
                                                                      // Filter
-                                                                     let filter = $rsi.resolveFilter();
+                                                                     let filter = $rsi->resolveFilter();
                                                                      let fromFilter = $filter.database;
                                                                      let fromFilterOpertation = $filter.filter.operation->meta::relational::functions::pureToSqlQuery::extractStore();
                                                                      let fromFilterJoins = $filter.joinTreeNode->map(x|$x->meta::relational::functions::pureToSqlQuery::flatten()).database;

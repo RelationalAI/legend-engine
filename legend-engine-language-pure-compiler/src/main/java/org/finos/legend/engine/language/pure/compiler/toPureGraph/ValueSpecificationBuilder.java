@@ -30,6 +30,7 @@ import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.applica
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.application.AppliedProperty;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.application.AppliedQualifiedProperty;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.application.UnknownAppliedFunction;
+import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.CByteStream;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.AggregateValue;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.CBoolean;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.CDateTime;
@@ -45,14 +46,18 @@ import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.Cla
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.Collection;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.Enum;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.EnumValue;
-import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.ExecutionContextInstance;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.GenericTypeInstance;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.HackedUnit;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.KeyExpression;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.Lambda;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.MappingInstance;
-import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.Pair;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.PrimitiveType;
+import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.UnitInstance;
+import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.UnitType;
+import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.Whatever;
+import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.AggregateValue;
+import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.ExecutionContextInstance;
+import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.Pair;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.PureList;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.RuntimeInstance;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.SerializationConfig;
@@ -61,33 +66,13 @@ import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.cla
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.TDSSortInformation;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.TdsOlapAggregation;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.TdsOlapRank;
-import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.UnitInstance;
-import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.UnitType;
-import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.Whatever;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.graph.PropertyGraphFetchTree;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.graph.RootGraphFetchTree;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.path.Path;
 import org.finos.legend.engine.protocol.pure.v1.model.valueSpecification.raw.classInstance.path.PropertyPathElement;
 import org.finos.legend.engine.shared.core.operational.Assert;
 import org.finos.legend.engine.shared.core.operational.errorManagement.EngineException;
-import org.finos.legend.pure.generated.Root_meta_pure_functions_collection_AggregateValue_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_functions_collection_Pair_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_functions_lang_KeyExpression_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_graphFetch_execution_AlloySerializationConfig;
-import org.finos.legend.pure.generated.Root_meta_pure_graphFetch_execution_AlloySerializationConfig_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_metamodel_path_Path_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_metamodel_path_PropertyPathElement_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_metamodel_type_PrimitiveType_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_metamodel_type_generics_GenericType_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_metamodel_valuespecification_InstanceValue_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_metamodel_valuespecification_SimpleFunctionExpression_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_metamodel_valuespecification_VariableExpression_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_tds_AggregateValue_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_tds_BasicColumnSpecification_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_tds_SortInformation_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_tds_TdsOlapAggregation_Impl;
-import org.finos.legend.pure.generated.Root_meta_pure_tds_TdsOlapRank_Impl;
-import org.finos.legend.pure.generated.platform_pure_graph;
+import org.finos.legend.pure.generated.*;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.function.LambdaFunction;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.function.property.AbstractProperty;
 import org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.multiplicity.Multiplicity;
@@ -104,9 +89,13 @@ import org.finos.legend.pure.m4.coreinstance.primitive.date.DateFormat;
 import org.finos.legend.pure.m4.coreinstance.primitive.date.LatestDate;
 import org.finos.legend.pure.m4.coreinstance.primitive.strictTime.StrictTimeFormat;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
+import static org.finos.legend.pure.generated.core_pure_corefunctions_metaExtension.Root_meta_pure_functions_meta_functionReturnType_Function_1__GenericType_1_;
 
 public class ValueSpecificationBuilder implements ValueSpecificationVisitor<org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.valuespecification.ValueSpecification>
 {
@@ -255,7 +244,7 @@ public class ValueSpecificationBuilder implements ValueSpecificationVisitor<org.
 
     public ValueSpecification processClassInstance(RuntimeInstance runtimeInstance)
     {
-        org.finos.legend.pure.m3.coreinstance.meta.pure.runtime.Runtime _runtime = HelperRuntimeBuilder.buildPureRuntime(runtimeInstance.runtime, this.context);
+        Root_meta_pure_runtime_Runtime _runtime = HelperRuntimeBuilder.buildPureRuntime(runtimeInstance.runtime, this.context);
         return new Root_meta_pure_metamodel_valuespecification_InstanceValue_Impl("", null, context.pureModel.getClass("meta::pure::metamodel::valuespecification::InstanceValue"))
                 ._genericType(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("", null, context.pureModel.getClass("meta::pure::metamodel::type::generics::GenericType"))._rawType(this.context.pureModel.getType("meta::pure::runtime::Runtime")))
                 ._multiplicity(this.context.pureModel.getMultiplicity("one"))
@@ -316,7 +305,7 @@ public class ValueSpecificationBuilder implements ValueSpecificationVisitor<org.
         TypeAndList res = ListIterate.injectInto(new TypeAndList(cl), path.path, (a, b) ->
                 {
                     AbstractProperty<?> property = HelperModelBuilder.getAppliedProperty(this.context, (org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.type.Class<?>) a.currentClass, Optional.empty(), ((PropertyPathElement) b).property);
-                    GenericType genericType = platform_pure_graph.Root_meta_pure_functions_meta_functionReturnType_Function_1__GenericType_1_(property, this.context.pureModel.getExecutionSupport());
+                    GenericType genericType = Root_meta_pure_functions_meta_functionReturnType_Function_1__GenericType_1_(property, this.context.pureModel.getExecutionSupport());
                     MutableList<org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.path.PathElement> result = a.result;
                     org.finos.legend.pure.m3.coreinstance.meta.pure.metamodel.path.PropertyPathElement ppe = new Root_meta_pure_metamodel_path_PropertyPathElement_Impl("", new SourceInformation("X", 0, 0, 0, 0), null);
                     RichIterable<ValueSpecification> params = ListIterate.collect(((PropertyPathElement) b).parameters, p -> p.accept(new ValueSpecificationBuilder(this.context, openVariables, processingContext)));
@@ -383,6 +372,15 @@ public class ValueSpecificationBuilder implements ValueSpecificationVisitor<org.
                 ._values(FastList.newListWith(cDecimal.value));
     }
 
+    @Override
+    public ValueSpecification visit(CByteStream cByteStream)
+    {
+        return new Root_meta_pure_metamodel_valuespecification_InstanceValue_Impl("", null, context.pureModel.getClass("meta::pure::metamodel::valuespecification::InstanceValue"))
+                ._genericType(this.context.pureModel.getGenericType("ByteStream"))
+                ._multiplicity(this.context.pureModel.getMultiplicity(cByteStream.multiplicity))
+                ._values(FastList.newListWith(new ByteArrayInputStream(cByteStream.value.getBytes(cByteStream.charset))));
+    }
+
     public ValueSpecification processClassInstance(SerializationConfig serializationConfig)
     {
         Root_meta_pure_graphFetch_execution_AlloySerializationConfig config = new Root_meta_pure_graphFetch_execution_AlloySerializationConfig_Impl("", null, context.pureModel.getClass("meta::pure::graphFetch::execution::AlloySerializationConfig"));
@@ -411,7 +409,7 @@ public class ValueSpecificationBuilder implements ValueSpecificationVisitor<org.
 
     public ValueSpecification processClassInstance(ExecutionContextInstance executionContextInstance)
     {
-        org.finos.legend.pure.m3.coreinstance.meta.pure.runtime.ExecutionContext _executionContext = HelperValueSpecificationBuilder.processExecutionContext(executionContextInstance.executionContext, this.context);
+        Root_meta_pure_runtime_ExecutionContext _executionContext = HelperValueSpecificationBuilder.processExecutionContext(executionContextInstance.executionContext, this.context);
         return new Root_meta_pure_metamodel_valuespecification_InstanceValue_Impl("", null, context.pureModel.getClass("meta::pure::metamodel::valuespecification::InstanceValue"))
                 ._genericType(new Root_meta_pure_metamodel_type_generics_GenericType_Impl("", null, context.pureModel.getClass("meta::pure::metamodel::type::generics::GenericType"))._rawType(this.context.pureModel.getType("meta::pure::runtime::ExecutionContext")))
                 ._multiplicity(this.context.pureModel.getMultiplicity("one"))

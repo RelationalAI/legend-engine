@@ -78,15 +78,18 @@ function meta::pure::runtime::getConstraintsManager(exeCtx:ExecutionContext[1]):
 
 function meta::pure::runtime::connectionByElement(runtime:Runtime[1], store:Store[1]):Connection[1]
 {
+   assert($runtime.connections->size() >= 1, | 'No connections were found in runtime.');
+
    if ($store->instanceOf(ModelStore),
-       |$runtime.connections->filter(c|$c.element->instanceOf(ModelStore))->toOne(),
-       |let connection = $runtime.connections->filter(c|$c.element == $store);
+       |let connections = $runtime.connections->filter(c|$c.element->instanceOf(ModelStore));
+        $connections->toOne($connections->size()->toString()+' connection(s) for "ModelStore" were found in the runtime. Expected 1 connection.');,
+       |let connections = $runtime.connections->filter(c|$c.element == $store);
         //meta::pure::functions::asserts::assertSize($connection, 1, |$connection->size()->toString()+' connection(s) for store "'+$store.name->toOne()+'" were found in the runtime');
-        if ($connection->size() == 0,
+        if ($connections->size() == 0,
             | $runtime.connections->at(0),
-            | $connection->toOne()
+            | $connections->toOne($connections->size()->toString()+' connection(s) for store "'+$store.name->toOne()+'" were found in the runtime. Expected 1 connection.')
         );
-   )
+   );
 }
 
 function meta::pure::runtime::getMappingsFromRuntime(runtime:Runtime[0..1]):Mapping[*]
@@ -97,4 +100,22 @@ function meta::pure::runtime::getMappingsFromRuntime(runtime:Runtime[0..1]):Mapp
 function meta::pure::runtime::getRuntimeWithModelConnection(sourceClass:Class<Any>[1], inputs:Any[*]):Runtime[1]
 {
    ^Runtime(connections=^ModelConnection(element = ^ModelStore(), instances=newMap(pair($sourceClass, list($inputs)))));
+}
+
+function meta::pure::runtime::getRuntimeWithModelQueryConnection(sourceClass:Class<Any>[1], binding:meta::external::shared::format::binding::Binding[1], inputStream:ByteStream[1]):Runtime[1]
+{
+  ^Runtime(connections = ^ModelQueryConnection(element = ^ModelStore(), instancesProvider=newMap(pair($sourceClass, {tree:meta::pure::graphFetch::RootGraphFetchTree<Any>[1] | $sourceClass->meta::external::shared::format::functions::internalize($binding, $inputStream)->meta::pure::graphFetch::execution::graphFetch($tree)}))));
+}
+
+function meta::pure::runtime::getRuntimeWithModelQueryConnection(sourceClass:Class<Any>[1], binding:meta::external::shared::format::binding::Binding[1], input:String[1]):Runtime[1]
+{
+  ^Runtime(connections = ^ModelQueryConnection(element = ^ModelStore(), instancesProvider=newMap(pair($sourceClass, {tree:meta::pure::graphFetch::RootGraphFetchTree<Any>[1] | $sourceClass->meta::external::shared::format::functions::internalize($binding, $input)->meta::pure::graphFetch::execution::graphFetch($tree)}))));
+}
+
+// Function signature takes Any to incorporate both Runtime & PackageableRuntime
+function meta::pure::runtime::mergeRuntimes(runtimes:Any[1..*]):Runtime[1]
+{
+  $runtimes->forAll(r | $r->instanceOf(PackageableRuntime) || $r->instanceOf(Runtime));
+  let updatedRuntimes = $runtimes->filter(r | $r->instanceOf(Runtime))->concatenate($runtimes->filter(r | $r->instanceOf(PackageableRuntime))->cast(@PackageableRuntime).runtimeValue)->cast(@Runtime);
+  ^Runtime(connections = $updatedRuntimes.connections);
 }
