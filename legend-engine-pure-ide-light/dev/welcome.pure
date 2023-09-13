@@ -38,6 +38,10 @@ function json_showcase::doQuery(connection: meta::pure::runtime::Connection[1], 
   $result.values;
 }
 
+function gs_demo::credentials(): meta::rel::runtime::RAICloudCredentials[1] {
+  meta::rel::runtime::RAICloudCredentials('<<client_id>>', '<<client_secret>>', 'https://login.relationalai.com/oauth/token');
+}
+
 function json_showcase::demo(): Any[*] {
   let schema = RAISchema('json')
     ->includeClass(Person)
@@ -46,7 +50,7 @@ function json_showcase::demo(): Any[*] {
 
 
   let rai = $schema
-    ->meta::rel::runtime::RAIConnection('azure-staging.relationalai.com', '443', 'https', 'json-demo-snowflake', 'gbrgr-dev', credentials());
+    ->meta::rel::runtime::RAIConnection('azure-staging.relationalai.com', '443', 'https', 'json-demo-snowflake', 'gbrgr-dev', gs_demo::credentials());
     //->meta::rel::runtime::TestConnection({source | println('Execution skipped (test connection).'); });
 
   $rai
