@@ -9,12 +9,15 @@ options
 
 // -------------------------------------- IDENTIFIER --------------------------------------
 
-identifier:                                 VALID_STRING | STRING
+validString:                                VALID_STRING | .
+;
+
+identifier:                                 validString | STRING
                                             | TRUE | FALSE
                                             | MASTER_RECORD_DEFINITION | RECORD_SOURCES
 ;
 
-masteryIdentifier:                          (VALID_STRING | '-' | INTEGER) (VALID_STRING | '-' | INTEGER)*;
+masteryIdentifier:                          (validString | '-' | INTEGER) (validString | '-' | INTEGER)*?;
 
 // -------------------------------------- DEFINITION --------------------------------------
 
@@ -45,6 +48,28 @@ description:                                DESCRIPTION COLON STRING SEMI_COLON
 ;
 postCurationEnrichmentService:              POST_CURATION_ENRICHMENT_SERVICE COLON qualifiedName SEMI_COLON
 ;
+exceptionWorkflowTransformService:          EXCEPTION_WORKFLOW_TRANSFORM_SERVICE COLON qualifiedName SEMI_COLON
+;
+elasticSearchTransformService:              ELASTIC_SEARCH_TRANSFORM_SERVICE COLON qualifiedName SEMI_COLON
+;
+publishToElasticSearch:                     PUBLISH_TO_ELASTIC_SEARCH COLON boolean_value SEMI_COLON
+;
+collectionEqualities:                       COLLECTION_EQUALITIES COLON
+                                            BRACKET_OPEN
+                                            (
+                                            collectionEquality (COMMA collectionEquality)*
+                                            )
+                                            BRACKET_CLOSE
+;
+collectionEquality:                         BRACE_OPEN
+                                            (
+                                                modelClass
+                                                | equalityFunction
+                                            )*
+                                            BRACE_CLOSE
+;
+equalityFunction:                           EQUALITY_FUNCTION COLON qualifiedName SEMI_COLON
+;
 
 // -------------------------------------- MASTER_RECORD_DEFINITION --------------------------------------
 
@@ -56,6 +81,10 @@ masterRecordDefinition:                       MASTER_RECORD_DEFINITION qualified
                                                     | recordSources
                                                     | precedenceRules
                                                     | postCurationEnrichmentService
+                                                    | exceptionWorkflowTransformService
+                                                    | elasticSearchTransformService
+                                                    | publishToElasticSearch
+                                                    | collectionEqualities
                                                 )*
                                                 BRACE_CLOSE
 ;
@@ -77,6 +106,8 @@ recordSource:                               masteryIdentifier COLON BRACE_OPEN
                                             (
                                                 recordStatus
                                                 | description
+                                                | parseService
+                                                | transformService
                                                 | sequentialData
                                                 | stagedLoad
                                                 | createPermitted
@@ -86,6 +117,11 @@ recordSource:                               masteryIdentifier COLON BRACE_OPEN
                                                 | recordService
                                                 | allowFieldDelete
                                                 | authorization
+                                                | sourcePartitions
+                                                | dependencies
+                                                | timeoutInMinutes
+                                                | runProfile
+                                                | raiseExceptionWorkflow
                                             )*
                                             BRACE_CLOSE
 ;
@@ -107,9 +143,36 @@ createPermitted:                            RECORD_SOURCE_CREATE_PERMITTED COLON
 ;
 createBlockedException:                     RECORD_SOURCE_CREATE_BLOCKED_EXCEPTION COLON boolean_value SEMI_COLON
 ;
+sourcePartitions:                           SOURCE_PARTITIONS COLON
+                                            BRACKET_OPEN
+                                            (
+                                                sourcePartition
+                                                (
+                                                    COMMA
+                                                    sourcePartition
+                                                )*
+                                            )
+                                            BRACKET_CLOSE
+;
+sourcePartition:                            masteryIdentifier COLON BRACE_OPEN
+                                            BRACE_CLOSE
+;
 allowFieldDelete:                           RECORD_SOURCE_ALLOW_FIELD_DELETE COLON boolean_value SEMI_COLON
 ;
 dataProvider:                               RECORD_SOURCE_DATA_PROVIDER COLON qualifiedName SEMI_COLON
+;
+timeoutInMinutes:                           RECORD_SOURCE_TIMEOUT_IN_MINUTES COLON INTEGER SEMI_COLON
+;
+raiseExceptionWorkflow:                     RECORD_SOURCE_RAISE_EXCEPTION_WORKFLOW COLON boolean_value SEMI_COLON
+;
+runProfile:                                 RECORD_SOURCE_RUN_PROFILE COLON
+                                            (
+                                                RECORD_SOURCE_RUN_PROFILE_LARGE
+                                                    | RECORD_SOURCE_RUN_PROFILE_MEDIUM
+                                                    | RECORD_SOURCE_RUN_PROFILE_SMALL
+                                                    | RECORD_SOURCE_RUN_PROFILE_XTRA_SMALL
+                                            )
+                                            SEMI_COLON
 ;
 
 // -------------------------------------- RECORD SERVICE --------------------------------------
@@ -148,6 +211,23 @@ dataProviderDef:                           identifier qualifiedName SEMI_COLON
 authorization:                              RECORD_SOURCE_AUTHORIZATION COLON islandSpecification SEMI_COLON
 ;
 
+// -------------------------------------- DEPENDENCIES --------------------------------------
+
+dependencies:                               RECORD_SOURCE_DEPENDENCIES COLON
+                                            BRACKET_OPEN
+                                            (
+                                            recordSourceDependency (COMMA recordSourceDependency)*
+                                            )
+                                            BRACKET_CLOSE
+                                            SEMI_COLON
+;
+
+recordSourceDependency:                     RECORD_SOURCE_DEPENDENCY
+                                            BRACE_OPEN
+                                            masteryIdentifier
+                                            BRACE_CLOSE
+;
+
 // -------------------------------------- CONNECTION --------------------------------------
 connection:                                 MASTERY_CONNECTION qualifiedName
                                                 BRACE_OPEN
@@ -164,7 +244,8 @@ specification:                              SPECIFICATION COLON islandSpecificat
 identityResolution:                         IDENTITY_RESOLUTION COLON
                                             BRACE_OPEN
                                             (
-                                              resolutionQueries
+                                                modelClass
+                                                | resolutionQueries
                                             )*
                                             BRACE_CLOSE
 ;
@@ -265,7 +346,7 @@ masterRecordFilter:                     qualifiedName filter?
 ;
 pathExtension:                           subPath filter?
 ;
-subPath:                                '.' VALID_STRING
+subPath:                                '.' validString
 ;
 filter:                                 BRACE_OPEN '$' '.' combinedExpression BRACE_CLOSE
 ;
@@ -302,7 +383,7 @@ recordSourceScope:                      RECORD_SOURCE_SCOPE
 ;
 dataProviderTypeScope:                  DATA_PROVIDER_TYPE_SCOPE
                                         BRACE_OPEN
-                                        VALID_STRING
+                                        validString
 ;
 dataProviderIdScope:                    DATA_PROVIDER_ID_SCOPE
                                         BRACE_OPEN

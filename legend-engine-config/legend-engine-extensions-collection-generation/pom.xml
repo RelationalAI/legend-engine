@@ -19,7 +19,7 @@
     <parent>
         <artifactId>legend-engine-config</artifactId>
         <groupId>org.finos.legend.engine</groupId>
-        <version>4.26.4-SNAPSHOT</version>
+        <version>4.28.3-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -214,7 +214,12 @@
         </dependency>
         <!-- Flat Data -->
 
+        <!-- ARROW -->
 
+        <dependency>
+            <groupId>org.finos.legend.engine</groupId>
+            <artifactId>legend-engine-xt-arrow-pure</artifactId>
+        </dependency>
         <!-- JSON -->
         <dependency>
             <groupId>org.finos.legend.engine</groupId>
@@ -516,6 +521,13 @@
             <artifactId>legend-engine-xt-graphQL-grammar-integration</artifactId>
         </dependency>
         <!-- GraphQL -->
+
+        <!-- SQL -->
+        <dependency>
+            <groupId>org.finos.legend.engine</groupId>
+            <artifactId>legend-engine-xt-sql-grammar-integration</artifactId>
+        </dependency>
+        <!-- SQL -->
 
         <!-- DAML -->
         <dependency>

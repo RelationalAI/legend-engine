@@ -25,6 +25,7 @@ import org.junit.Test;
 
 public class TestSQLRoundTrip
 {
+
     @Test
     public void testEmptyStatement()
     {
@@ -215,6 +216,18 @@ public class TestSQLRoundTrip
     }
 
     @Test
+    public void testNaturalJoin()
+    {
+        check("SELECT * FROM myTable NATURAL LEFT OUTER JOIN myTable2");
+    }
+
+    @Test
+    public void testCrossJoin()
+    {
+        check("SELECT * FROM myTable CROSS JOIN myTable1");
+    }
+
+    @Test
     public void testUnionAll()
     {
         check("SELECT * FROM myTable UNION ALL SELECT * FROM myTable");
@@ -243,6 +256,12 @@ public class TestSQLRoundTrip
     public void testWindowFunc()
     {
         check("SELECT *, ROW_NUMBER() OVER (PARTITION BY abc ORDER BY price ASC) FROM myTable");
+    }
+
+    @Test
+    public void testCast()
+    {
+        check("SELECT CAST(1 AS VARCHAR), CAST(1 AS VARCHAR(1)), CAST(1 AS NUMERIC(1, 2)) FROM myTable");
     }
 
     @Test

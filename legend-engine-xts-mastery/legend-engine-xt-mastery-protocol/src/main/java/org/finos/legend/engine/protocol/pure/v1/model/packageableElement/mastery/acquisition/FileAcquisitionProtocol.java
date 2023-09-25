@@ -14,8 +14,6 @@
 
 package org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mastery.acquisition;
 
-import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mastery.connection.FileConnection;
-
 import java.util.List;
 
 public class FileAcquisitionProtocol extends AcquisitionProtocol
@@ -26,4 +24,7 @@ public class FileAcquisitionProtocol extends AcquisitionProtocol
     public List<String> fileSplittingKeys;
     public Integer headerLines;
     public String recordsKey;
+    public Integer maxRetryTimeInMinutes;
+    public String encoding;
+    public Decryption decryption;
 }

@@ -27,7 +27,7 @@
     <name>Legend Engine</name>
     <groupId>org.finos.legend.engine</groupId>
     <artifactId>legend-engine</artifactId>
-    <version>4.26.4-SNAPSHOT</version>
+    <version>4.28.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -57,6 +57,7 @@
         <module>legend-engine-xts-flatdata</module>
         <module>legend-engine-xts-json</module>
         <module>legend-engine-xts-avro</module>
+        <module>legend-engine-xts-arrow</module>
 
         <!-- Table Formats -->
         <module>legend-engine-xts-iceberg</module>
@@ -111,8 +112,8 @@
 
     <properties>
         <!-- Legend -->
-        <legend.pure.version>4.5.13-SNAPSHOT</legend.pure.version>
-        <legend.shared.version>0.24.0</legend.shared.version>
+        <legend.pure.version>4.6.0-SNAPSHOT</legend.pure.version>
+        <legend.shared.version>0.24.1</legend.shared.version>
 
         <!-- SONAR -->
         <sonar.projectKey>legend-engine</sonar.projectKey>
@@ -201,11 +202,12 @@
         <json-smart.version>2.4.7</json-smart.version>
         <byte-buddy.version>1.11.20</byte-buddy.version>
         <wiremock.version>2.27.2</wiremock.version>
-        <io.netty.version>4.1.95.Final</io.netty.version>
+        <io.netty.version>4.1.96.Final</io.netty.version>
         <amazon.awssdk.version>2.17.129</amazon.awssdk.version>
         <opencsv.version>4.6</opencsv.version>
         <logback.version>1.2.3</logback.version>
         <logback-contrib.version>0.1.5</logback-contrib.version>
+        <arrow.version>13.0.0</arrow.version>
 
         <!-- Plugin versions -->
         <maven.compiler.plugin.version>3.8.0</maven.compiler.plugin.version>
@@ -643,7 +645,6 @@
                 <version>${project.version}</version>
             </dependency>
 
-
             <dependency>
                 <groupId>org.finos.legend.engine</groupId>
                 <artifactId>legend-engine-xt-authentication-pure</artifactId>
@@ -657,6 +658,11 @@
             <dependency>
                 <groupId>org.finos.legend.engine</groupId>
                 <artifactId>legend-engine-xt-authentication-grammar</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.finos.legend.engine</groupId>
+                <artifactId>legend-engine-xt-authentication-connection-factory</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -943,6 +949,11 @@
             <dependency>
                 <groupId>org.finos.legend.engine</groupId>
                 <artifactId>legend-engine-xt-relationalStore-postgres-connection</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.finos.legend.engine</groupId>
+                <artifactId>legend-engine-xt-relationalStore-postgres-connection-tests</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -2002,7 +2013,17 @@
                 <artifactId>legend-engine-xt-openapi-generation</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            <!-- ENGINE -->
+            <dependency>
+                <groupId>org.finos.legend.engine</groupId>
+                <artifactId>legend-engine-xt-arrow-pure</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.finos.legend.engine</groupId>
+                <artifactId>legend-engine-xt-arrow-runtime</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+              <!-- ENGINE -->
 
             <!-- PURE -->
             <dependency>
@@ -2429,6 +2450,12 @@
                 <groupId>io.opentracing.contrib</groupId>
                 <artifactId>opentracing-concurrent</artifactId>
                 <version>${opentracing.contrib.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.opentracing</groupId>
+                <artifactId>opentracing-mock</artifactId>
+                <version>${opentracing.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>io.zipkin.reporter2</groupId>
@@ -3021,6 +3048,35 @@
                 </exclusions>
             </dependency>
 
+
+            <dependency>
+                <groupId>org.apache.arrow</groupId>
+                <artifactId>arrow-memory-netty</artifactId>
+                <version>${arrow.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.arrow</groupId>
+                <artifactId>arrow-vector</artifactId>
+                <version>${arrow.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.datatype</groupId>
+                        <artifactId>jackson-datatype-jsr310</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.arrow</groupId>
+                <artifactId>arrow-memory-core</artifactId>
+                <version>${arrow.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.arrow</groupId>
+                <artifactId>arrow-jdbc</artifactId>
+                <version>${arrow.version}</version>
+            </dependency>
+
+            <!-- arrow -->
         </dependencies>
 
     </dependencyManagement>
