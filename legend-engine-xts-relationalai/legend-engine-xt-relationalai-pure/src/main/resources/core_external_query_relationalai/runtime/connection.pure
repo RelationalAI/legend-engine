@@ -93,5 +93,5 @@ function meta::rel::runtime::query(connection: meta::pure::runtime::Connection[1
   //
   //$result.values;
 
-  'dummy';
+  'dummy@1';
 }

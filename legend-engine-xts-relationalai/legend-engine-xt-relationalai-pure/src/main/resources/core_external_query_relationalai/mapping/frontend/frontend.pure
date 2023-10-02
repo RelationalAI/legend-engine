@@ -29,7 +29,7 @@ function meta::rel::mapping::frontend::RAISchema(name: String[1]): RAISchema[1] 
   );
 }
 
-function meta::rel::mapping::frontend::insert<T>(connection: RAIConnection[1], schema: RAISchema[1], objects: T[1..*]): meta::rel::utils::Result<RAIResult|0..1>[1] {  
+function meta::rel::mapping::frontend::insert<T>(connection: TestConnection[1], schema: RAISchema[1], objects: T[1..*]): Any[1] {  
   let class = $objects
     ->genericType()
     ->genericTypeClass()
@@ -45,16 +45,24 @@ function meta::rel::mapping::frontend::insert<T>(connection: RAIConnection[1], s
           ->program()
           ->render()
           ->inspect();
-      $connection->RAIExecute($program)->inspect();
+      //$connection->RAIExecute($program)->inspect();
     });
+
+    'dummy';
 }
 
-function meta::rel::mapping::frontend::insert<T>(connection: RAIConnection[1], objects: T[1..*]): meta::rel::utils::Result<RAIResult|0..1>[1] {
+function meta::rel::mapping::frontend::insert<T>(connection: TestConnection[1], objects: T[1..*]): Any[*] {
+  // $connection
+  //   .element
+  //   ->tryCast(@RAISchema)
+  //   ->else(| error('Property `element` is not an instance of `meta::rel::frontend::RAISchema`.'))
+  //   ->andThen(schema: RAISchema[1] | $connection->insert($schema, $objects));
+
   $connection
-    .element
-    ->tryCast(@RAISchema)
-    ->else(| error('Property `element` is not an instance of `meta::rel::frontend::RAISchema`.'))
-    ->andThen(schema: RAISchema[1] | $connection->insert($schema, $objects));
+    .element->match([
+    schema: RAISchema[1] | $connection->insert($schema, $objects),
+    other: Any[1] | 'dummy value'
+  ])
 }
 
 function meta::rel::mapping::frontend::schema(class: Class<Any>[1]): RelationDeclaration[1] {
