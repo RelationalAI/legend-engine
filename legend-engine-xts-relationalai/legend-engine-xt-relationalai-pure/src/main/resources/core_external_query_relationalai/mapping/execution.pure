@@ -86,11 +86,6 @@ function <<access.private>> meta::rel::mapping::execution(
               switch([
                 // Handles case 2.
                 case($class == TabularDataSet, {| 
-                  // For each case, we specify a postprocessing function which is applied
-                  // to the result response returned by RAI. 
-                  let postProcessor = {result: RAIResult[1] |
-                    ^TabularDataSet();
-                  };
 
                   // Return the new state and the postprocessing function.
                   let outputBody = 
@@ -111,11 +106,8 @@ function <<access.private>> meta::rel::mapping::execution(
                       })
                     );
 
-                  pair(
-                    ^$state(
-                      program=$state.program->with($output)
-                    ), 
-                    $postProcessor
+                  ^$state(
+                    program=$state.program->with($output)
                   )
                   ->ok();
                 })
@@ -129,8 +121,8 @@ function <<access.private>> meta::rel::mapping::execution(
                   ->andThen({set: RelSetImplementation[1] |
                     $set
                       ->propertyOutputs()
-                      ->them({rules: Pair<Label,Rule>[*] | 
-                        let newState = ^$state(
+                      ->them({rules: Pair<Label,Rule>[*] |
+                        ^$state(
                           program=$state
                             .program
                             ->with([
@@ -140,38 +132,17 @@ function <<access.private>> meta::rel::mapping::execution(
                                 ->def($expr->atom(var('x')))
                             ])
                             ->with($rules.second)
-                        );
-
-                        let postProcessor = {result: RAIResult[1] |
-                          $result->buildClasses(
-                            $rules.first.identifier,
-                            $set,
-                            $mapping,
-                            $runtime,
-                            $exeCtx, 
-                            $extensions, 
-                            $debug
-                          );
-                        };
-
-                        pair($newState, $postProcessor);
+                        )
                       });
                   });
               });
             },
             // Handles case 3.
             {p: PrimitiveType[1] |
-              let postProcessor = {result: RAIResult[1] |
-                []->okm();
-              };
-
-              pair(
-                ^$state(program=
-                  $state
-                    .program
-                    ->with(rel('output')->def($expr))
-                ), 
-                $postProcessor
+              ^$state(program=
+                $state
+                  .program
+                  ->with(rel('output')->def($expr))
               )
               ->ok();
             }
@@ -182,11 +153,10 @@ function <<access.private>> meta::rel::mapping::execution(
 
   if ($result->isOk(), {|
     let unwrapped = $result->unwrap();
-    let compiled = $unwrapped.first.program->render();
+    // The Rel query.
+    let compiled = $unwrapped.program->render();
 
-    let response = $connection->cast(@TestConnection)
-      ->doRAIExecute($compiled)
-      ->maybeFail();
+    println(format('Executing program:\n-------------------\n%s', $compiled));
 
     ^meta::pure::mapping::Result<Any|*>(
       values=[], 
@@ -197,22 +167,6 @@ function <<access.private>> meta::rel::mapping::execution(
     $result->unwrap();
     ^meta::pure::mapping::Result<Any|*>();
   });
-}
-
-function <<access.private>> meta::rel::mapping::doRAIExecute(connection: TestConnection[1], rel: String[1]): RAIResult[1] {
-  println(format('Executing program:\n-------------------\n%s', $rel));
-  let result = 
-    measure(| $connection->RAIExecute2($rel));
-  
-  println(format('Executed in %d milliseconds.', $result.first));
-  println('');
-
-  $result.second;
-}
-
-// TODO: Remove this function.
-function <<access.private>> meta::rel::mapping::maybeFail(result: RAIResult[1]): RAIResult[1] {
-  $result
 }
 
 /**
@@ -265,20 +219,6 @@ function <<access.private>> meta::rel::mapping::propertyOutputs(
             )
         });
     });
-}
-
-function <<access.private>> meta::rel::mapping::buildClasses(
-  result: RAIResult[1],
-  keys: String[*],
-  set: RelSetImplementation[1],
-  mapping: meta::pure::mapping::Mapping[1],
-  runtime: meta::pure::runtime::Runtime[1],
-  exeCtx: meta::pure::runtime::ExecutionContext[1], 
-  extensions: meta::pure::extension::Extension[*], 
-  debug: DebugContext[1]
-): Result<Any|*>[1] {
-  
-  ^Result<Nil|Nil>();
 }
 
 function meta::rel::mapping::supports(f: FunctionExpression[1]): Boolean[1] {
