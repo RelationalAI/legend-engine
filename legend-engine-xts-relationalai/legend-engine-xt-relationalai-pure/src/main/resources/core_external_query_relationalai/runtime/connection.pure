@@ -79,17 +79,19 @@ function meta::rel::runtime::RAIConnection(
   RAIConnection($element, $host, $port, $scheme, $database, $engine, []);
 }
 
-function meta::rel::runtime::query(connection: RAIConnection[1], query: FunctionDefinition<{->Any[*]}>[1]): Any[*] {  
+function meta::rel::runtime::query(connection: meta::pure::runtime::Connection[1], query: FunctionDefinition<{->Any[*]}>[1]): Any[*] {  
   let schema = $connection.element->cast(@meta::rel::mapping::frontend::RAISchema);
 
   let runtime = ^meta::pure::runtime::Runtime(connections=$connection);
 
-  let result = execute(
-    $query,
-    $schema.mapping,
-    $runtime,
-    meta::rel::extension::defaultRAIExtension()
-  );
+  //let result = execute(
+  //  $query,
+  //  $schema.mapping,
+  //  $runtime,
+  //  meta::rel::extension::defaultRAIExtension()
+  //);
+  //
+  //$result.values;
 
-  $result.values;
+  'dummy';
 }
