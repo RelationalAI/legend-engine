@@ -967,14 +967,13 @@ function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: Rel
 //
         })
       ], {|
-        let error = error(| 
+        error(
           'Encountered unknown instance while translating: ' +
             $other
               ->elementToPath()
               ->else(| '<<unknown>>')
-              ->quote();
+              ->quote()
         );
-        error($error);
       });
     }
   ]);
