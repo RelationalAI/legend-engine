@@ -1075,9 +1075,9 @@ function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: Rel
           handleCaseGraphFetch($func)),
         case($other == meta::pure::functions::lang::extractEnumValue_Enumeration_1__String_1__T_1_,|
           handleCaseExtractEnumValue($func)),
-        case($other == meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_,|
-          meta::rel::compile::ir::tds::intoPExpr($func)),
-        case($other == meta::pure::tds::filter_TabularDataSet_1__Function_1__TabularDataSet_1_,|
+        case($other == meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_ ||
+             $other == meta::pure::tds::project_K_MANY__Function_MANY__String_MANY__TabularDataSet_1_ ||
+             $other == meta::pure::tds::filter_TabularDataSet_1__Function_1__TabularDataSet_1_,|
           meta::rel::compile::ir::tds::intoPExpr($func))
 //
 // FIXME: Commented out to fix the build.
