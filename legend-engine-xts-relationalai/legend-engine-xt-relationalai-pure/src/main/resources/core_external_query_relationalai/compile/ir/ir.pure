@@ -432,6 +432,521 @@ function meta::rel::compile::ir::intoPExpr(spec: ValueSpecification[1], set: Rel
   ])
 }
 
+function <<access.private>> meta::rel::compile::ir::handleCaseFilter(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == filter_T_MANY__Function_1__T_MANY_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->andThen({parent: PExpr[1] |
+      $func.parametersValues
+        ->at(1)
+        ->intoScoped($parent)
+        ->then(scoped: Scoped[1] | $parent->filter($scoped));
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseGetAll(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == getAll_Class_1__T_MANY_);
+
+  $func.parametersValues
+    ->at(0)
+    ->map(vs: meta::pure::router::store::metamodel::StoreMappingRoutedValueSpecification[1] |
+      $vs.sets
+        ->first()
+        ->okOr(| 'No set implementation supplied.')
+        ->tryCast(@RelSetImplementation);
+    )
+    ->then(set | all($set));
+
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseMap(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == map_T_m__Function_1__V_m_ || $func.func == map_T_MANY__Function_1__V_MANY_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->andThen({parent: PExpr[1] |
+      $func.parametersValues
+        ->at(1)
+        ->intoScoped($parent)
+        ->then(scoped: Scoped[1] | $parent->mapExpr($scoped));
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseExists(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == exists_T_MANY__Function_1__Boolean_1_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->andThen({parent: PExpr[1] |
+      $func.parametersValues
+        ->at(1)
+        ->intoScoped($parent)
+        ->then({predicate: Scoped[1] | $parent->exists($predicate); });
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseForAll(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == forAll_T_MANY__Function_1__Boolean_1_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->andThen({parent: PExpr[1] |
+      $func.parametersValues
+        ->at(1)
+        ->intoScoped($parent)
+        ->then({predicate: Scoped[1] | $parent->forAll($predicate); });
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseProject1(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == project_T_MANY__Path_MANY__TabularDataSet_1_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->andThen({parent: PExpr[1] |
+      let paths = $func.parametersValues
+        ->at(1);
+
+      switch([
+        case($paths->instanceOf(ExtendedRoutedValueSpecification), 
+          | $paths
+              ->cast(@ExtendedRoutedValueSpecification)
+              .value
+              ->cast(@InstanceValue)
+              .values
+              ->cast(@meta::pure::metamodel::path::Path<Nil,Any|1>)
+        ),
+        case($paths->instanceOf(InstanceValue), | 
+          $paths
+            ->cast(@InstanceValue)
+            .values
+            ->cast(@meta::pure::metamodel::path::Path<Nil,Any|1>)
+        )
+      ], {| $paths->reactivate(); })
+      ->okOr(| 'Encountered unknown argument during compilation of `project_T_MANY__Path_MANY__TabularDataSet_1_`.')
+      ->andThem({paths: meta::pure::metamodel::path::Path<Nil,Any|1>[*] |
+        $parent
+          ->set()
+          ->okOr(| 'Expected set in parent expression of `project_T_MANY__Path_MANY__TabularDataSet_1_`.')
+          ->andThen({set: RelSetImplementation[1] |
+            $paths
+              ->map({path |
+                $path.path
+                  ->fold({element, accum |
+                    $accum
+                      ->andThen({expr: PExpr[1] |
+                        $element
+                          ->tryCast(@meta::pure::metamodel::path::PropertyPathElement)
+                          ->andThen(p: meta::pure::metamodel::path::PropertyPathElement[1] | $p.property->tryCast(@Property<Nil,Any|*>))
+                          ->andThen({property: Property<Nil,Any|*>[1] | 
+                            $property
+                              .genericType
+                              .rawType
+                              ->okOr(| format('No type information for property `%s`.', $property.name))
+                              ->then({type: Type[1] |
+                                let next = 
+                                  $set
+                                    .parent
+                                    ->meta::pure::mapping::classMappingById($type->elementToPath('_'))
+                                    ->map(set | $set->cast(@RelSetImplementation));
+                                
+                                $expr->propertyAccess($property, $next);
+                              })
+                          });
+                      });
+                  }, ok(setAccess($set, 'x')))
+                  ->then(expr: PExpr[1] | 
+                    let name = 
+                      if ($path.name->isEmpty() || $path.name == '', {| 
+                        $path.path
+                          ->last()
+                          ->map({last | 
+                            if ($last->instanceOf(meta::pure::metamodel::path::PropertyPathElement), {|
+                              $last
+                                ->cast(@meta::pure::metamodel::path::PropertyPathElement)
+                                .property
+                                .name
+                                ->orElse('')
+                            }, | '')
+                          })
+                          ->orElse('');
+                      }, | $path.name)
+                      ->orElse('');
+
+                    pair($name, $expr->scoped('x')->withParent($parent));
+                  );
+              })
+              ->collect()
+              ->them({pairs: Pair<String, Scoped>[*] |
+                $parent->project($pairs);
+              });
+          });
+      });
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseProject2(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == project_T_MANY__ColumnSpecification_MANY__TabularDataSet_1_ ||
+         $func.func == project_TabularDataSet_1__ColumnSpecification_MANY__TabularDataSet_1_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->andThen({parent: PExpr[1] |
+      $func.parametersValues
+        ->at(1)
+        ->tryCast(@InstanceValue)
+        ->andThen({params: InstanceValue[1] |
+          $params.values
+            ->map({v | 
+              $v->tryCast(@InstanceValue)
+                ->then(i: InstanceValue[1] | 
+                  // Values guaranteed by function signature
+                  $i.values
+                    ->toOne()
+                    ->cast(@BasicColumnSpecification<Any>)
+                );
+            })
+            ->collect()
+            ->andThem({columns: BasicColumnSpecification<Any>[*] |
+              $columns.func
+                ->map(f | 
+                  $f->tryCast(@FunctionDefinition<Any>)
+                    ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->intoScoped($parent))
+                )
+                ->collect()
+                ->them(fexprs | $parent->project($columns.name->zip($fexprs)));
+            });
+        });
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy1(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == groupBy_K_MANY__Function_MANY__AggregateValue_MANY__String_MANY__TabularDataSet_1_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->andThen({parent: PExpr[1] |
+      $func.parametersValues
+        ->at(1)
+        ->intoScopes($parent)
+        ->collect()
+        ->andThem({group: Scoped[*] |
+          $func.parametersValues
+            ->at(2)
+            ->intoAggregates($parent)
+            ->collect()
+            ->andThem({aggregates: Aggregate[*] | 
+              $func.parametersValues
+                ->at(3)
+                ->tryCast(@InstanceValue)
+                ->andThen(i: InstanceValue[1] | 
+                  $i.values
+                    ->map(v | $v->tryCast(@String))
+                    ->collect()
+                )
+                ->andThem({names: String[*] | 
+                  if ($names->size() != $group->size() + $aggregates->size(),
+                    | error('Number of specified columns does not match the arity of the `group by` expression.'),
+                    {|
+                      let namedAggregates = 
+                        $aggregates
+                          ->toNumbered()
+                          ->map({pair: Pair<Integer, Aggregate>[1] | 
+                            let agg = $pair.second;
+                            ^$agg(name=$names->at($group->size() + $pair.first - 1));
+                          });
+                      $parent
+                        ->groupBy($group, $namedAggregates, $names)
+                        ->ok();
+                    }
+                  );
+                })
+            })
+        });
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy2(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == groupBy_TabularDataSet_1__String_MANY__AggregateValue_MANY__TabularDataSet_1_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->andThen({parent: PExpr[1] |
+      $func.parametersValues
+        ->at(1)
+        ->tryCast(@InstanceValue)
+        ->andThen(v: InstanceValue[1] | 
+          $v.values
+            ->map(s | $s->tryCast(@String))
+            ->collect()
+        )
+        ->andThem({columns: String[*] |
+          $func.parametersValues
+            ->at(2)
+            ->map(vs: ValueSpecification[1] | $vs->intoAggregates($parent)->collect())
+            ->them({aggregates: Aggregate[*] | 
+              $parent->groupBy($columns, $aggregates);
+            });
+        })
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseBinaryOperator(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == and_Boolean_1__Boolean_1__Boolean_1_ || 
+         $func.func == or_Boolean_1__Boolean_1__Boolean_1_ ||
+         $func.func == equal_Any_MANY__Any_MANY__Boolean_1_ ||
+         $func.func == greaterThan_Number_1__Number_1__Boolean_1_ ||
+         $func.func == greaterThanEqual_Number_1__Number_1__Boolean_1_ ||
+         $func.func == greaterThan_Date_1__Date_1__Boolean_1_ ||
+         $func.func == greaterThanEqual_Date_1__Date_1__Boolean_1_ ||
+         $func.func == lessThan_Number_1__Number_1__Boolean_1_ ||
+         $func.func == lessThanEqual_Number_1__Number_1__Boolean_1_ ||
+         $func.func == lessThan_Date_1__Date_1__Boolean_1_ ||
+         $func.func == lessThanEqual_Date_1__Date_1__Boolean_1_ ||
+         $func.func == divide_Number_1__Number_1__Float_1_);
+
+  let left = $func.parametersValues->at(0);
+  let right = $func.parametersValues->at(1);
+
+  [$left, $right]
+    ->evaluateAndDeactivate()
+    ->tryCastm(@ValueSpecification)
+    ->andThem({specs: ValueSpecification[*] |
+      $specs
+        ->map(spec | $spec->intoPExpr())
+        ->collect()
+    })
+    ->andThem({arguments: PExpr[*] |
+      $func
+        ->getFunctionExpr()
+        ->then(fn | $arguments->fexpr($fn));
+    });
+
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseUnaryOperator(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == not_Boolean_1__Boolean_1_ ||
+         $func.func == isEmpty_Any_$0_1$__Boolean_1_ ||
+         $func.func == toOne_T_MANY__T_1_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->andThen({inner: PExpr[1] |
+      $func
+        ->getFunctionExpr()
+        ->then(fn | $inner->fexpr($fn));
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseBigOperator1(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == plus_Number_MANY__Number_1_ || $func.func == plus_String_MANY__String_1_ || 
+         $func.func == plus_Integer_MANY__Integer_1_ || $func.func == plus_Float_MANY__Float_1_ || 
+         $func.func == times_Number_MANY__Number_1_ || $func.func == times_Integer_MANY__Integer_1_ ||
+         $func.func == times_Float_MANY__Float_1_ || $func.func == minus_Number_MANY__Number_1_ ||
+         $func.func == minus_Integer_MANY__Integer_1_ || $func.func == minus_Float_MANY__Float_1_);
+
+  $func.parametersValues
+    ->at(0)
+    ->tryCast(@InstanceValue)
+    ->andThen({spec: InstanceValue[1] | 
+      $spec.values
+        ->map(v: ValueSpecification[1] | $v->intoPExpr())
+        ->collect(); 
+    })
+    ->andThem({params: PExpr[*] |
+      $func
+        ->getFunctionExpr()
+        ->then(fn | $params->fexpr($fn));
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseBigOperator2(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == sum_Integer_MANY__Integer_1_ || $func.func == sum_Float_MANY__Float_1_ || $func.func == sum_Number_MANY__Number_1_ ||
+         $func.func == count_Any_MANY__Integer_1_ ||
+         $func.func == max_Integer_MANY__Integer_$0_1$_ || $func.func == max_Float_MANY__Float_$0_1$_ ||
+         $func.func == min_Integer_MANY__Integer_$0_1$_ || $func.func == min_Float_MANY__Float_$0_1$_ ||
+         $func.func == toString_Any_1__String_1_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->andThen({parent: PExpr[1] | 
+      $func
+        ->getFunctionExpr()
+        ->then(fun | $parent->fexpr($fun));
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseIf(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == if_Boolean_1__Function_1__Function_1__T_m_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->andThen({condition: PExpr[1] |
+      $func.parametersValues
+        ->at(1)
+        ->intoScoped()
+        ->andThen({then: Scoped[1] |
+          $func.parametersValues
+            ->at(2)
+            ->intoScoped()
+            ->then(else: Scoped[1] | $condition->ifThenElse($then, $else));
+        });
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseInstanceOf(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == instanceOf_Any_1__Type_1__Boolean_1_);
+
+  let object = $func.parametersValues->at(0);
+  let type = $func.parametersValues->at(1);
+
+  $object
+    ->intoPExpr()
+    ->andThen({obj: PExpr[1] |
+      $type
+        ->tryCast(@ExtendedRoutedValueSpecification)
+        ->andThen({spec: ExtendedRoutedValueSpecification[1] |
+          $spec
+            ->intoPExpr()
+            ->then({class: PExpr[1] |
+              compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
+                $obj
+                  ->meta::rel::compile::compile($callback, $state)
+                  ->andThen({state: meta::rel::compile::CompilationState[1] |
+                    let objExpr = $state.current->toOne();
+                    $class
+                      ->meta::rel::compile::compile($callback, $state)
+                      ->then({next: meta::rel::compile::CompilationState[1] |
+                        let typeExpr = $next.current->toOne();
+                        let current = $typeExpr->atom($objExpr);
+
+                        ^$next(current=$current->annotate(Boolean));
+                      });
+                  });
+              });
+            });
+        });
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseCast(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert(false, 'Not yet implemented');
+  ^Result<PExpr|0..1>();
+
+  /*
+  assert($func.func == cast_Any_m__T_1__T_m_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->andThen({obj: PExpr[1] |
+      $func.parametersValues
+        ->at(1)
+        ->tryCast(@ExtendedRoutedValueSpecification)
+        ->andThen({spec: ExtendedRoutedValueSpecification[1] |
+          $spec.sets
+            ->first()
+            ->okOr(| 'No set implementation specified for argument of `cast`.')
+            ->tryCast(@RelSetImplementation)
+            ->then({set: RelSetImplementation[1] |
+                compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
+                  $obj
+                    ->meta::rel::compile::compile($callback, $state)
+                    ->then({next: meta::rel::compile::CompilationState[1] |
+                      let obj = $next.current->toOne();
+                      let var = $next.variableFactory->meta::rel::compile::utils::next('x')->var();
+                      let current = 
+                        $var
+                          ->from($var->in($obj)->where($set.classExpr->atom($var)));
+
+                      ^$next(current=$current->annotate($set.class));
+                      //$next;
+                    })
+                }, 
+                {property: String[1], params: Any[*] |
+                  if ($property == 'set', | $set, | []);
+                });
+            })
+        });
+    });
+    */
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseSerialize(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == meta::pure::graphFetch::execution::serialize_T_MANY__RootGraphFetchTree_1__String_1_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->then({parent: PExpr[1] | 
+      compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
+        $parent
+          ->meta::rel::compile::compile($callback, $state)
+          ->then({state: meta::rel::compile::CompilationState[1] | $state});
+      });
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseGraphFetch(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == meta::pure::graphFetch::execution::graphFetch_T_MANY__RootGraphFetchTree_1__T_MANY_);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->then({parent: PExpr[1] | 
+      compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
+        // TODO: Implement!
+        $parent
+          ->meta::rel::compile::compile($callback, $state)
+          ->then({state: meta::rel::compile::CompilationState[1] | $state});
+      });
+    });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseExtractEnumValue(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == meta::pure::functions::lang::extractEnumValue_Enumeration_1__String_1__T_1_);
+
+  $func.parametersValues
+    ->at(0)
+    ->tryCast(@InstanceValue)
+    ->andThen({value: InstanceValue[1] |
+      let enum = $value.values
+        ->at(0)
+        ->cast(@Enumeration<Any>);
+
+      $func.parametersValues
+        ->at(1)
+        ->tryCast(@InstanceValue)
+        ->then({val: InstanceValue[1] |
+          let enumValue = $val.values
+            ->at(0)
+            ->cast(@String);
+
+          compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
+            ^$state(current=
+              $enum
+                ->enumName()
+                ->meta::rel::metamodel::rel()
+                ->appl(meta::rel::metamodel::label($enumValue))
+            )
+            ->ok();
+          });
+        });
+    });
+}
+
 function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: RelSetImplementation[0..1]): Result<PExpr|0..1>[1] {
   $func.func->match([
     {property: Property<Nil, Any|*>[1] |
@@ -501,246 +1016,25 @@ function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: Rel
     },
     {other: Function<Any>[1] |
       switch([
-        case($other == filter_T_MANY__Function_1__T_MANY_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->andThen({parent: PExpr[1] |
-              $func.parametersValues
-                ->at(1)
-                ->intoScoped($parent)
-                ->then(scoped: Scoped[1] | $parent->filter($scoped));
-            });
-        }),
-        case($other == getAll_Class_1__T_MANY_, {|
-          $func.parametersValues
-            ->at(0)
-            ->map(vs: meta::pure::router::store::metamodel::StoreMappingRoutedValueSpecification[1] |
-              $vs.sets
-                ->first()
-                ->okOr(| 'No set implementation supplied.')
-                ->tryCast(@RelSetImplementation);
-            )
-            ->then(set | all($set));
-        }),
-        case($other == map_T_m__Function_1__V_m_ || $other == map_T_MANY__Function_1__V_MANY_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->andThen({parent: PExpr[1] |
-              $func.parametersValues
-                ->at(1)
-                ->intoScoped($parent)
-                ->then(scoped: Scoped[1] | $parent->mapExpr($scoped));
-            });
-        }),
-        case($other == exists_T_MANY__Function_1__Boolean_1_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->andThen({parent: PExpr[1] |
-              $func.parametersValues
-                ->at(1)
-                ->intoScoped($parent)
-                ->then({predicate: Scoped[1] | $parent->exists($predicate); });
-            })
-        }),
-        case($other == forAll_T_MANY__Function_1__Boolean_1_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->andThen({parent: PExpr[1] |
-              $func.parametersValues
-                ->at(1)
-                ->intoScoped($parent)
-                ->then({predicate: Scoped[1] | $parent->forAll($predicate); });
-            })
-        }),
-        case($other == project_T_MANY__Path_MANY__TabularDataSet_1_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->andThen({parent: PExpr[1] |
-              let paths = $func.parametersValues
-                ->at(1);
-
-              switch([
-                case($paths->instanceOf(ExtendedRoutedValueSpecification), 
-                  | $paths
-                      ->cast(@ExtendedRoutedValueSpecification)
-                      .value
-                      ->cast(@InstanceValue)
-                      .values
-                      ->cast(@meta::pure::metamodel::path::Path<Nil,Any|1>)
-                ),
-                case($paths->instanceOf(InstanceValue), | 
-                  $paths
-                    ->cast(@InstanceValue)
-                    .values
-                    ->cast(@meta::pure::metamodel::path::Path<Nil,Any|1>)
-                )
-              ], {| $paths->reactivate(); })
-              ->okOr(| 'Encountered unknown argument during compilation of `project_T_MANY__Path_MANY__TabularDataSet_1_`.')
-              ->andThem({paths: meta::pure::metamodel::path::Path<Nil,Any|1>[*] |
-                $parent
-                  ->set()
-                  ->okOr(| 'Expected set in parent expression of `project_T_MANY__Path_MANY__TabularDataSet_1_`.')
-                  ->andThen({set: RelSetImplementation[1] |
-                    $paths
-                      ->map({path |
-                        $path.path
-                          ->fold({element, accum |
-                            $accum
-                              ->andThen({expr: PExpr[1] |
-                                $element
-                                  ->tryCast(@meta::pure::metamodel::path::PropertyPathElement)
-                                  ->andThen(p: meta::pure::metamodel::path::PropertyPathElement[1] | $p.property->tryCast(@Property<Nil,Any|*>))
-                                  ->andThen({property: Property<Nil,Any|*>[1] | 
-                                    $property
-                                      .genericType
-                                      .rawType
-                                      ->okOr(| format('No type information for property `%s`.', $property.name))
-                                      ->then({type: Type[1] |
-                                        let next = 
-                                          $set
-                                            .parent
-                                            ->meta::pure::mapping::classMappingById($type->elementToPath('_'))
-                                            ->map(set | $set->cast(@RelSetImplementation));
-                                        
-                                        $expr->propertyAccess($property, $next);
-                                      })
-                                  });
-                              });
-                          }, ok(setAccess($set, 'x')))
-                          ->then(expr: PExpr[1] | 
-                            let name = 
-                              if ($path.name->isEmpty() || $path.name == '', {| 
-                                $path.path
-                                  ->last()
-                                  ->map({last | 
-                                    if ($last->instanceOf(meta::pure::metamodel::path::PropertyPathElement), {|
-                                      $last
-                                        ->cast(@meta::pure::metamodel::path::PropertyPathElement)
-                                        .property
-                                        .name
-                                        ->orElse('')
-                                    }, | '')
-                                  })
-                                  ->orElse('');
-                              }, | $path.name)
-                              ->orElse('');
-
-                            pair($name, $expr->scoped('x')->withParent($parent));
-                          );
-                      })
-                      ->collect()
-                      ->them({pairs: Pair<String, Scoped>[*] |
-                        $parent->project($pairs);
-                      });
-                  });
-              });
-            });
-        }),
+        case($other == filter_T_MANY__Function_1__T_MANY_,|
+          handleCaseFilter($func)),
+        case($other == getAll_Class_1__T_MANY_,|
+          handleCaseGetAll($func)),
+        case($other == map_T_m__Function_1__V_m_ || $other == map_T_MANY__Function_1__V_MANY_,|
+          handleCaseMap($func)),
+        case($other == exists_T_MANY__Function_1__Boolean_1_,|
+          handleCaseExists($func)),
+        case($other == forAll_T_MANY__Function_1__Boolean_1_,|
+          handleCaseForAll($func)),
+        case($other == project_T_MANY__Path_MANY__TabularDataSet_1_,|
+          handleCaseProject1($func)),
         case($other == project_T_MANY__ColumnSpecification_MANY__TabularDataSet_1_ ||
-             $other == project_TabularDataSet_1__ColumnSpecification_MANY__TabularDataSet_1_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->andThen({parent: PExpr[1] |
-              $func.parametersValues
-                ->at(1)
-                ->tryCast(@InstanceValue)
-                ->andThen({params: InstanceValue[1] |
-                  $params.values
-                    ->map({v | 
-                      $v->tryCast(@InstanceValue)
-                        ->then(i: InstanceValue[1] | 
-                          // Values guaranteed by function signature
-                          $i.values
-                            ->toOne()
-                            ->cast(@BasicColumnSpecification<Any>)
-                        );
-                    })
-                    ->collect()
-                    ->andThem({columns: BasicColumnSpecification<Any>[*] |
-                      $columns.func
-                        ->map(f | 
-                          $f->tryCast(@FunctionDefinition<Any>)
-                            ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->intoScoped($parent))
-                        )
-                        ->collect()
-                        ->them(fexprs | $parent->project($columns.name->zip($fexprs)));
-                    });
-                });
-            });
-        }),
-        case($other == groupBy_K_MANY__Function_MANY__AggregateValue_MANY__String_MANY__TabularDataSet_1_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->andThen({parent: PExpr[1] |
-              $func.parametersValues
-                ->at(1)
-                ->intoScopes($parent)
-                ->collect()
-                ->andThem({group: Scoped[*] |
-                  $func.parametersValues
-                    ->at(2)
-                    ->intoAggregates($parent)
-                    ->collect()
-                    ->andThem({aggregates: Aggregate[*] | 
-                      $func.parametersValues
-                        ->at(3)
-                        ->tryCast(@InstanceValue)
-                        ->andThen(i: InstanceValue[1] | 
-                          $i.values
-                            ->map(v | $v->tryCast(@String))
-                            ->collect()
-                        )
-                        ->andThem({names: String[*] | 
-                          if ($names->size() != $group->size() + $aggregates->size(),
-                            | error('Number of specified columns does not match the arity of the `group by` expression.'),
-                            {|
-                              let namedAggregates = 
-                                $aggregates
-                                  ->toNumbered()
-                                  ->map({pair: Pair<Integer, Aggregate>[1] | 
-                                    let agg = $pair.second;
-                                    ^$agg(name=$names->at($group->size() + $pair.first - 1));
-                                  });
-                              $parent
-                                ->groupBy($group, $namedAggregates, $names)
-                                ->ok();
-                            }
-                          );
-                        })
-                    })
-                });
-            });
-        }),
-        case($other == groupBy_TabularDataSet_1__String_MANY__AggregateValue_MANY__TabularDataSet_1_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->andThen({parent: PExpr[1] |
-              $func.parametersValues
-                ->at(1)
-                ->tryCast(@InstanceValue)
-                ->andThen(v: InstanceValue[1] | 
-                  $v.values
-                    ->map(s | $s->tryCast(@String))
-                    ->collect()
-                )
-                ->andThem({columns: String[*] |
-                  $func.parametersValues
-                    ->at(2)
-                    ->map(vs: ValueSpecification[1] | $vs->intoAggregates($parent)->collect())
-                    ->them({aggregates: Aggregate[*] | 
-                      $parent->groupBy($columns, $aggregates);
-                    });
-                })
-            });
-        }),
+             $other == project_TabularDataSet_1__ColumnSpecification_MANY__TabularDataSet_1_,|
+          handleCaseProject2($func)),
+        case($other == groupBy_K_MANY__Function_MANY__AggregateValue_MANY__String_MANY__TabularDataSet_1_,|
+          handleCaseGroupBy1($func)),
+        case($other == groupBy_TabularDataSet_1__String_MANY__AggregateValue_MANY__TabularDataSet_1_,|
+          handleCaseGroupBy2($func)),
         case($other == and_Boolean_1__Boolean_1__Boolean_1_ || 
              $other == or_Boolean_1__Boolean_1__Boolean_1_ ||
              $other == equal_Any_MANY__Any_MANY__Boolean_1_ ||
@@ -752,229 +1046,57 @@ function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: Rel
              $other == lessThanEqual_Number_1__Number_1__Boolean_1_ ||
              $other == lessThan_Date_1__Date_1__Boolean_1_ ||
              $other == lessThanEqual_Date_1__Date_1__Boolean_1_ ||
-             $other == divide_Number_1__Number_1__Float_1_, {|
-          let left = $func.parametersValues->at(0);
-          let right = $func.parametersValues->at(1);
-
-          [$left, $right]
-            ->evaluateAndDeactivate()
-            ->tryCastm(@ValueSpecification)
-            ->andThem({specs: ValueSpecification[*] |
-              $specs
-                ->map(spec | $spec->intoPExpr())
-                ->collect()
-            })
-            ->andThem({arguments: PExpr[*] |
-              $func
-                ->getFunctionExpr()
-                ->then(fn | $arguments->fexpr($fn));
-            });
-        }),
+             $other == divide_Number_1__Number_1__Float_1_,|
+          handleCaseBinaryOperator($func)),
         case($other == not_Boolean_1__Boolean_1_ || $other == isEmpty_Any_$0_1$__Boolean_1_ ||
-             $other == toOne_T_MANY__T_1_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->andThen({inner: PExpr[1] |
-              $func
-                ->getFunctionExpr()
-                ->then(fn | $inner->fexpr($fn));
-            });
-        }),
+             $other == toOne_T_MANY__T_1_,|
+          handleCaseUnaryOperator($func)),
         case($other == plus_Number_MANY__Number_1_ || $other == plus_String_MANY__String_1_ || 
              $other == plus_Integer_MANY__Integer_1_ || $other == plus_Float_MANY__Float_1_ || 
              $other == times_Number_MANY__Number_1_ || $other == times_Integer_MANY__Integer_1_ ||
              $other == times_Float_MANY__Float_1_ || $other == minus_Number_MANY__Number_1_ ||
-             $other == minus_Integer_MANY__Integer_1_ || $other == minus_Float_MANY__Float_1_, {|
-          $func.parametersValues
-            ->at(0)
-            ->tryCast(@InstanceValue)
-            ->andThen({spec: InstanceValue[1] | 
-              $spec.values
-                ->map(v: ValueSpecification[1] | $v->intoPExpr())
-                ->collect(); 
-            })
-            ->andThem({params: PExpr[*] |
-              $func
-                ->getFunctionExpr()
-                ->then(fn | $params->fexpr($fn));
-            });
-        }),
+             $other == minus_Integer_MANY__Integer_1_ || $other == minus_Float_MANY__Float_1_,|
+          handleCaseBigOperator1($func)),
         case($other == sum_Integer_MANY__Integer_1_ || $other == sum_Float_MANY__Float_1_ || $other == sum_Number_MANY__Number_1_ ||
              $other == count_Any_MANY__Integer_1_ ||
              $other == max_Integer_MANY__Integer_$0_1$_ || $other == max_Float_MANY__Float_$0_1$_ ||
              $other == min_Integer_MANY__Integer_$0_1$_ || $other == min_Float_MANY__Float_$0_1$_ ||
-             $other == toString_Any_1__String_1_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->andThen({parent: PExpr[1] | 
-              $func
-                ->getFunctionExpr()
-                ->then(fun | $parent->fexpr($fun));
-            });
-        }),
-        case($other == if_Boolean_1__Function_1__Function_1__T_m_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->andThen({condition: PExpr[1] |
-              $func.parametersValues
-                ->at(1)
-                ->intoScoped()
-                ->andThen({then: Scoped[1] |
-                  $func.parametersValues
-                    ->at(2)
-                    ->intoScoped()
-                    ->then(else: Scoped[1] | $condition->ifThenElse($then, $else));
-                });
-            });
-        }),
-        case($other == instanceOf_Any_1__Type_1__Boolean_1_, {|
-          let object = $func.parametersValues->at(0);
-          let type = $func.parametersValues->at(1);
-
-          $object
-            ->intoPExpr()
-            ->andThen({obj: PExpr[1] |
-              $type
-                ->tryCast(@ExtendedRoutedValueSpecification)
-                ->andThen({spec: ExtendedRoutedValueSpecification[1] |
-                  $spec
-                    ->intoPExpr()
-                    ->then({class: PExpr[1] |
-                      compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
-                        $obj
-                          ->meta::rel::compile::compile($callback, $state)
-                          ->andThen({state: meta::rel::compile::CompilationState[1] |
-                            let objExpr = $state.current->toOne();
-                            $class
-                              ->meta::rel::compile::compile($callback, $state)
-                              ->then({next: meta::rel::compile::CompilationState[1] |
-                                let typeExpr = $next.current->toOne();
-                                let current = $typeExpr->atom($objExpr);
-
-                                ^$next(current=$current->annotate(Boolean));
-                              });
-                          });
-                      });
-                    });
-                });
-            });
-        }),
-        /*case($other == cast_Any_m__T_1__T_m_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->andThen({obj: PExpr[1] |
-              $func.parametersValues
-                ->at(1)
-                ->tryCast(@ExtendedRoutedValueSpecification)
-                ->andThen({spec: ExtendedRoutedValueSpecification[1] |
-                  $spec.sets
-                    ->first()
-                    ->okOr(| 'No set implementation specified for argument of `cast`.')
-                    ->tryCast(@RelSetImplementation)
-                    ->then({set: RelSetImplementation[1] |
-                        compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
-                          $obj
-                            ->meta::rel::compile::compile($callback, $state)
-                            ->then({next: meta::rel::compile::CompilationState[1] |
-                              let obj = $next.current->toOne();
-                              let var = $next.variableFactory->meta::rel::compile::utils::next('x')->var();
-                              let current = 
-                                $var
-                                  ->from($var->in($obj)->where($set.classExpr->atom($var)));
-
-                              ^$next(current=$current->annotate($set.class));
-                              //$next;
-                            })
-                        }, 
-                        {property: String[1], params: Any[*] |
-                          if ($property == 'set', | $set, | []);
-                        });
-                    })
-                });
-            });
-        }),*/ //TODO
-        case($other == meta::pure::graphFetch::execution::serialize_T_MANY__RootGraphFetchTree_1__String_1_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->then({parent: PExpr[1] | 
-              compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
-                $parent
-                  ->meta::rel::compile::compile($callback, $state)
-                  ->then({state: meta::rel::compile::CompilationState[1] | $state});
-              });
-            });
-        }),
-        case($other == meta::pure::graphFetch::execution::graphFetch_T_MANY__RootGraphFetchTree_1__T_MANY_, {|
-          $func.parametersValues
-            ->at(0)
-            ->intoPExpr()
-            ->then({parent: PExpr[1] | 
-              compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
-                // TODO: Implement!
-                $parent
-                  ->meta::rel::compile::compile($callback, $state)
-                  ->then({state: meta::rel::compile::CompilationState[1] | $state});
-              });
-            });
-        }),
-        case($other == meta::pure::functions::lang::extractEnumValue_Enumeration_1__String_1__T_1_, {|
-          $func.parametersValues
-            ->at(0)
-            ->tryCast(@InstanceValue)
-            ->andThen({value: InstanceValue[1] |
-              let enum = $value.values
-                ->at(0)
-                ->cast(@Enumeration<Any>);
-
-              $func.parametersValues
-                ->at(1)
-                ->tryCast(@InstanceValue)
-                ->then({val: InstanceValue[1] |
-                  let enumValue = $val.values
-                    ->at(0)
-                    ->cast(@String);
-
-                  compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
-                    ^$state(current=
-                      $enum
-                        ->enumName()
-                        ->meta::rel::metamodel::rel()
-                        ->appl(meta::rel::metamodel::label($enumValue))
-                    )
-                    ->ok();
-                  });
-                });
-            });
-        }),
-        case($other == meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_, {| 
-          meta::rel::compile::ir::tds::intoPExpr($func);
-        }),
-        case($other == meta::pure::tds::filter_TabularDataSet_1__Function_1__TabularDataSet_1_, {|
-          meta::rel::compile::ir::tds::intoPExpr($func);
+             $other == toString_Any_1__String_1_,|
+          handleCaseBigOperator2($func)),
+        case($other == if_Boolean_1__Function_1__Function_1__T_m_,|
+          handleCaseIf($func)),
+        case($other == instanceOf_Any_1__Type_1__Boolean_1_,|
+          handleCaseInstanceOf($func)),
+        case($other == cast_Any_m__T_1__T_m_,|
+          handleCaseCast($func)),
+        case($other == meta::pure::graphFetch::execution::serialize_T_MANY__RootGraphFetchTree_1__String_1_,|
+          handleCaseSerialize($func)),
+        case($other == meta::pure::graphFetch::execution::graphFetch_T_MANY__RootGraphFetchTree_1__T_MANY_,|
+          handleCaseGraphFetch($func)),
+        case($other == meta::pure::functions::lang::extractEnumValue_Enumeration_1__String_1__T_1_,|
+          handleCaseExtractEnumValue($func)),
+        case($other == meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_,|
+          meta::rel::compile::ir::tds::intoPExpr($func)),
+        case($other == meta::pure::tds::filter_TabularDataSet_1__Function_1__TabularDataSet_1_,|
+          meta::rel::compile::ir::tds::intoPExpr($func))
 //
 // FIXME: Commented out to fix the build.
-//        }),
 //        case($other == meta::rel::query::def_String_1__FunctionDefinition_1__Any_MANY_, {| 
 //          // TODO not implemented yet
 //          let query = $func.parametersValues->at(1)->intoScoped()->unwrap()->inspect();
 //
 //          meta::rel::compile::ir::const(1)->ok();
+//      )
 //
-        })
-      ], {|
+      ], |
         error(
           'Encountered unknown instance while translating: ' +
             $other
               ->elementToPath()
               ->else(| '<<unknown>>')
               ->quote()
-        );
-      });
+        )
+      )
     }
   ]);
 }
