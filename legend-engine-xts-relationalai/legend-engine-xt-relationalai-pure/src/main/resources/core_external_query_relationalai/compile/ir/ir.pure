@@ -462,7 +462,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGetAll(func: Funct
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseMap(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
-  assert($func.func == map_T_m__Function_1__V_m_ || $func.func == map_T_MANY__Function_1__V_MANY_);
+  assert($func.func == map_T_m__Function_1__V_m_ || $func.func == map_T_MANY__Function_1__V_MANY_ || $func.func == map_T_$0_1$__Function_1__V_$0_1$_);
 
   $func.parametersValues
     ->at(0)
@@ -896,7 +896,9 @@ function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: Rel
           handleCaseFilter($func)),
         case($other == getAll_Class_1__T_MANY_,|
           handleCaseGetAll($func)),
-        case($other == map_T_m__Function_1__V_m_ || $other == map_T_MANY__Function_1__V_MANY_,|
+        case($other == map_T_m__Function_1__V_m_ ||
+             $other == map_T_MANY__Function_1__V_MANY_ ||
+             $other == map_T_$0_1$__Function_1__V_$0_1$_,|
           handleCaseMap($func)),
         case($other == exists_T_MANY__Function_1__Boolean_1_,|
           handleCaseExists($func)),
