@@ -910,7 +910,7 @@ function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: Rel
              $other == project_TabularDataSet_1__ColumnSpecification_MANY__TabularDataSet_1_,|
           handleCaseProject2($func)),
         case($other == project_K_MANY__Function_MANY__String_MANY__TabularDataSet_1_,|
-          handleCaseProjectNEW($func)),
+          handleCaseProject3($func)),
         case($other == groupBy_K_MANY__Function_MANY__AggregateValue_MANY__String_MANY__TabularDataSet_1_,|
           handleCaseGroupBy1($func)),
         case($other == groupBy_TabularDataSet_1__String_MANY__AggregateValue_MANY__TabularDataSet_1_,|

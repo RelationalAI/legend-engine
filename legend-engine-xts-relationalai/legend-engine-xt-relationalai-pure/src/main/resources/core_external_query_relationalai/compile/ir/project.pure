@@ -130,7 +130,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject2(func: Fun
     });
 }
 
-function <<access.private>> meta::rel::compile::ir::handleCaseProjectNEW(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+function <<access.private>> meta::rel::compile::ir::handleCaseProject3(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == project_K_MANY__Function_MANY__String_MANY__TabularDataSet_1_);
 
   let param0 = $func.parametersValues->at(0);
