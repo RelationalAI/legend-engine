@@ -503,130 +503,6 @@ function <<access.private>> meta::rel::compile::ir::handleCaseForAll(func: Funct
     });
 }
 
-function <<access.private>> meta::rel::compile::ir::handleCaseProject1(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
-  assert($func.func == project_T_MANY__Path_MANY__TabularDataSet_1_);
-
-  $func.parametersValues
-    ->at(0)
-    ->intoPExpr()
-    ->andThen({parent: PExpr[1] |
-      let paths = $func.parametersValues
-        ->at(1);
-
-      switch([
-        case($paths->instanceOf(ExtendedRoutedValueSpecification), 
-          | $paths
-              ->cast(@ExtendedRoutedValueSpecification)
-              .value
-              ->cast(@InstanceValue)
-              .values
-              ->cast(@meta::pure::metamodel::path::Path<Nil,Any|1>)
-        ),
-        case($paths->instanceOf(InstanceValue), | 
-          $paths
-            ->cast(@InstanceValue)
-            .values
-            ->cast(@meta::pure::metamodel::path::Path<Nil,Any|1>)
-        )
-      ], {| $paths->reactivate(); })
-      ->okOr(| 'Encountered unknown argument during compilation of `project_T_MANY__Path_MANY__TabularDataSet_1_`.')
-      ->andThem({paths: meta::pure::metamodel::path::Path<Nil,Any|1>[*] |
-        $parent
-          ->set()
-          ->okOr(| 'Expected set in parent expression of `project_T_MANY__Path_MANY__TabularDataSet_1_`.')
-          ->andThen({set: RelSetImplementation[1] |
-            $paths
-              ->map({path |
-                $path.path
-                  ->fold({element, accum |
-                    $accum
-                      ->andThen({expr: PExpr[1] |
-                        $element
-                          ->tryCast(@meta::pure::metamodel::path::PropertyPathElement)
-                          ->andThen(p: meta::pure::metamodel::path::PropertyPathElement[1] | $p.property->tryCast(@Property<Nil,Any|*>))
-                          ->andThen({property: Property<Nil,Any|*>[1] | 
-                            $property
-                              .genericType
-                              .rawType
-                              ->okOr(| format('No type information for property `%s`.', $property.name))
-                              ->then({type: Type[1] |
-                                let next = 
-                                  $set
-                                    .parent
-                                    ->meta::pure::mapping::classMappingById($type->elementToPath('_'))
-                                    ->map(set | $set->cast(@RelSetImplementation));
-                                
-                                $expr->propertyAccess($property, $next);
-                              })
-                          });
-                      });
-                  }, ok(setAccess($set, 'x')))
-                  ->then(expr: PExpr[1] | 
-                    let name = 
-                      if ($path.name->isEmpty() || $path.name == '', {| 
-                        $path.path
-                          ->last()
-                          ->map({last | 
-                            if ($last->instanceOf(meta::pure::metamodel::path::PropertyPathElement), {|
-                              $last
-                                ->cast(@meta::pure::metamodel::path::PropertyPathElement)
-                                .property
-                                .name
-                                ->orElse('')
-                            }, | '')
-                          })
-                          ->orElse('');
-                      }, | $path.name)
-                      ->orElse('');
-
-                    pair($name, $expr->scoped('x')->withParent($parent));
-                  );
-              })
-              ->collect()
-              ->them({pairs: Pair<String, Scoped>[*] |
-                $parent->project($pairs);
-              });
-          });
-      });
-    });
-}
-
-function <<access.private>> meta::rel::compile::ir::handleCaseProject2(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
-  assert($func.func == project_T_MANY__ColumnSpecification_MANY__TabularDataSet_1_ ||
-         $func.func == project_TabularDataSet_1__ColumnSpecification_MANY__TabularDataSet_1_);
-
-  $func.parametersValues
-    ->at(0)
-    ->intoPExpr()
-    ->andThen({parent: PExpr[1] |
-      $func.parametersValues
-        ->at(1)
-        ->tryCast(@InstanceValue)
-        ->andThen({params: InstanceValue[1] |
-          $params.values
-            ->map({v | 
-              $v->tryCast(@InstanceValue)
-                ->then(i: InstanceValue[1] | 
-                  // Values guaranteed by function signature
-                  $i.values
-                    ->toOne()
-                    ->cast(@BasicColumnSpecification<Any>)
-                );
-            })
-            ->collect()
-            ->andThem({columns: BasicColumnSpecification<Any>[*] |
-              $columns.func
-                ->map(f | 
-                  $f->tryCast(@FunctionDefinition<Any>)
-                    ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->intoScoped($parent))
-                )
-                ->collect()
-                ->them(fexprs | $parent->project($columns.name->zip($fexprs)));
-            });
-        });
-    });
-}
-
 function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy1(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == groupBy_K_MANY__Function_MANY__AggregateValue_MANY__String_MANY__TabularDataSet_1_);
 
@@ -1031,6 +907,8 @@ function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: Rel
         case($other == project_T_MANY__ColumnSpecification_MANY__TabularDataSet_1_ ||
              $other == project_TabularDataSet_1__ColumnSpecification_MANY__TabularDataSet_1_,|
           handleCaseProject2($func)),
+        case($other == project_K_MANY__Function_MANY__String_MANY__TabularDataSet_1_,|
+          handleCaseProjectNEW($func)),
         case($other == groupBy_K_MANY__Function_MANY__AggregateValue_MANY__String_MANY__TabularDataSet_1_,|
           handleCaseGroupBy1($func)),
         case($other == groupBy_TabularDataSet_1__String_MANY__AggregateValue_MANY__TabularDataSet_1_,|
@@ -1073,11 +951,10 @@ function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: Rel
           handleCaseSerialize($func)),
         case($other == meta::pure::graphFetch::execution::graphFetch_T_MANY__RootGraphFetchTree_1__T_MANY_,|
           handleCaseGraphFetch($func)),
-        case($other == meta::pure::functions::lang::extractEnumValue_Enumeration_1__String_1__T_1_,|
+        case($other == extractEnumValue_Enumeration_1__String_1__T_1_,|
           handleCaseExtractEnumValue($func)),
-        case($other == meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_ ||
-             $other == meta::pure::tds::project_K_MANY__Function_MANY__String_MANY__TabularDataSet_1_ ||
-             $other == meta::pure::tds::filter_TabularDataSet_1__Function_1__TabularDataSet_1_,|
+        case($other == join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_ ||
+             $other == filter_TabularDataSet_1__Function_1__TabularDataSet_1_,|
           meta::rel::compile::ir::tds::intoPExpr($func))
 //
 // FIXME: Commented out to fix the build.
