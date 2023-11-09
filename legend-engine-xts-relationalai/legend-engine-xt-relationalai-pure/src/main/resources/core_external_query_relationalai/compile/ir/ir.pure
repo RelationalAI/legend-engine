@@ -432,6 +432,27 @@ function meta::rel::compile::ir::intoPExpr(spec: ValueSpecification[1], set: Rel
   ])
 }
 
+function <<access.private>> meta::rel::compile::ir::handleCaseAt(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == at_T_MANY__Integer_1__T_1_);
+
+/*
+  println($func);
+
+  $func.parametersValues
+    ->at(0)
+    ->intoPExpr()
+    ->andThen({parent: PExpr[1] |
+      $func.parametersValues
+        ->at(1)
+        ->intoScoped($parent)
+        ->then(scoped: Scoped[1] | $parent->filter($scoped));
+    });
+*/
+
+  fail('Not yet implemented.');
+  ^Result<PExpr|0..1>();
+}
+
 function <<access.private>> meta::rel::compile::ir::handleCaseFilter(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == filter_T_MANY__Function_1__T_MANY_);
 
@@ -892,6 +913,8 @@ function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: Rel
     },
     {other: Function<Any>[1] |
       switch([
+        case($other == at_T_MANY__Integer_1__T_1_,|
+          handleCaseAt($func)),
         case($other == filter_T_MANY__Function_1__T_MANY_,|
           handleCaseFilter($func)),
         case($other == getAll_Class_1__T_MANY_,|
