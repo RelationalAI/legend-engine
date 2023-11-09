@@ -1,0 +1,399 @@
+/**
+  * Intermediate representation (IR) for PURE queries
+  *
+  * Here we define classes that model the part of PURE expressions
+  * which are supported for compilation into Rel code. Most of this file
+  * consists of functions that take instances of `ValueSpecification` and 
+  * translate these instances into IR objects. IR objects exist so that
+  * subsequent compilation can rely on well-defined type signatures without
+  * having to manually parse `ValueSpecification`s first.
+  */
+
+import meta::rel::compile::ir::*;
+import meta::rel::mapping::*;
+import meta::rel::utils::*;
+import meta::rel::metamodel::*;
+
+/**
+  * Abstract type representing PURE query expressions. Expressions evaluate to values.
+  */
+Class <<typemodifiers.abstract>> meta::rel::compile::ir::PExpr { }
+
+Class <<typemodifiers.abstract>> meta::rel::compile::ir::Constant extends PExpr { }
+
+Class meta::rel::compile::ir::VariablePlaceholder extends PExpr {
+  identifier: String[1];
+}
+
+Class meta::rel::compile::ir::StringConst extends meta::rel::compile::ir::Constant {
+  value: String[1];
+}
+
+Class meta::rel::compile::ir::IntegerConst extends meta::rel::compile::ir::Constant {
+  value: Integer[1];
+}
+
+Class meta::rel::compile::ir::FloatConst extends meta::rel::compile::ir::Constant {
+  value: Float[1];
+}
+
+Class meta::rel::compile::ir::BooleanConst extends meta::rel::compile::ir::Constant {
+  value: Boolean[1];
+}
+
+Class meta::rel::compile::ir::StrictDateConst extends meta::rel::compile::ir::Constant {
+  value: StrictDate[1];
+}
+
+Class meta::rel::compile::ir::DateTimeConst extends meta::rel::compile::ir::Constant {
+  value: DateTime[1];
+}
+
+/**
+  * Expression asking to fetch all elements of a certain type.
+  */
+Class meta::rel::compile::ir::All extends PExpr {
+  set: RelSetImplementation[1];
+}
+
+/**
+  * Expression asking to filter another query node by a given predicate.
+  */
+Class meta::rel::compile::ir::Filter extends PExpr {
+  parent: PExpr[1];
+  predicate: Scoped[1];
+}
+
+/**
+  * Type denoting an application of a function to multiple expressions.
+  */
+Class meta::rel::compile::ir::FunctionExpr<|n> extends PExpr {
+  arguments: PExpr[n];
+  fn: FunctionDefinition<{meta::rel::metamodel::Expr[n]->meta::rel::metamodel::Expr[1]}>[1];
+}
+
+/**
+  * Type denoting `exists` expressions.
+  */
+Class meta::rel::compile::ir::Exists extends PExpr {
+  parent: PExpr[1];
+  predicate: Scoped[1];
+}
+
+/**
+  * Type denoting `forAll` expressions.
+  */
+Class meta::rel::compile::ir::ForAll extends PExpr {
+  parent: PExpr[1];
+  predicate: Scoped[1];
+}
+
+/**
+  * Type for expressions which denote access to a variable
+  * representing a Rel set.
+  */
+Class meta::rel::compile::ir::SetAccess extends PExpr {
+  set: RelSetImplementation[1];
+  variable: String[1];
+}
+
+/**
+  * Type representing access to a property.
+  */
+Class meta::rel::compile::ir::PropertyAccess extends PExpr {
+  parent: PExpr[1];
+  property: Property<Nil, Any|*>[1];
+  set: RelSetImplementation[0..1];
+}
+
+/**
+  * Type representing an access to a column of a row.
+  * Such calls can only occur if the `parent` expression represents
+  * a `TDSRow`.
+  */
+Class meta::rel::compile::ir::ColumnAccess extends PExpr {
+  parent: PExpr[1];
+  column: String[1];
+}
+
+/**
+  * Helper type for representing variable scopes.
+  */ 
+Class meta::rel::compile::ir::Scoped extends PExpr {
+  variables: String[*];
+  inner: PExpr[1];
+  parent: PExpr[0..1];
+}
+
+/**
+  * Type denoting `map` expressions.
+  */
+Class meta::rel::compile::ir::MapExpr extends PExpr {
+  parent: PExpr[1];
+  body: Scoped[1];
+}
+
+/**
+  * Type denoting projections.
+  */
+Class meta::rel::compile::ir::Project extends PExpr {
+  parent: PExpr[1];
+  projections: Pair<String,Scoped>[*];
+}
+
+/**
+  * Denotes an aggregation function.
+  */
+Class meta::rel::compile::ir::Aggregate {
+  map: Scoped[1];
+  aggregateFunction: Scoped[1];
+  name: String[0..1];
+}
+
+Class <<typemodifiers.abstract>> meta::rel::compile::ir::GroupBy extends PExpr {
+  parent: PExpr[1];
+  aggregates: Aggregate[*];
+}
+
+/**
+  * Expression type denting `group by` expressions.
+  */
+Class meta::rel::compile::ir::GroupByScopes extends GroupBy {
+  group: Scoped[*];
+  names: String[*];
+
+  group() {
+    $this.group;
+  }: Any[*];
+
+  names() {
+    $this.names;
+  }: String[*];
+}
+
+/**
+  * Expression type denting `group by` expressions.
+  */
+Class meta::rel::compile::ir::GroupByColumns extends GroupBy {
+  group: String[*];
+
+  group() {
+    $this.group;
+  }: Any[*];
+
+  names() {
+    $this.group->concatenate($this.aggregates.name);
+  }: String[*];
+}
+
+/**
+  * If-then-else expression.
+  */
+Class meta::rel::compile::ir::IfThenElse extends PExpr {
+  condition: PExpr[1];
+  then: Scoped[1];
+  else: Scoped[1];
+}
+
+/**
+  * Helper class for implementing a custom compilation step without the need
+  * to represent IR objects explicitly.
+  */
+Class meta::rel::compile::ir::CompilationStep extends PExpr {
+  logic: FunctionDefinition<{
+    FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
+    meta::rel::compile::CompilationState[1]
+      ->Result<meta::rel::compile::CompilationState|0..1>[1]
+  }>[1];
+
+  property: FunctionDefinition<{String[1], Any[*]->Any[*]}>[0..1];
+}
+
+///////////////////////////
+// Constructor functions //
+///////////////////////////
+
+function meta::rel::compile::ir::const(value: String[1]): StringConst[1] {
+  string($value);
+}
+
+function meta::rel::compile::ir::const(value: Integer[1]): IntegerConst[1] {
+  integer($value);
+}
+
+function meta::rel::compile::ir::const(value: Float[1]): FloatConst[1] {
+  float($value);
+}
+
+function meta::rel::compile::ir::const(value: Boolean[1]): BooleanConst[1] {
+  boolean($value);
+}
+
+function meta::rel::compile::ir::const(value: StrictDate[1]): StrictDateConst[1] {
+  strictDate($value);
+}
+
+function meta::rel::compile::ir::const(value: DateTime[1]): DateTimeConst[1] {
+  dateTime($value);
+}
+
+function meta::rel::compile::ir::string(value: String[1]): StringConst[1] {
+  ^StringConst(value=$value);
+}
+
+function meta::rel::compile::ir::integer(value: Integer[1]): IntegerConst[1] {
+  ^IntegerConst(value=$value);
+}
+
+function meta::rel::compile::ir::float(value: Float[1]): FloatConst[1] {
+  ^FloatConst(value=$value);
+}
+
+function meta::rel::compile::ir::boolean(value: Boolean[1]): BooleanConst[1] {
+  ^BooleanConst(value=$value);
+}
+
+function meta::rel::compile::ir::strictDate(value: StrictDate[1]): StrictDateConst[1] {
+  ^StrictDateConst(value=$value);
+}
+
+function meta::rel::compile::ir::dateTime(value: DateTime[1]): DateTimeConst[1] {
+  ^DateTimeConst(value=$value);
+}
+
+function meta::rel::compile::ir::variablePlaceholder(identifier: String[1]): VariablePlaceholder[1] {
+  ^VariablePlaceholder(identifier=$identifier);
+}
+
+function meta::rel::compile::ir::fexpr<|n>(
+  arguments: PExpr[n], 
+  fn: FunctionDefinition<{meta::rel::metamodel::Expr[n]->meta::rel::metamodel::Expr[1]}>[1]
+): FunctionExpr<|n>[1] {
+  ^FunctionExpr<|n>(arguments=$arguments, fn=$fn);
+}
+
+function meta::rel::compile::ir::setAccess(set: RelSetImplementation[1], variable: String[1]): SetAccess[1] {
+  ^SetAccess(set=$set, variable=$variable);
+}
+
+function meta::rel::compile::ir::propertyAccess(
+  parent: PExpr[1], 
+  property: Property<Nil, Any|*>[1],
+  set: RelSetImplementation[0..1]
+): PropertyAccess[1] {
+  ^PropertyAccess(parent=$parent, property=$property, set=$set);
+}
+
+
+function meta::rel::compile::ir::columnAccess(parent: PExpr[1], column: String[1]): ColumnAccess[1] {
+  ^ColumnAccess(parent=$parent, column=$column);
+}
+
+function meta::rel::compile::ir::all(set: RelSetImplementation[1]): All[1] {
+  ^All(set=$set);
+}
+
+function meta::rel::compile::ir::filter(parent: PExpr[1], predicate: Scoped[1]): Filter[1] {
+  ^Filter(parent=$parent, predicate=$predicate);
+}
+
+function meta::rel::compile::ir::scoped(inner: PExpr[1], variable: String[*]): Scoped[1] {
+  scoped($inner, $variable, []);
+}
+
+function meta::rel::compile::ir::scoped(inner: PExpr[1], variables: String[*], parent: PExpr[0..1]): Scoped[1] {
+  ^Scoped(inner=$inner, variables=$variables, parent=$parent);
+}
+
+function meta::rel::compile::ir::withParent(scoped: Scoped[1], parent: PExpr[0..1]): Scoped[1] {
+  ^$scoped(parent=$parent);
+}
+
+function meta::rel::compile::ir::mapExpr(parent: PExpr[1], body: Scoped[1]): MapExpr[1] {
+  ^MapExpr(parent=$parent, body=$body);
+}
+
+function meta::rel::compile::ir::exists(parent: PExpr[1], predicate: Scoped[1]): meta::rel::compile::ir::Exists[1] {
+  ^meta::rel::compile::ir::Exists(parent=$parent, predicate=$predicate);
+}
+
+function meta::rel::compile::ir::forAll(parent: PExpr[1], predicate: Scoped[1]): meta::rel::compile::ir::ForAll[1] {
+  ^meta::rel::compile::ir::ForAll(parent=$parent, predicate=$predicate);
+}
+
+function meta::rel::compile::ir::project(parent: PExpr[1], projections: Pair<String,Scoped>[*]): Project[1] {
+  ^Project(parent=$parent, projections=$projections);
+}
+
+function meta::rel::compile::ir::aggregate(map: Scoped[1], aggregateFunction: Scoped[1]): Aggregate[1] {
+  ^Aggregate(map=$map, aggregateFunction=$aggregateFunction);
+}
+
+function meta::rel::compile::ir::aggregate(map: Scoped[1], aggregateFunction: Scoped[1], name: String[1]): Aggregate[1] {
+  let agg = aggregate($map, $aggregateFunction);
+  ^$agg(name=$name);
+}
+
+function meta::rel::compile::ir::groupBy(parent: PExpr[1], group: Scoped[*], aggregates: Aggregate[*], names: String[*]): GroupByScopes[1] {
+  ^GroupByScopes(parent=$parent, group=$group, aggregates=$aggregates, names=$names);
+}
+
+function meta::rel::compile::ir::groupBy(parent: PExpr[1], group: String[*], aggregates: Aggregate[*]): GroupByColumns[1] {
+  ^GroupByColumns(parent=$parent, group=$group, aggregates=$aggregates);
+}
+
+function meta::rel::compile::ir::compilationStep(
+  logic: FunctionDefinition<{
+    FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
+    meta::rel::compile::CompilationState[1]
+      ->Result<meta::rel::compile::CompilationState|0..1>[1]
+  }>[1]
+): CompilationStep[1] {
+  compilationStep($logic, []);
+}
+
+function meta::rel::compile::ir::compilationStep(
+  logic: FunctionDefinition<{
+    FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
+    meta::rel::compile::CompilationState[1]
+      ->Result<meta::rel::compile::CompilationState|0..1>[1]
+  }>[1],
+  property: FunctionDefinition<{String[1], Any[*]->Any[*]}>[0..1]
+): CompilationStep[1] {
+  ^CompilationStep(logic=$logic, property=$property);
+}
+
+function meta::rel::compile::ir::ifThenElse(condition: PExpr[1], then: Scoped[1], else: Scoped[1]): meta::rel::compile::ir::IfThenElse[1] {
+  ^meta::rel::compile::ir::IfThenElse(condition=$condition, then=$then, else=$else);
+}
+
+///////////////////
+// API functions //
+///////////////////
+
+function meta::rel::compile::ir::set(expr: PExpr[1]): RelSetImplementation[0..1] {
+  $expr->match([
+    {access: SetAccess[1] | $access.set},
+    {scoped: Scoped[1] | $scoped.parent->map(p | $p->set()); },
+    {all: All[1] | $all.set},
+    {access: PropertyAccess[1] | $access.set},
+    {map: MapExpr[1] | $map.parent->set()},
+    {filter: Filter[1] | $filter.parent->set()},
+    {exists: meta::rel::compile::ir::Exists[1] | $exists.parent->set()},
+    {forAll: meta::rel::compile::ir::ForAll[1] | $forAll.parent->set()},
+    {project: Project[1] | $project.parent->set()},
+    {groupBy: GroupBy[1] | $groupBy.parent->set()},
+    {step: CompilationStep[1] | $step.property->map(fun | $fun->eval('set', []))->first()->cast(@RelSetImplementation)},
+    {other: Any[1] | []}
+  ]);
+}
+
+function meta::rel::compile::ir::root(expr: PExpr[1]): PExpr[1] {
+  $expr->match([
+    {access: SetAccess[1] | $access},
+    {scoped: Scoped[1] | $scoped.parent->map(p | $p->root())->orElse($scoped)},
+    {variable: VariablePlaceholder[1] | $variable},
+    {access: PropertyAccess[1] | $access.parent->root()},
+    {access: ColumnAccess[1] | $access.parent->root()}
+  ])
+}
