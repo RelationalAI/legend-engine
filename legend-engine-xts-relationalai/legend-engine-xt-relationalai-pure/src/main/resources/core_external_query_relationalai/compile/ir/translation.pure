@@ -71,12 +71,13 @@ function <<access.private>> meta::rel::compile::ir::handleCaseAt(func: FunctionE
 function <<access.private>> meta::rel::compile::ir::handleCaseFilter(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == filter_T_MANY__Function_1__T_MANY_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+  let param1 = $func.parametersValues->at(1);
+
+  $param0
     ->intoPExpr()
     ->andThen({parent: PExpr[1] |
-      $func.parametersValues
-        ->at(1)
+      $param1
         ->intoScoped($parent)
         ->then(scoped: Scoped[1] | $parent->filter($scoped));
     });
@@ -85,8 +86,9 @@ function <<access.private>> meta::rel::compile::ir::handleCaseFilter(func: Funct
 function <<access.private>> meta::rel::compile::ir::handleCaseGetAll(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == getAll_Class_1__T_MANY_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+
+  $param0
     ->map(vs: meta::pure::router::store::metamodel::StoreMappingRoutedValueSpecification[1] |
       $vs.sets
         ->first()
@@ -100,12 +102,13 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGetAll(func: Funct
 function <<access.private>> meta::rel::compile::ir::handleCaseMap(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == map_T_m__Function_1__V_m_ || $func.func == map_T_MANY__Function_1__V_MANY_ || $func.func == map_T_$0_1$__Function_1__V_$0_1$_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+  let param1 = $func.parametersValues->at(1);
+
+  $param0
     ->intoPExpr()
     ->andThen({parent: PExpr[1] |
-      $func.parametersValues
-        ->at(1)
+      $param1
         ->intoScoped($parent)
         ->then(scoped: Scoped[1] | $parent->mapExpr($scoped));
     });
@@ -114,12 +117,13 @@ function <<access.private>> meta::rel::compile::ir::handleCaseMap(func: Function
 function <<access.private>> meta::rel::compile::ir::handleCaseExists(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == exists_T_MANY__Function_1__Boolean_1_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+  let param1 = $func.parametersValues->at(1);
+
+  $param0
     ->intoPExpr()
     ->andThen({parent: PExpr[1] |
-      $func.parametersValues
-        ->at(1)
+      $param1
         ->intoScoped($parent)
         ->then({predicate: Scoped[1] | $parent->exists($predicate); });
     });
@@ -128,12 +132,13 @@ function <<access.private>> meta::rel::compile::ir::handleCaseExists(func: Funct
 function <<access.private>> meta::rel::compile::ir::handleCaseForAll(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == forAll_T_MANY__Function_1__Boolean_1_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+  let param1 = $func.parametersValues->at(1);
+
+  $param0
     ->intoPExpr()
     ->andThen({parent: PExpr[1] |
-      $func.parametersValues
-        ->at(1)
+      $param1
         ->intoScoped($parent)
         ->then({predicate: Scoped[1] | $parent->forAll($predicate); });
     });
@@ -142,22 +147,23 @@ function <<access.private>> meta::rel::compile::ir::handleCaseForAll(func: Funct
 function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy1(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == groupBy_K_MANY__Function_MANY__AggregateValue_MANY__String_MANY__TabularDataSet_1_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+  let param1 = $func.parametersValues->at(1);
+  let param2 = $func.parametersValues->at(2);
+  let param3 = $func.parametersValues->at(3);
+
+  $param0
     ->intoPExpr()
     ->andThen({parent: PExpr[1] |
-      $func.parametersValues
-        ->at(1)
+      $param1
         ->intoScopes($parent)
         ->collect()
         ->andThem({group: Scoped[*] |
-          $func.parametersValues
-            ->at(2)
+          $param2
             ->intoAggregates($parent)
             ->collect()
             ->andThem({aggregates: Aggregate[*] | 
-              $func.parametersValues
-                ->at(3)
+              $param3
                 ->tryCast(@InstanceValue)
                 ->andThen(i: InstanceValue[1] | 
                   $i.values
@@ -189,12 +195,14 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy1(func: Fun
 function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy2(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == groupBy_TabularDataSet_1__String_MANY__AggregateValue_MANY__TabularDataSet_1_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+  let param1 = $func.parametersValues->at(1);
+  let param2 = $func.parametersValues->at(2);
+
+  $param0
     ->intoPExpr()
     ->andThen({parent: PExpr[1] |
-      $func.parametersValues
-        ->at(1)
+      $param1
         ->tryCast(@InstanceValue)
         ->andThen(v: InstanceValue[1] | 
           $v.values
@@ -202,8 +210,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy2(func: Fun
             ->collect()
         )
         ->andThem({columns: String[*] |
-          $func.parametersValues
-            ->at(2)
+          $param2
             ->map(vs: ValueSpecification[1] | $vs->intoAggregates($parent)->collect())
             ->them({aggregates: Aggregate[*] | 
               $parent->groupBy($columns, $aggregates);
@@ -250,8 +257,9 @@ function <<access.private>> meta::rel::compile::ir::handleCaseUnaryOperator(func
          $func.func == isEmpty_Any_$0_1$__Boolean_1_ ||
          $func.func == toOne_T_MANY__T_1_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+
+  $param0
     ->intoPExpr()
     ->andThen({inner: PExpr[1] |
       $func
@@ -267,8 +275,9 @@ function <<access.private>> meta::rel::compile::ir::handleCaseBigOperator1(func:
          $func.func == times_Float_MANY__Float_1_ || $func.func == minus_Number_MANY__Number_1_ ||
          $func.func == minus_Integer_MANY__Integer_1_ || $func.func == minus_Float_MANY__Float_1_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+
+  $param0
     ->tryCast(@InstanceValue)
     ->andThen({spec: InstanceValue[1] | 
       $spec.values
@@ -289,8 +298,9 @@ function <<access.private>> meta::rel::compile::ir::handleCaseBigOperator2(func:
          $func.func == min_Integer_MANY__Integer_$0_1$_ || $func.func == min_Float_MANY__Float_$0_1$_ ||
          $func.func == toString_Any_1__String_1_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+
+  $param0
     ->intoPExpr()
     ->andThen({parent: PExpr[1] | 
       $func
@@ -302,16 +312,17 @@ function <<access.private>> meta::rel::compile::ir::handleCaseBigOperator2(func:
 function <<access.private>> meta::rel::compile::ir::handleCaseIf(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == if_Boolean_1__Function_1__Function_1__T_m_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+  let param1 = $func.parametersValues->at(1);
+  let param2 = $func.parametersValues->at(2);
+
+  $param0
     ->intoPExpr()
     ->andThen({condition: PExpr[1] |
-      $func.parametersValues
-        ->at(1)
+      $param1
         ->intoScoped()
         ->andThen({then: Scoped[1] |
-          $func.parametersValues
-            ->at(2)
+          $param2
             ->intoScoped()
             ->then(else: Scoped[1] | $condition->ifThenElse($then, $else));
         });
@@ -399,8 +410,9 @@ function <<access.private>> meta::rel::compile::ir::handleCaseCast(func: Functio
 function <<access.private>> meta::rel::compile::ir::handleCaseSerialize(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == meta::pure::graphFetch::execution::serialize_T_MANY__RootGraphFetchTree_1__String_1_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+
+  $param0
     ->intoPExpr()
     ->then({parent: PExpr[1] | 
       compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
@@ -414,8 +426,9 @@ function <<access.private>> meta::rel::compile::ir::handleCaseSerialize(func: Fu
 function <<access.private>> meta::rel::compile::ir::handleCaseGraphFetch(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == meta::pure::graphFetch::execution::graphFetch_T_MANY__RootGraphFetchTree_1__T_MANY_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+
+  $param0
     ->intoPExpr()
     ->then({parent: PExpr[1] | 
       compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
@@ -430,16 +443,17 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGraphFetch(func: F
 function <<access.private>> meta::rel::compile::ir::handleCaseExtractEnumValue(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == meta::pure::functions::lang::extractEnumValue_Enumeration_1__String_1__T_1_);
 
-  $func.parametersValues
-    ->at(0)
+  let param0 = $func.parametersValues->at(0);
+  let param1 = $func.parametersValues->at(1);
+
+  $param0
     ->tryCast(@InstanceValue)
     ->andThen({value: InstanceValue[1] |
       let enum = $value.values
         ->at(0)
         ->cast(@Enumeration<Any>);
 
-      $func.parametersValues
-        ->at(1)
+      $param1
         ->tryCast(@InstanceValue)
         ->then({val: InstanceValue[1] |
           let enumValue = $val.values
@@ -646,7 +660,7 @@ function meta::rel::compile::ir::intoPExpr(value: Any[1], set: RelSetImplementat
               ->ok();
           });
         })
-        ->okOr(| format('Encountered class `%s` but no set implementation has been provided.', $class.name));
+        ->okOr(| format('Encountered class `%s` but no set implementation has been provided.', $class.name))
     },
     {a: Any[1] | 
       let error = error(| 
