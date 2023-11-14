@@ -126,6 +126,14 @@ Class meta::rel::compile::ir::Scoped extends PExpr {
 }
 
 /**
+  * Type denoting `at` expressions.
+  */
+Class meta::rel::compile::ir::AtExpr extends PExpr {
+  parent: PExpr[1];
+  index: Integer[1];
+}
+
+/**
   * Type denoting `map` expressions.
   */
 Class meta::rel::compile::ir::MapExpr extends PExpr {
@@ -307,6 +315,10 @@ function meta::rel::compile::ir::scoped(inner: PExpr[1], variables: String[*], p
 
 function meta::rel::compile::ir::withParent(scoped: Scoped[1], parent: PExpr[0..1]): Scoped[1] {
   ^$scoped(parent=$parent);
+}
+
+function meta::rel::compile::ir::atExpr(parent: PExpr[1], index: Integer[1]): AtExpr[1] {
+  ^AtExpr(parent=$parent, index=$index);
 }
 
 function meta::rel::compile::ir::mapExpr(parent: PExpr[1], body: Scoped[1]): MapExpr[1] {
