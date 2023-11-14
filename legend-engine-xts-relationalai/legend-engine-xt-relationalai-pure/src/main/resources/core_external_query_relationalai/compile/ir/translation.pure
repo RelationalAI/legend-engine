@@ -50,22 +50,23 @@ function meta::rel::compile::ir::intoPExpr(spec: ValueSpecification[1], set: Rel
 function <<access.private>> meta::rel::compile::ir::handleCaseAt(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
   assert($func.func == at_T_MANY__Integer_1__T_1_);
 
-/*
-  println($func);
+  let param0 = $func.parametersValues->at(0);
+  let param1 = $func.parametersValues->at(1);
 
-  $func.parametersValues
-    ->at(0)
+  $param0
     ->intoPExpr()
     ->andThen({parent: PExpr[1] |
-      $func.parametersValues
-        ->at(1)
-        ->intoScoped($parent)
-        ->then(scoped: Scoped[1] | $parent->filter($scoped));
+      $param1
+        ->tryCast(@InstanceValue)
+        ->andThen(v: InstanceValue[1] | 
+          $v.values
+            ->toOne()
+            ->tryCast(@Integer)
+        )
+        ->then(index: Integer[1] |
+          $parent->atExpr($index)
+        )
     });
-*/
-
-  fail('Not yet implemented.');
-  ^Result<PExpr|0..1>();
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseFilter(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
