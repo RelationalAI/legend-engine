@@ -533,10 +533,9 @@ function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: Rel
               })
               ->ok();
             }, {|
-              let error = error(| 
-                format('Encountered unknown qualified property while translating: `%s`', $property.name)
-              );
-              error($error);
+              let message = 
+                format('Encountered unknown qualified property while translating: `%s`', $property.name);
+              error($message);
             });
           });
         });
@@ -638,7 +637,7 @@ function meta::rel::compile::ir::intoPExpr(spec: InstanceValue[1], set: RelSetIm
     ->okOr(| 'Expected value within `InstanceValue`.')
     ->andThem({values: Any[*] | 
       if ($values->size() != 1,
-        | error(error(| 'Expected exactly one value in `InstanceValue`.')),
+        | error('Expected exactly one value in `InstanceValue`.'),
         | $values->toOne()->ok()
       );
     })
@@ -664,15 +663,14 @@ function meta::rel::compile::ir::intoPExpr(value: Any[1], set: RelSetImplementat
         ->okOr(| format('Encountered class `%s` but no set implementation has been provided.', $class.name))
     },
     {a: Any[1] | 
-      let error = error(| 
+      let message =
         'Encountered unknown instance when constructing PExpr for value with type: ' +
           $a
             ->type()
             ->elementToPath()
             ->else(| '<<unknown>>')
             ->quote();
-      );
-      error($error);
+      error($message);
     }
   ])
 }
@@ -708,7 +706,7 @@ function meta::rel::compile::ir::intoScoped(func: FunctionDefinition<Any>[1], pa
     ->okOr(|'Encountered empty function body while evaluating expression.')
     ->andThem({exprs: ValueSpecification[*] |
       if ($exprs->size() != 1,
-        | error(error(| 'More than one expression in function body not supported yet.')),
+        | error('More than one expression in function body not supported yet.'),
         | $exprs->toOne()->ok()
       );
     })
@@ -780,10 +778,9 @@ function meta::rel::compile::ir::intoAggregates(spec: ValueSpecification[1], par
             });
         })
       ], {|
-        let error = error(| 
-          format('Encountered unexpected aggregation function during translation: `%s`', $fexpr.func->elementToPath())
-        );
-        error($error);
+        let message =
+          format('Encountered unexpected aggregation function during translation: `%s`', $fexpr.func->elementToPath());
+        error($message);
       });
     },
     {value: InstanceValue[1] |
@@ -957,14 +954,13 @@ function meta::rel::compile::ir::getFunctionExpr(
         ->ok();
       })
     ], {|
-      let error = error(| 
+      let message = 
         'Encountered unknown instance when constructing Expr for function with type: ' +
           $fn.func
             ->elementToPath()
             ->else(| '<<unknown>>')
             ->quote();
-      );
-      error($error);
+      error($message);
     });
   
   let type = $fn.genericType.rawType;

@@ -3,7 +3,7 @@ import meta::rel::utils::*;
 
 Class meta::rel::utils::Result<T|n> { 
   <<equality.Key>> values: T[n];
-  <<equality.Key>> errors: Any[*];
+  <<equality.Key>> errors: String[*];
 }
 
 function meta::rel::utils::okOrElse<T|m>(value: T[m], else: FunctionDefinition<{->Result<T|m>[1]}>[1]): Result<T|m>[1] {
@@ -18,7 +18,10 @@ function meta::rel::utils::okOrElse<T|m>(value: T[m], else: FunctionDefinition<{
 }
 
 function meta::rel::utils::okOr<T|m>(value: T[m], message: FunctionDefinition<{->String[1]}>[1]): Result<T|m>[1] {
-  $value->okOrElse(| ^Result<T|m>(errors=[error($message)]));
+  /*
+   * TODO: We should delay the evaluation of the message until the error is reported.
+   */
+  $value->okOrElse(| ^Result<T|m>(errors=[$message->eval()]))
 }
 
 function meta::rel::utils::ok<T>(value: T[1]): Result<T|0..1>[1] {
@@ -29,7 +32,7 @@ function meta::rel::utils::okm<T>(values: T[*]): Result<T|*>[1] {
   ^Result<T|*>(values=$values);
 }
 
-function meta::rel::utils::error(errors: Any[*]): Result<Nil|0..1>[1] {
+function meta::rel::utils::error(errors: String[*]): Result<Nil|0..1>[1] {
   ^Result<Nil|0..1>(errors=$errors);
 }
 
@@ -122,13 +125,6 @@ function meta::rel::utils::collect<T>(results: Result<T|0..1>[*]): Result<T|*>[1
       ^Result<T|*>(errors=$accum.errors->concatenate($r.errors), values=[])
     )
   }, okm([])->cast(@Result<T|*>));
-}
-
-function meta::rel::utils::expand<T>(result: Result<T|*>[1]): Result<T|0..1>[*] {
-  if ($result.errors->isEmpty(),
-    | $result.values->map(v | ok($v)),
-    | $result.errors->map(e | error($e))
-  );
 }
 
 function meta::rel::utils::tryCast<T>(source: Any[1], object: T[1]): Result<T|0..1>[1] {
