@@ -395,8 +395,7 @@ function meta::rel::compile::ir::set(expr: PExpr[1]): RelSetImplementation[0..1]
     {forAll: meta::rel::compile::ir::ForAll[1] | $forAll.parent->set()},
     {project: Project[1] | $project.parent->set()},
     {groupBy: GroupBy[1] | $groupBy.parent->set()},
-    {step: CompilationStep[1] | $step.property->map(fun | $fun->eval('set', []))->first()->cast(@RelSetImplementation)},
-    {other: Any[1] | []}
+    {step: CompilationStep[1] | $step.property->map(fun | $fun->eval('set', []))->first()->cast(@RelSetImplementation)}
   ]);
 }
 
