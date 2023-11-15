@@ -143,35 +143,35 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject3(func: Fun
     ->intoPExpr()
     ->andThen({parent: PExpr[1] |
 
-  $param1
-    ->tryCast(@InstanceValue)
-    ->andThen({params: InstanceValue[1] |
-      $params.values
-        ->map( v |
-          $v->tryCast(@FunctionRoutedValueSpecification)
-            ->then(s: FunctionRoutedValueSpecification[1] |
-              // CHECK: Is value type guarenteed?
-              $s.value->cast(@InstanceValue)
-            )
-        )
-        ->collect()
-        ->andThem(i: InstanceValue[*] |
-          $i.values
-            ->map(v |
-              // Type Result<Project>
-              $v->tryCast(@FunctionDefinition<Any>)
-                ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->intoScoped($parent))
-            )
-            ->collect()
-            ->andThem(fexprs: Scoped[*] |
-              // Type Result<Project>
-              $param2->tryCast(@InstanceValue)->then(param: InstanceValue[1] |
-                // Type guareteed by function signature.
-                let columnNames = $param.values->cast(@String);
-                $parent->project($columnNames->zip($fexprs));
+    $param1
+      ->tryCast(@InstanceValue)
+      ->andThen({params: InstanceValue[1] |
+        $params.values
+          ->map( v |
+            $v->tryCast(@FunctionRoutedValueSpecification)
+              ->then(s: FunctionRoutedValueSpecification[1] |
+                // CHECK: Is value type guarenteed?
+                $s.value->cast(@InstanceValue);
               )
-            )
-        )
-    })
+          )
+          ->collect()
+          ->andThem(i: InstanceValue[*] |
+            $i.values
+              ->map(v |
+                // Type Result<Project>
+                $v->tryCast(@FunctionDefinition<Any>)
+                  ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->intoScoped($parent))
+              )
+              ->collect()
+              ->andThem(fexprs: Scoped[*] |
+                // Type Result<Project>
+                $param2->tryCast(@InstanceValue)->then(param: InstanceValue[1] |
+                  // Type guareteed by function signature.
+                  let columnNames = $param.values->cast(@String);
+                  $parent->project($columnNames->zip($fexprs));
+                )
+              )
+          )
+      })
   });
 }
