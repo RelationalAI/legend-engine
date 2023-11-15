@@ -75,6 +75,26 @@ function meta::rel::compile::compile(
     ->then(expr: Expr[1] | ^$state(current=$expr->annotate($all.set.class)))
 }
 
+function <<access.private>> meta::rel::compile::chainCallback(
+  callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
+  key: String[1],
+  value: Variable[1]
+): FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1] {
+  /*
+   * Add the mapping `key -> value` to the callback function.
+   */
+  {a: Any[1] |
+    $a
+      ->tryCast(@String)
+      ->andThen({var: String[1] |
+        if ($var == $key, 
+          | ok($value), 
+          | $callback->eval($a)
+        );
+      })
+  };
+}
+
 function meta::rel::compile::compile(
   filter: Filter[1], 
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
@@ -86,16 +106,10 @@ function meta::rel::compile::compile(
       let bound = var($state.variableFactory->next());
 
       $filter.predicate
-        ->compile({a: Any[1] |
-          $a
-            ->tryCast(@String)
-            ->andThen({var: String[1] |
-              if ($var == $filter.predicate.variables->toOne(), 
-                | ok($bound), 
-                | $callback->eval($a)
-              );
-            })
-        }, $state)
+        ->compile(
+          $callback->chainCallback($filter.predicate.variables->toOne(), $bound),
+          $state
+        )
         ->step({predicate: Expr[1] | 
           $predicate
             ->abstract($bound->in($parent))
@@ -135,16 +149,10 @@ function meta::rel::compile::compile(
       let bound = var($state.variableFactory->next());
 
       $exists.predicate
-        ->compile({a: Any[1] | 
-          $a
-            ->tryCast(@String)
-            ->andThen({var: String[1] |
-              if ($var == $exists.predicate.variables->toOne(), 
-                | ok($bound), 
-                | $callback->eval($a)
-              );
-            })
-        }, $state)
+        ->compile(
+          $callback->chainCallback($exists.predicate.variables->toOne(), $bound),
+          $state
+        )
         ->step({predicate: Expr[1] | 
             /*[
               meta::rel::metamodel::const(1),
@@ -179,16 +187,10 @@ function meta::rel::compile::compile(
       let bound = var($state.variableFactory->next());
 
       $forAll.predicate
-        ->compile({a: Any[1] | 
-          $a
-            ->tryCast(@String)
-            ->andThen({var: String[1] |
-              if ($var == $forAll.predicate.variables->toOne(), 
-                | ok($bound), 
-                | $callback->eval($a)
-              );
-            })
-        }, $state)
+        ->compile(
+          $callback->chainCallback($forAll.predicate.variables->toOne(), $bound),
+          $state
+        )
         ->step({predicate: Expr[1] | 
           $bound
             ->in($parent)
@@ -279,16 +281,10 @@ function meta::rel::compile::compile(
       let bound = var($state.variableFactory->next());
       
       $expr.body
-        ->compile({a: Any[1] |
-          $a
-            ->tryCast(@String)
-            ->andThen({var: String[1] |
-              if ($var == $expr.body.variables->toOne(), 
-                | ok($bound), 
-                | $callback->eval($a)
-              );
-            })
-        }, $state)
+        ->compile(
+          $callback->chainCallback($expr.body.variables->toOne(), $bound),
+          $state
+        )
         ->step({body: Expr[1] |
           $body
             ->from($bound->in($parent))
@@ -370,12 +366,10 @@ function meta::rel::compile::compile(
             let vx = var('x');
 
             $pair.second
-              ->compile({a: Any[1] |
-                $a->tryCast(@String)
-                  ->andThen({var: String[1] |
-                    if ($var == $pair.second.variables->toOne(), | ok($vx), | $callback->eval($var));
-                  });
-              }, $state)
+              ->compile(
+                $callback->chainCallback($pair.second.variables->toOne(), $vx),
+                $state
+              )
               ->current()
               ->then({scope: Expr[1] |  
                 def(
@@ -438,12 +432,10 @@ function meta::rel::compile::compile(
       let baseTable = $parentState.relFactory->next('tbl');
       
       $expr.group->map({g: Scoped[1] |
-        $g->compile({a: Any[1] |
-          $a->tryCast(@String)
-            ->andThen({var: String[1] |
-              if ($var == $g.variables->toOne(), | ok($parentVariable), | $callback->eval($a));
-            });
-        }, $parentState)
+        $g->compile(
+          $callback->chainCallback($g.variables->toOne(), $parentVariable),
+          $parentState
+        )
         ->current();
       })
       ->collect()
@@ -546,12 +538,10 @@ function meta::rel::compile::compile(
           $a->tryCast(@String)
             ->andThen({var: String[1] |
               if ($var == $agg.aggregateFunction.variables->toOne(), {| 
-                $agg.map->compile({a: Any[1] |
-                  $a->tryCast(@String)
-                    ->andThen({var: String[1] |
-                      if ($var == $agg.map.variables->toOne(), | ok($aggVar), | $callback->eval($a));
-                    })
-                }, $state)
+                $agg.map->compile(
+                  $callback->chainCallback($agg.map.variables->toOne(), $aggVar),
+                  $state
+                )
                 ->step({mapExpr: Expr[1] |
                   let body = $groupByVariables
                     ->toIndexed()
