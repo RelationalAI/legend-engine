@@ -31,35 +31,35 @@ function meta::rel::compile::compile(
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
   $expr->match([
-    a: AtExpr[1] | $a->compile($callback, $state),
-    all: All[1] | $all->compile($callback, $state),
-    s: StringConst[1] | ^$state(current=meta::rel::metamodel::const($s.value)->annotate(String))->ok(),
+    e: AtExpr[1]       | $e->compile($callback, $state),
+    e: All[1]          | $e->compile($callback, $state),
+    s: StringConst[1]  | ^$state(current=meta::rel::metamodel::const($s.value)->annotate(String))->ok(),
     i: IntegerConst[1] | ^$state(current=meta::rel::metamodel::const($i.value)->annotate(Integer))->ok(),
-    f: FloatConst[1] | ^$state(current=meta::rel::metamodel::const($f.value)->annotate(Float))->ok(),
+    f: FloatConst[1]   | ^$state(current=meta::rel::metamodel::const($f.value)->annotate(Float))->ok(),
     b: BooleanConst[1] | ^$state(
       current=
         if($b.value, | booleanTrue(), | booleanFalse())
           ->annotate(Boolean)
       )
       ->ok(),
-    d: StrictDateConst[1] | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(StrictDate))->ok(),
-    d: DateTimeConst[1] | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(DateTime))->ok(),
-    property: PropertyAccess[1] | $property->compile($callback, $state),
-    access: SetAccess[1] | $access->compile($callback, $state),
-    access: ColumnAccess[1] | $access->compile($callback, $state),
-    filter: Filter[1] | $filter->compile($callback, $state),
-    map: MapExpr[1] | $map->compile($callback, $state),
-    project: Project[1] | $project->compile($callback, $state),
-    scoped: Scoped[1] | $scoped->compile($callback, $state),
-    groupBy: GroupBy[1] | $groupBy->compile($callback, $state),
-    variablePlaceholder: VariablePlaceholder[1] | $variablePlaceholder->compile($callback, $state),
-    fexpr: FunctionExpr<|*>[1] | $fexpr->compile($callback, $state),
-    exists: meta::rel::compile::ir::Exists[1] | $exists->compile($callback, $state),
-    forAll: meta::rel::compile::ir::ForAll[1] | $forAll->compile($callback, $state),
-    step: CompilationStep[1] | $step.logic->eval($callback, $state),
-    ifThenElse: meta::rel::compile::ir::IfThenElse[1] | $ifThenElse->compile($callback, $state),
-    join: meta::rel::compile::ir::tds::Join[1] | $join->meta::rel::compile::tds::compile($callback, $state),
-    filter: meta::rel::compile::ir::tds::TDSFilter[1] | $filter->meta::rel::compile::tds::compile($callback, $state)
+    d: StrictDateConst[1]     | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(StrictDate))->ok(),
+    d: DateTimeConst[1]       | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(DateTime))->ok(),
+    e: PropertyAccess[1]      | $e->compile($callback, $state),
+    e: SetAccess[1]           | $e->compile($callback, $state),
+    e: ColumnAccess[1]        | $e->compile($callback, $state),
+    e: Filter[1]              | $e->compile($callback, $state),
+    e: MapExpr[1]             | $e->compile($callback, $state),
+    e: Project[1]             | $e->compile($callback, $state),
+    e: Scoped[1]              | $e->compile($callback, $state),
+    e: GroupBy[1]             | $e->compile($callback, $state),
+    e: VariablePlaceholder[1] | $e->compile($callback, $state),
+    e: FunctionExpr<|*>[1]    | $e->compile($callback, $state),
+    e: meta::rel::compile::ir::Exists[1] | $e->compile($callback, $state),
+    e: meta::rel::compile::ir::ForAll[1] | $e->compile($callback, $state),
+    s: CompilationStep[1] | $s.logic->eval($callback, $state),
+    c: meta::rel::compile::ir::IfThenElse[1]     | $c->compile($callback, $state),
+    j: meta::rel::compile::ir::tds::Join[1]      | $j->meta::rel::compile::tds::compile($callback, $state),
+    f: meta::rel::compile::ir::tds::TDSFilter[1] | $f->meta::rel::compile::tds::compile($callback, $state)
   ]);
 }
 
@@ -72,16 +72,15 @@ function meta::rel::compile::compile(
    * Recursively compile the parent and apply partial relational application
    * using the index of the `at` operator.
    */
+  let indexExpr = meta::rel::metamodel::const($at.index);
   $at.parent
     ->compile($callback, $state)
-    ->step({parent: Expr[1] |
-      let indexExpr = meta::rel::metamodel::const($at.index);
-
+    ->step(parent: Expr[1] |
       $parent
         ->appl($indexExpr)
         ->annotate($parent.annotation)
-        ->ok();
-    })
+        ->ok()
+    );
 }
 
 function meta::rel::compile::compile(
@@ -108,13 +107,13 @@ function <<access.private>> meta::rel::compile::addCallbackBinding(
   {a: Any[1] |
     $a
       ->tryCast(@String)
-      ->andThen({var: String[1] |
+      ->andThen(var: String[1] |
         if ($var == $key, 
           | ok($value), 
           | $callback->eval($a)
-        );
-      })
-  };
+        )
+      )
+  }
 }
 
 function meta::rel::compile::compile(
@@ -145,7 +144,7 @@ function meta::rel::compile::compile(
             ->ok();*/
         })
         ->current();
-    });
+    })
 }
 
 function meta::rel::compile::compile<|n>(
@@ -157,7 +156,7 @@ function meta::rel::compile::compile<|n>(
     ->map(a | $a->compile($callback, $state)->current())
     ->collect()
     ->them({params: Expr[*] | $fexpr.fn->eval($params); })
-    ->then({result: Expr[1] | ^$state(current=$result); });
+    ->then({result: Expr[1] | ^$state(current=$result); })
 }
 
 function meta::rel::compile::compile(
@@ -195,7 +194,7 @@ function meta::rel::compile::compile(
               ->ok()
         })
         ->current();
-    });
+    })
 }
 
 function meta::rel::compile::compile(
@@ -235,7 +234,7 @@ function meta::rel::compile::compile(
             ->ok();*/
         })
         ->current();
-    });
+    })
 }
 
 function meta::rel::compile::compile(
@@ -245,7 +244,7 @@ function meta::rel::compile::compile(
 ): Result<CompilationState|0..1>[1] {
   $callback
     ->eval($access.variable)
-    ->then({var: Expr[1] | ^$state(current=$var->annotate($access.set.class)); });
+    ->then({var: Expr[1] | ^$state(current=$var->annotate($access.set.class)); })
 }
 
 function meta::rel::compile::compile(
@@ -255,11 +254,11 @@ function meta::rel::compile::compile(
 ): Result<CompilationState|0..1>[1] {
   $callback
     ->eval($access)
-    ->then({expr: Expr[1] |
+    ->then(expr: Expr[1] |
       ^$state(
         current=$expr
-      );
-    });
+      )
+    )
 }
 
 function meta::rel::compile::compile(
@@ -269,27 +268,27 @@ function meta::rel::compile::compile(
 ): Result<CompilationState|0..1>[1] {
   $access.parent
     ->compile($callback, $state)
-    ->step({parent: Expr[1] |
+    ->step(parent: Expr[1] |
       $access.property.name
         ->okOr(| 'No name specified for property.')
-        ->andThen({propertyName: String[1] |
+        ->andThen(propertyName: String[1] |
           $access.parent
             ->set()
             ->map(set | $set->meta::pure::mapping::propertyMappingsByPropertyName($propertyName); )
             ->okOr(| format('No property mapping found for property %s', [$propertyName->quote()]))
             ->them(inner: meta::pure::mapping::PropertyMapping[*] | $inner->first()->toOne())
             ->tryCast(@RelPropertyMapping)
-            ->andThen({mapping: RelPropertyMapping[1] | 
+            ->andThen(mapping: RelPropertyMapping[1] | 
               $access.property.genericType.rawType
                 ->okOr(| 'Could not determine type of property ' + $propertyName)
-                ->then({type: Type[1] |
+                ->then(type: Type[1] |
                   $mapping
                     .target
-                    ->appl($parent);
-                })              
-            });
-        })
-    });
+                    ->appl($parent)
+                )              
+            )
+        )
+    )
 }
 
 function meta::rel::compile::compile(
@@ -299,7 +298,7 @@ function meta::rel::compile::compile(
 ): Result<CompilationState|0..1>[1] {
   $expr.parent
     ->compile($callback, $state)
-    ->step({parent: Expr[1] |
+    ->step(parent: Expr[1] |
       let bound = var($state.variableFactory->next());
       
       $expr.body
@@ -325,7 +324,7 @@ function meta::rel::compile::compile(
             ->ok()*/
         })
         ->current();
-    });
+    )
 }
 
 function meta::rel::compile::compile(
@@ -415,7 +414,7 @@ function meta::rel::compile::compile(
           cols=columns($expr.projections.first)
         );
       });
-    });
+    })
 }
 
 
@@ -426,7 +425,7 @@ function meta::rel::compile::compile(
 ): Result<CompilationState|0..1>[1] {
   $callback
     ->eval($expr.identifier)
-    ->then(subst: Expr[1] | ^$state(current=$subst)); 
+    ->then(subst: Expr[1] | ^$state(current=$subst))
 }
 
 function meta::rel::compile::compile(
@@ -437,7 +436,7 @@ function meta::rel::compile::compile(
   $expr->match([
     gs: GroupByScopes[1] | $gs->compile($callback, $state),
     gc: GroupByColumns[1] | $gc->compile($callback, $state)
-  ]);
+  ])
 }
 
 function meta::rel::compile::compile(
@@ -835,11 +834,11 @@ function meta::rel::compile::compile(
 
           $ifThenElse.else
             ->compile($callback, $state)
-            ->step({else: Expr[1] |
+            ->step(else: Expr[1] |
               $condition
                 ->meta::rel::metamodel::ifThenElse($then, $else)
-                ->ok();
-            });
+                ->ok()
+            );
         });
-    });
+    })
 }
