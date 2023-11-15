@@ -385,6 +385,7 @@ function meta::rel::compile::ir::ifThenElse(condition: PExpr[1], then: Scoped[1]
 
 function meta::rel::compile::ir::set(expr: PExpr[1]): RelSetImplementation[0..1] {
   $expr->match([
+    {at: AtExpr[1] | $at.parent->set()},
     {access: SetAccess[1] | $access.set},
     {scoped: Scoped[1] | $scoped.parent->map(p | $p->set()); },
     {all: All[1] | $all.set},
