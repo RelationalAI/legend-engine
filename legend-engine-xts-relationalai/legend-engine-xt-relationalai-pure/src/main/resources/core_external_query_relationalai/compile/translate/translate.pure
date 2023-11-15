@@ -31,6 +31,7 @@ function meta::rel::compile::compile(
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
   $expr->match([
+    a: AtExpr[1] | $a->compile($callback, $state),
     all: All[1] | $all->compile($callback, $state),
     s: StringConst[1] | ^$state(current=meta::rel::metamodel::const($s.value)->annotate(String))->ok(),
     i: IntegerConst[1] | ^$state(current=meta::rel::metamodel::const($i.value)->annotate(Integer))->ok(),
@@ -60,6 +61,27 @@ function meta::rel::compile::compile(
     join: meta::rel::compile::ir::tds::Join[1] | $join->meta::rel::compile::tds::compile($callback, $state),
     filter: meta::rel::compile::ir::tds::TDSFilter[1] | $filter->meta::rel::compile::tds::compile($callback, $state)
   ]);
+}
+
+function meta::rel::compile::compile(
+  at: meta::rel::compile::ir::AtExpr[1], 
+  callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
+  state: CompilationState[1]
+): Result<CompilationState|0..1>[1] {
+  /*
+   * Recursively compile the parent and apply partial relational application
+   * using the index of the `at` operator.
+   */
+  $at.parent
+    ->compile($callback, $state)
+    ->step({parent: Expr[1] |
+      let indexExpr = meta::rel::metamodel::const($at.index);
+
+      $parent
+        ->appl($indexExpr)
+        ->annotate($parent.annotation)
+        ->ok();
+    })
 }
 
 function meta::rel::compile::compile(
