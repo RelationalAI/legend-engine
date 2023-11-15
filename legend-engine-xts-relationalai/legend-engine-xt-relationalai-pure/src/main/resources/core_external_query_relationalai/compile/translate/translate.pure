@@ -75,7 +75,7 @@ function meta::rel::compile::compile(
     ->then(expr: Expr[1] | ^$state(current=$expr->annotate($all.set.class)))
 }
 
-function <<access.private>> meta::rel::compile::chainCallback(
+function <<access.private>> meta::rel::compile::addCallbackBinding(
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   key: String[1],
   value: Variable[1]
@@ -107,7 +107,7 @@ function meta::rel::compile::compile(
 
       $filter.predicate
         ->compile(
-          $callback->chainCallback($filter.predicate.variables->toOne(), $bound),
+          $callback->addCallbackBinding($filter.predicate.variables->toOne(), $bound),
           $state
         )
         ->step({predicate: Expr[1] | 
@@ -150,7 +150,7 @@ function meta::rel::compile::compile(
 
       $exists.predicate
         ->compile(
-          $callback->chainCallback($exists.predicate.variables->toOne(), $bound),
+          $callback->addCallbackBinding($exists.predicate.variables->toOne(), $bound),
           $state
         )
         ->step({predicate: Expr[1] | 
@@ -188,7 +188,7 @@ function meta::rel::compile::compile(
 
       $forAll.predicate
         ->compile(
-          $callback->chainCallback($forAll.predicate.variables->toOne(), $bound),
+          $callback->addCallbackBinding($forAll.predicate.variables->toOne(), $bound),
           $state
         )
         ->step({predicate: Expr[1] | 
@@ -282,7 +282,7 @@ function meta::rel::compile::compile(
       
       $expr.body
         ->compile(
-          $callback->chainCallback($expr.body.variables->toOne(), $bound),
+          $callback->addCallbackBinding($expr.body.variables->toOne(), $bound),
           $state
         )
         ->step({body: Expr[1] |
@@ -367,7 +367,7 @@ function meta::rel::compile::compile(
 
             $pair.second
               ->compile(
-                $callback->chainCallback($pair.second.variables->toOne(), $vx),
+                $callback->addCallbackBinding($pair.second.variables->toOne(), $vx),
                 $state
               )
               ->current()
@@ -433,7 +433,7 @@ function meta::rel::compile::compile(
       
       $expr.group->map({g: Scoped[1] |
         $g->compile(
-          $callback->chainCallback($g.variables->toOne(), $parentVariable),
+          $callback->addCallbackBinding($g.variables->toOne(), $parentVariable),
           $parentState
         )
         ->current();
@@ -539,7 +539,7 @@ function meta::rel::compile::compile(
             ->andThen({var: String[1] |
               if ($var == $agg.aggregateFunction.variables->toOne(), {| 
                 $agg.map->compile(
-                  $callback->chainCallback($agg.map.variables->toOne(), $aggVar),
+                  $callback->addCallbackBinding($agg.map.variables->toOne(), $aggVar),
                   $state
                 )
                 ->step({mapExpr: Expr[1] |
