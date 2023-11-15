@@ -1,3 +1,4 @@
+import meta::pure::router::store::metamodel::*;
 import meta::rel::compile::ir::*;
 import meta::rel::mapping::*;
 import meta::rel::utils::*;
@@ -142,36 +143,46 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject3(func: Fun
   $param0
     ->intoPExpr()
     ->andThen({parent: PExpr[1] |
-
-    $param1
-      ->tryCast(@InstanceValue)
-      ->andThen({params: InstanceValue[1] |
-        $params.values
-          ->map( v |
-            $v->tryCast(@FunctionRoutedValueSpecification)
-              ->then(s: FunctionRoutedValueSpecification[1] |
-                // CHECK: Is value type guarenteed?
-                $s.value->cast(@InstanceValue);
+      switch([
+          case($param1->instanceOf(InstanceValue), |
+            $param1
+              ->cast(@InstanceValue)
+              .values
+              ->map( v |
+                $v->tryCast(@FunctionRoutedValueSpecification)
+                  ->then(s: FunctionRoutedValueSpecification[1] |
+                    // CHECK: Is value type guarenteed?
+                    $s.value->cast(@InstanceValue)
+                  )
               )
+              ->collect();
+          ),
+          case($param1->instanceOf(StoreMappingRoutedValueSpecification), | 
+            $param1
+              ->cast(@StoreMappingRoutedValueSpecification)
+              .value
+              ->cast(@FunctionRoutedValueSpecification)
+              .value
+              ->tryCast(@InstanceValue)
+          )
+        ], {| error('Match error: Unexpected type') }
+      )
+      ->andThem({i: InstanceValue[*] |
+        $i.values
+          ->map(v |
+            // Type Result<Project>
+            $v->tryCast(@FunctionDefinition<Any>)
+              ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->intoScoped($parent))
           )
           ->collect()
-          ->andThem(i: InstanceValue[*] |
-            $i.values
-              ->map(v |
-                // Type Result<Project>
-                $v->tryCast(@FunctionDefinition<Any>)
-                  ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->intoScoped($parent))
-              )
-              ->collect()
-              ->andThem(fexprs: Scoped[*] |
-                // Type Result<Project>
-                $param2->tryCast(@InstanceValue)->then(param: InstanceValue[1] |
-                  // Type guareteed by function signature.
-                  let columnNames = $param.values->cast(@String);
-                  $parent->project($columnNames->zip($fexprs));
-                )
-              )
+          ->andThem(fexprs: Scoped[*] |
+            // Type Result<Project>
+            $param2->tryCast(@InstanceValue)->then(param: InstanceValue[1] |
+              // Type guareteed by function signature.
+              let columnNames = $param.values->cast(@String);
+              $parent->project($columnNames->zip($fexprs));
+            )
           )
-      })
+      });
   });
 }
