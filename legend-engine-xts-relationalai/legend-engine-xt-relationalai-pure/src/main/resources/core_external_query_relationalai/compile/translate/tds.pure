@@ -29,8 +29,8 @@ function meta::rel::compile::tds::compile(
 
           $join.condition
             ->compile({a: Any[1] |
-              $a->tryCast(@ColumnAccess)
-                ->then({access: ColumnAccess[1] |
+              $a->tryCast(@PExprColumnAccess)
+                ->then({access: PExprColumnAccess[1] |
                   let var = $access
                     ->root()
                     ->cast(@VariablePlaceholder);
@@ -108,8 +108,8 @@ function meta::rel::compile::tds::compile(
       
       $filter.predicate
         ->compile({a: Any[1] |
-          $a->tryCast(@ColumnAccess)
-            ->andThen({access: ColumnAccess[1] |
+          $a->tryCast(@PExprColumnAccess)
+            ->andThen({access: PExprColumnAccess[1] |
               let var = $access
                 ->root()
                 ->cast(@VariablePlaceholder)

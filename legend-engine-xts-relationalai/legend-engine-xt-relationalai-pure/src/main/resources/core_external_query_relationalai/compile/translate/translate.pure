@@ -31,40 +31,40 @@ function meta::rel::compile::compile(
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
   $expr->match([
-    e: AtExpr[1]       | $e->compile($callback, $state),
-    e: All[1]          | $e->compile($callback, $state),
-    s: StringConst[1]  | ^$state(current=meta::rel::metamodel::const($s.value)->annotate(String))->ok(),
-    i: IntegerConst[1] | ^$state(current=meta::rel::metamodel::const($i.value)->annotate(Integer))->ok(),
-    f: FloatConst[1]   | ^$state(current=meta::rel::metamodel::const($f.value)->annotate(Float))->ok(),
-    b: BooleanConst[1] | ^$state(
+    e: PExprAt[1]      | $e->compile($callback, $state),
+    e: PExprAll[1]     | $e->compile($callback, $state),
+    s: ConstString[1]  | ^$state(current=meta::rel::metamodel::const($s.value)->annotate(String))->ok(),
+    i: ConstInteger[1] | ^$state(current=meta::rel::metamodel::const($i.value)->annotate(Integer))->ok(),
+    f: ConstFloat[1]   | ^$state(current=meta::rel::metamodel::const($f.value)->annotate(Float))->ok(),
+    b: ConstBoolean[1] | ^$state(
       current=
         if($b.value, | booleanTrue(), | booleanFalse())
           ->annotate(Boolean)
       )
       ->ok(),
-    d: StrictDateConst[1]     | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(StrictDate))->ok(),
-    d: DateTimeConst[1]       | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(DateTime))->ok(),
-    e: PropertyAccess[1]      | $e->compile($callback, $state),
-    e: SetAccess[1]           | $e->compile($callback, $state),
-    e: ColumnAccess[1]        | $e->compile($callback, $state),
-    e: Filter[1]              | $e->compile($callback, $state),
-    e: MapExpr[1]             | $e->compile($callback, $state),
-    e: Project[1]             | $e->compile($callback, $state),
-    e: Scoped[1]              | $e->compile($callback, $state),
-    e: GroupBy[1]             | $e->compile($callback, $state),
-    e: VariablePlaceholder[1] | $e->compile($callback, $state),
-    e: FunctionExpr<|*>[1]    | $e->compile($callback, $state),
-    e: meta::rel::compile::ir::Exists[1] | $e->compile($callback, $state),
-    e: meta::rel::compile::ir::ForAll[1] | $e->compile($callback, $state),
-    s: CompilationStep[1] | $s.logic->eval($callback, $state),
-    c: meta::rel::compile::ir::IfThenElse[1]     | $c->compile($callback, $state),
+    d: ConstStrictDate[1]      | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(StrictDate))->ok(),
+    d: ConstDateTime[1]        | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(DateTime))->ok(),
+    e: PExprPropertyAccess[1]  | $e->compile($callback, $state),
+    e: PExprSetAccess[1]       | $e->compile($callback, $state),
+    e: PExprColumnAccess[1]    | $e->compile($callback, $state),
+    e: PExprFilter[1]          | $e->compile($callback, $state),
+    e: PExprMap[1]             | $e->compile($callback, $state),
+    e: PExprProject[1]         | $e->compile($callback, $state),
+    e: PExprScoped[1]          | $e->compile($callback, $state),
+    e: PExprGroupBy[1]         | $e->compile($callback, $state),
+    e: VariablePlaceholder[1]  | $e->compile($callback, $state),
+    e: PExprFunction<|*>[1]    | $e->compile($callback, $state),
+    e: PExprExists[1]          | $e->compile($callback, $state),
+    e: PExprForAll[1]          | $e->compile($callback, $state),
+    s: PExprCompilationStep[1] | $s.logic->eval($callback, $state),
+    c: PExprIfThenElse[1]      | $c->compile($callback, $state),
     j: meta::rel::compile::ir::tds::Join[1]      | $j->meta::rel::compile::tds::compile($callback, $state),
     f: meta::rel::compile::ir::tds::TDSFilter[1] | $f->meta::rel::compile::tds::compile($callback, $state)
   ]);
 }
 
 function meta::rel::compile::compile(
-  at: meta::rel::compile::ir::AtExpr[1], 
+  at: PExprAt[1], 
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -84,7 +84,7 @@ function meta::rel::compile::compile(
 }
 
 function meta::rel::compile::compile(
-  all: All[1], 
+  all: PExprAll[1], 
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -117,7 +117,7 @@ function <<access.private>> meta::rel::compile::addCallbackBinding(
 }
 
 function meta::rel::compile::compile(
-  filter: Filter[1], 
+  filter: PExprFilter[1], 
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -148,7 +148,7 @@ function meta::rel::compile::compile(
 }
 
 function meta::rel::compile::compile<|n>(
-  fexpr: FunctionExpr<|n>[1],
+  fexpr: PExprFunction<|n>[1],
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -160,7 +160,7 @@ function meta::rel::compile::compile<|n>(
 }
 
 function meta::rel::compile::compile(
-  exists: meta::rel::compile::ir::Exists[1], 
+  exists: PExprExists[1], 
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -198,7 +198,7 @@ function meta::rel::compile::compile(
 }
 
 function meta::rel::compile::compile(
-  forAll: meta::rel::compile::ir::ForAll[1], 
+  forAll: PExprForAll[1], 
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -238,7 +238,7 @@ function meta::rel::compile::compile(
 }
 
 function meta::rel::compile::compile(
-  access: SetAccess[1], 
+  access: PExprSetAccess[1], 
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -248,7 +248,7 @@ function meta::rel::compile::compile(
 }
 
 function meta::rel::compile::compile(
-  access: ColumnAccess[1], 
+  access: PExprColumnAccess[1], 
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -262,7 +262,7 @@ function meta::rel::compile::compile(
 }
 
 function meta::rel::compile::compile(
-  access: PropertyAccess[1], 
+  access: PExprPropertyAccess[1], 
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -292,7 +292,7 @@ function meta::rel::compile::compile(
 }
 
 function meta::rel::compile::compile(
-  expr: MapExpr[1],
+  expr: PExprMap[1],
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -328,7 +328,7 @@ function meta::rel::compile::compile(
 }
 
 function meta::rel::compile::compile(
-  expr: Scoped[1],
+  expr: PExprScoped[1],
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -336,7 +336,7 @@ function meta::rel::compile::compile(
 }
 
 function meta::rel::compile::compile(
-  expr: Project[1],
+  expr: PExprProject[1],
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -348,14 +348,14 @@ function meta::rel::compile::compile(
 
       if ($parent.annotation == TabularDataSet, {|
         $expr.projections
-          ->map({pair: Pair<String, Scoped>[1] |
+          ->map({pair: Pair<String, PExprScoped>[1] |
             let name = $pair.first;
             let vi = var('i');
             
             $pair.second
               ->compile({a: Any[1] |
-                $a->tryCast(@ColumnAccess)
-                  ->andThen({access: ColumnAccess[1] |
+                $a->tryCast(@PExprColumnAccess)
+                  ->andThen({access: PExprColumnAccess[1] |
                     $parent
                       ->appl([label($access.column), $vi])
                       ->ok();
@@ -382,7 +382,7 @@ function meta::rel::compile::compile(
           );
 
         $expr.projections
-          ->map({pair: Pair<String, Scoped>[1] |
+          ->map({pair: Pair<String, PExprScoped>[1] |
             let name = $pair.first;
             let vx = var('x');
 
@@ -429,18 +429,18 @@ function meta::rel::compile::compile(
 }
 
 function meta::rel::compile::compile(
-  expr: GroupBy[1],
+  expr: PExprGroupBy[1],
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
   $expr->match([
-    gs: GroupByScopes[1] | $gs->compile($callback, $state),
-    gc: GroupByColumns[1] | $gc->compile($callback, $state)
+    gs: PExprGroupByScopes[1] | $gs->compile($callback, $state),
+    gc: PExprGroupByColumns[1] | $gc->compile($callback, $state)
   ])
 }
 
 function meta::rel::compile::compile(
-  expr: GroupByScopes[1], 
+  expr: PExprGroupByScopes[1], 
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -452,7 +452,7 @@ function meta::rel::compile::compile(
       let indexVariable = var($parentState.variableFactory->next());
       let baseTable = $parentState.relFactory->next('tbl');
       
-      $expr.group->map({g: Scoped[1] |
+      $expr.group->map({g: PExprScoped[1] |
         $g->compile(
           $callback->addCallbackBinding($g.variables->toOne(), $parentVariable),
           $parentState
@@ -495,7 +495,7 @@ function meta::rel::compile::compile(
                     ->appl(
                       $expr.group
                         ->toIndexed()
-                        ->map({pair: Pair<Integer, Scoped>[1] |
+                        ->map({pair: Pair<Integer, PExprScoped>[1] |
                           rel($baseTable)
                             ->appl([label('group'), label($pair.first->toString()), var('j')])
                         })
@@ -511,7 +511,7 @@ function meta::rel::compile::compile(
               //def tbl1[:Underlying] = tbl1[:groups][i, x, _] for i, x
               $expr.group
                 ->toIndexed()
-                ->map({pair: Pair<Integer, Scoped>[1] |
+                ->map({pair: Pair<Integer, PExprScoped>[1] |
                   let index = $pair.first;
                   let name = $expr.names->at($index);
 
@@ -552,7 +552,7 @@ function meta::rel::compile::compile(
       let groupByVariables = $expr.group->map(_g | $factory->next()->var());
       let head = $state.current->toOne();
 
-      $expr.aggregates->map({agg: Aggregate[1] |
+      $expr.aggregates->map({agg: PExprAggregate[1] |
         let aggVar = $factory->next()->var();
         
         $agg.aggregateFunction->compile({a: Any[1] |
@@ -644,7 +644,7 @@ function meta::rel::compile::compile(
 }
 
 function meta::rel::compile::compile(
-  expr: GroupByColumns[1], 
+  expr: PExprGroupByColumns[1], 
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
@@ -700,7 +700,7 @@ function meta::rel::compile::compile(
                   ->appl(
                     $expr.group
                       ->toIndexed()
-                      ->map({pair: Pair<Integer, Scoped>[1] |
+                      ->map({pair: Pair<Integer, PExprScoped>[1] |
                           rel($targetTable)
                             ->appl([label('group'), label($pair.first->toString()), var('j')])
                         })
@@ -714,7 +714,7 @@ function meta::rel::compile::compile(
           );
 
       $expr.aggregates
-        ->map({agg: Aggregate[1] |
+        ->map({agg: PExprAggregate[1] |
           let head = rel($targetTable)
             ->appl($agg.name->toOne()->label());
           let vxs = $expr.group->map(g | $parentState.variableFactory->next('x')->var());
@@ -731,7 +731,7 @@ function meta::rel::compile::compile(
                           ok(reltrue());
                         }, | $callback->eval($var)); 
                       },
-                      {access: ColumnAccess[1] |
+                      {access: PExprColumnAccess[1] |
                         $access.parent->compile({a: Any[1] | 
                           $a->tryCast(@String)
                             ->andThen({var: String[1] | 
@@ -819,7 +819,7 @@ function meta::rel::compile::compile(
 
 
 function meta::rel::compile::compile(
-  ifThenElse: meta::rel::compile::ir::IfThenElse[1], 
+  ifThenElse: PExprIfThenElse[1], 
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {

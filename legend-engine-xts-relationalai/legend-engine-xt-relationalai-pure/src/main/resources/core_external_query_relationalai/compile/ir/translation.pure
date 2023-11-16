@@ -80,7 +80,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseFilter(func: Funct
     ->andThen({parent: PExpr[1] |
       $param1
         ->intoScoped($parent)
-        ->then(scoped: Scoped[1] | $parent->filter($scoped));
+        ->then(scoped: PExprScoped[1] | $parent->filter($scoped));
     });
 }
 
@@ -111,7 +111,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseMap(func: Function
     ->andThen({parent: PExpr[1] |
       $param1
         ->intoScoped($parent)
-        ->then(scoped: Scoped[1] | $parent->mapExpr($scoped));
+        ->then(scoped: PExprScoped[1] | $parent->mapExpr($scoped));
     });
 }
 
@@ -126,7 +126,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseExists(func: Funct
     ->andThen({parent: PExpr[1] |
       $param1
         ->intoScoped($parent)
-        ->then({predicate: Scoped[1] | $parent->exists($predicate); });
+        ->then({predicate: PExprScoped[1] | $parent->exists($predicate); });
     });
 }
 
@@ -141,7 +141,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseForAll(func: Funct
     ->andThen({parent: PExpr[1] |
       $param1
         ->intoScoped($parent)
-        ->then({predicate: Scoped[1] | $parent->forAll($predicate); });
+        ->then({predicate: PExprScoped[1] | $parent->forAll($predicate); });
     });
 }
 
@@ -159,11 +159,11 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy1(func: Fun
       $param1
         ->intoScopes($parent)
         ->collect()
-        ->andThem({group: Scoped[*] |
+        ->andThem({group: PExprScoped[*] |
           $param2
             ->intoAggregates($parent)
             ->collect()
-            ->andThem({aggregates: Aggregate[*] | 
+            ->andThem({aggregates: PExprAggregate[*] | 
               $param3
                 ->tryCast(@InstanceValue)
                 ->andThen(i: InstanceValue[1] | 
@@ -178,7 +178,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy1(func: Fun
                       let namedAggregates = 
                         $aggregates
                           ->toNumbered()
-                          ->map({pair: Pair<Integer, Aggregate>[1] | 
+                          ->map({pair: Pair<Integer, PExprAggregate>[1] | 
                             let agg = $pair.second;
                             ^$agg(name=$names->at($group->size() + $pair.first - 1));
                           });
@@ -213,7 +213,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy2(func: Fun
         ->andThem({columns: String[*] |
           $param2
             ->map(vs: ValueSpecification[1] | $vs->intoAggregates($parent)->collect())
-            ->them({aggregates: Aggregate[*] | 
+            ->them({aggregates: PExprAggregate[*] | 
               $parent->groupBy($columns, $aggregates);
             });
         })
@@ -322,10 +322,10 @@ function <<access.private>> meta::rel::compile::ir::handleCaseIf(func: FunctionE
     ->andThen({condition: PExpr[1] |
       $param1
         ->intoScoped()
-        ->andThen({then: Scoped[1] |
+        ->andThen({then: PExprScoped[1] |
           $param2
             ->intoScoped()
-            ->then(else: Scoped[1] | $condition->ifThenElse($then, $else));
+            ->then(else: PExprScoped[1] | $condition->ifThenElse($then, $else));
         });
     });
 }
@@ -675,11 +675,11 @@ function meta::rel::compile::ir::intoPExpr(value: Any[1], set: RelSetImplementat
   ])
 }
 
-function meta::rel::compile::ir::intoScoped(spec: ValueSpecification[1]): Result<Scoped|0..1>[1] {
+function meta::rel::compile::ir::intoScoped(spec: ValueSpecification[1]): Result<PExprScoped|0..1>[1] {
   $spec->intoScoped([]);
 }
 
-function meta::rel::compile::ir::intoScoped(spec: ValueSpecification[1], parent: PExpr[0..1]): Result<Scoped|0..1>[1] {
+function meta::rel::compile::ir::intoScoped(spec: ValueSpecification[1], parent: PExpr[0..1]): Result<PExprScoped|0..1>[1] {
   $spec->match([
     {spec: FunctionRoutedValueSpecification[1] |
       $spec.value
@@ -700,7 +700,7 @@ function meta::rel::compile::ir::intoScoped(spec: ValueSpecification[1], parent:
   ]);
 }
 
-function meta::rel::compile::ir::intoScoped(func: FunctionDefinition<Any>[1], parent: PExpr[0..1]): Result<Scoped|0..1>[1] {
+function meta::rel::compile::ir::intoScoped(func: FunctionDefinition<Any>[1], parent: PExpr[0..1]): Result<PExprScoped|0..1>[1] {
   $func.expressionSequence
     ->evaluateAndDeactivate()
     ->okOr(|'Encountered empty function body while evaluating expression.')
@@ -724,11 +724,11 @@ function meta::rel::compile::ir::intoScoped(func: FunctionDefinition<Any>[1], pa
     });
 }
 
-function meta::rel::compile::ir::intoScopes(spec: ValueSpecification[1]): Result<Scoped|0..1>[*] {
+function meta::rel::compile::ir::intoScopes(spec: ValueSpecification[1]): Result<PExprScoped|0..1>[*] {
   $spec->intoScopes([])
 }
 
-function meta::rel::compile::ir::intoScopes(spec: ValueSpecification[1], parent: PExpr[0..1]): Result<Scoped|0..1>[*] {
+function meta::rel::compile::ir::intoScopes(spec: ValueSpecification[1], parent: PExpr[0..1]): Result<PExprScoped|0..1>[*] {
   $spec->match([
     {spec: InstanceValue[1] | 
       $spec.values
@@ -741,7 +741,7 @@ function meta::rel::compile::ir::intoScopes(spec: ValueSpecification[1], parent:
   ]);
 }
 
-function meta::rel::compile::ir::intoAggregates(spec: ValueSpecification[1], parent: PExpr[1]): Result<Aggregate|0..1>[*] {
+function meta::rel::compile::ir::intoAggregates(spec: ValueSpecification[1], parent: PExpr[1]): Result<PExprAggregate|0..1>[*] {
   $spec->match([
     {fexpr: SimpleFunctionExpression[1] |
       switch([
@@ -749,11 +749,11 @@ function meta::rel::compile::ir::intoAggregates(spec: ValueSpecification[1], par
           $fexpr.parametersValues
             ->at(0)
             ->intoScoped($parent)
-            ->andThen({map: Scoped[1] | 
+            ->andThen({map: PExprScoped[1] | 
               $fexpr.parametersValues
                 ->at(1)
                 ->intoScoped($parent)
-                ->then(aggFn: Scoped[1] | aggregate($map, $aggFn));
+                ->then(aggFn: PExprScoped[1] | aggregate($map, $aggFn));
             });
         }),
         case($fexpr.func == agg_String_1__FunctionDefinition_1__FunctionDefinition_1__AggregateValue_1_, {|
@@ -769,11 +769,11 @@ function meta::rel::compile::ir::intoAggregates(spec: ValueSpecification[1], par
               $fexpr.parametersValues
                 ->at(1)
                 ->intoScoped($parent)
-                ->andThen({map: Scoped[1] |
+                ->andThen({map: PExprScoped[1] |
                   $fexpr.parametersValues
                     ->at(2)
                     ->intoScoped($parent)
-                    ->then(aggFn: Scoped[1] | aggregate($map, $aggFn, $name))
+                    ->then(aggFn: PExprScoped[1] | aggregate($map, $aggFn, $name))
                 });
             });
         })
