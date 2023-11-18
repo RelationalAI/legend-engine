@@ -16,6 +16,7 @@ import meta::rel::utils::lang::*;
 import meta::rel::lib::*;
 import meta::rel::metamodel::*;
 import meta::pure::router::metamodel::*;
+import meta::pure::router::store::metamodel::*;
 
 ///////////////////////////
 // Translation functions //
@@ -113,6 +114,17 @@ function <<access.private>> meta::rel::compile::ir::handleCaseMap(func: Function
         ->intoScoped($parent)
         ->then(scoped: PExprScoped[1] | $parent->mapExpr($scoped));
     });
+}
+
+function <<access.private>> meta::rel::compile::ir::handleCaseMatch(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+  assert($func.func == match_Any_MANY__Function_$1_MANY$__T_m_);
+
+  println('These are the function parameters:');
+
+  let param0 = $func.parametersValues->at(0);
+  let param1 = $func.parametersValues->at(1);
+
+  error('Not yet implemented support for match.');
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseExists(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -366,46 +378,26 @@ function <<access.private>> meta::rel::compile::ir::handleCaseInstanceOf(func: F
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseCast(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
-  assert(false, 'Not yet implemented');
-  ^Result<PExpr|0..1>();
-
-  /*
   assert($func.func == cast_Any_m__T_1__T_m_);
 
-  $func.parametersValues
-    ->at(0)
-    ->intoPExpr()
-    ->andThen({obj: PExpr[1] |
-      $func.parametersValues
-        ->at(1)
-        ->tryCast(@ExtendedRoutedValueSpecification)
-        ->andThen({spec: ExtendedRoutedValueSpecification[1] |
-          $spec.sets
-            ->first()
-            ->okOr(| 'No set implementation specified for argument of `cast`.')
-            ->tryCast(@RelSetImplementation)
-            ->then({set: RelSetImplementation[1] |
-                compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
-                  $obj
-                    ->meta::rel::compile::compile($callback, $state)
-                    ->then({next: meta::rel::compile::CompilationState[1] |
-                      let obj = $next.current->toOne();
-                      let var = $next.variableFactory->meta::rel::compile::utils::next('x')->var();
-                      let current = 
-                        $var
-                          ->from($var->in($obj)->where($set.classExpr->atom($var)));
+  let param0 = $func.parametersValues->at(0);
+  let param1 = $func.parametersValues->at(1);
 
-                      ^$next(current=$current->annotate($set.class));
-                      //$next;
-                    })
-                }, 
-                {property: String[1], params: Any[*] |
-                  if ($property == 'set', | $set, | []);
-                });
-            })
-        });
-    });
-    */
+  $param0
+    ->intoPExpr()
+    ->andThen(parent: PExpr[1] |
+        $param1
+          ->tryCast(@StoreMappingRoutedValueSpecification)
+          ->andThen(spec: StoreMappingRoutedValueSpecification[1] |
+            $spec.sets
+              ->first()
+              ->okOr(| 'No set implementation specified for argument of `cast`.')
+              ->tryCast(@RelSetImplementation)
+              ->then(set: RelSetImplementation[1] |
+                castExpr($parent, $set)
+              )
+          )
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseSerialize(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -552,6 +544,8 @@ function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: Rel
              $other == map_T_MANY__Function_1__V_MANY_ ||
              $other == map_T_$0_1$__Function_1__V_$0_1$_,|
           handleCaseMap($func)),
+        case($other == match_Any_MANY__Function_$1_MANY$__T_m_,|
+          handleCaseMatch($func)),
         case($other == exists_T_MANY__Function_1__Boolean_1_,|
           handleCaseExists($func)),
         case($other == forAll_T_MANY__Function_1__Boolean_1_,|
@@ -932,7 +926,7 @@ function meta::rel::compile::ir::getFunctionExpr(
         {exprs: Expr[*] |
           $exprs
             ->at(0)
-            ->group()
+            ->parenthesise()
             ->exists()
             ->not();
         }

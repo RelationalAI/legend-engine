@@ -31,12 +31,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
   $expr->match([
-    e: PExprAt[1]      | $e->compile($callback, $state),
-    e: PExprAll[1]     | $e->compile($callback, $state),
-    s: ConstString[1]  | ^$state(current=meta::rel::metamodel::const($s.value)->annotate(String))->ok(),
-    i: ConstInteger[1] | ^$state(current=meta::rel::metamodel::const($i.value)->annotate(Integer))->ok(),
-    f: ConstFloat[1]   | ^$state(current=meta::rel::metamodel::const($f.value)->annotate(Float))->ok(),
-    b: ConstBoolean[1] | ^$state(
+    s: ConstString[1]          | ^$state(current=meta::rel::metamodel::const($s.value)->annotate(String))->ok(),
+    i: ConstInteger[1]         | ^$state(current=meta::rel::metamodel::const($i.value)->annotate(Integer))->ok(),
+    f: ConstFloat[1]           | ^$state(current=meta::rel::metamodel::const($f.value)->annotate(Float))->ok(),
+    b: ConstBoolean[1]         | ^$state(
       current=
         if($b.value, | booleanTrue(), | booleanFalse())
           ->annotate(Boolean)
@@ -44,6 +42,9 @@ function meta::rel::compile::compile(
       ->ok(),
     d: ConstStrictDate[1]      | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(StrictDate))->ok(),
     d: ConstDateTime[1]        | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(DateTime))->ok(),
+    e: PExprAt[1]              | $e->compile($callback, $state),
+    e: PExprAll[1]             | $e->compile($callback, $state),
+    e: PExprCast[1]            | $e->compile($callback, $state),
     e: PExprPropertyAccess[1]  | $e->compile($callback, $state),
     e: PExprSetAccess[1]       | $e->compile($callback, $state),
     e: PExprColumnAccess[1]    | $e->compile($callback, $state),
@@ -94,6 +95,31 @@ function meta::rel::compile::compile(
       'for class ' + $all.set.class.name->else(| '<<unknown>>')->quote()
     )
     ->then(expr: Expr[1] | ^$state(current=$expr->annotate($all.set.class)))
+}
+
+function meta::rel::compile::compile(
+  cast: PExprCast[1], 
+  callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
+  state: CompilationState[1]
+): Result<CompilationState|0..1>[1] {
+  let bound = var($state.variableFactory->next());
+  $cast.set.classExpr
+    ->okOr(
+      | 'Mappings with empty class expressions not yet supported. No class expression found ' +
+      'for class ' + $cast.set.class.name->else(| '<<unknown>>')->quote()
+    )
+    ->andThen(classExpr: Expr[1] |
+
+      $cast.parent
+        ->compile($callback, $state)
+        ->step(parent: Expr[1] |
+          $parent
+            ->appl($bound)
+            ->abstract($bound->in($classExpr))
+            ->annotate($parent.annotation)
+            ->ok()
+        )
+    );
 }
 
 function <<access.private>> meta::rel::compile::addCallbackBinding(
@@ -155,8 +181,8 @@ function meta::rel::compile::compile<|n>(
   $fexpr.arguments
     ->map(a | $a->compile($callback, $state)->current())
     ->collect()
-    ->them({params: Expr[*] | $fexpr.fn->eval($params); })
-    ->then({result: Expr[1] | ^$state(current=$result); })
+    ->them(params: Expr[*] | $fexpr.fn->eval($params))
+    ->then(result: Expr[1] | ^$state(current=$result))
 }
 
 function meta::rel::compile::compile(
@@ -244,7 +270,9 @@ function meta::rel::compile::compile(
 ): Result<CompilationState|0..1>[1] {
   $callback
     ->eval($access.variable)
-    ->then({var: Expr[1] | ^$state(current=$var->annotate($access.set.class)); })
+    ->then(var: Expr[1] |
+      ^$state(current=$var->annotate($access.set.class))
+    )
 }
 
 function meta::rel::compile::compile(
@@ -255,9 +283,7 @@ function meta::rel::compile::compile(
   $callback
     ->eval($access)
     ->then(expr: Expr[1] |
-      ^$state(
-        current=$expr
-      )
+      ^$state(current=$expr)
     )
 }
 
@@ -309,7 +335,7 @@ function meta::rel::compile::compile(
         ->step({body: Expr[1] |
           $body
             ->from($bound->in($parent))
-            ->group()
+            ->parenthesise()
             ->annotate($body.annotation)
             ->ok()
 
@@ -502,7 +528,7 @@ function meta::rel::compile::compile(
                         ->toOneMany()
                         ->product()
                         ->from(var('j'))
-                        ->group()
+                        ->parenthesise()
                     )
                 )
               })
@@ -707,7 +733,7 @@ function meta::rel::compile::compile(
                       ->toOneMany()
                       ->product()
                       ->from(var('j'))
-                      ->group()
+                      ->parenthesise()
                   )
               )
             })

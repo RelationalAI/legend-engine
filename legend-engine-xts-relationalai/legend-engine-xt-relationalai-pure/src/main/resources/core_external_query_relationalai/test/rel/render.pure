@@ -35,7 +35,7 @@ function <<test.Test>> meta::rel::test::metamodel::render::testSimpleRendering()
 
   assertEquals(
     '(x)',
-    var('x')->group()->render()
+    var('x')->parenthesise()->render()
   );
 }
 

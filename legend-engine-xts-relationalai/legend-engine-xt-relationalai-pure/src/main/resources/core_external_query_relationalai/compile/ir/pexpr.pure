@@ -73,6 +73,14 @@ Class meta::rel::compile::ir::PExprFunction<|n> extends PExpr {
 }
 
 /**
+  * Type denoting `cast` expressions.
+  */
+Class meta::rel::compile::ir::PExprCast extends PExpr {
+  parent: PExpr[1];
+  set: RelSetImplementation[1];
+}
+
+/**
   * Type denoting `exists` expressions.
   */
 Class meta::rel::compile::ir::PExprExists extends PExpr {
@@ -278,6 +286,10 @@ function meta::rel::compile::ir::fexpr<|n>(
   fn: FunctionDefinition<{meta::rel::metamodel::Expr[n]->meta::rel::metamodel::Expr[1]}>[1]
 ): PExprFunction<|n>[1] {
   ^PExprFunction<|n>(arguments=$arguments, fn=$fn)
+}
+
+function meta::rel::compile::ir::castExpr(parent: PExpr[1], set: RelSetImplementation[1]): PExprCast[1] {
+  ^PExprCast(parent=$parent, set=$set);
 }
 
 function meta::rel::compile::ir::setAccess(set: RelSetImplementation[1], variable: String[1]): PExprSetAccess[1] {

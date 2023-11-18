@@ -67,7 +67,7 @@ function meta::rel::lib::concat(exprs: Expr[*]): Expr[1] {
         ->fold({expr, accum | 
           rel('concat')->appl([$accum, $expr]);
         }, $init)
-        ->group();
+        ->parenthesise();
     }
   )  
 }

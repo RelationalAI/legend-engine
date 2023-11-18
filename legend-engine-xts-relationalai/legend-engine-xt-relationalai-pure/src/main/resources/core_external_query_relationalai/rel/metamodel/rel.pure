@@ -611,7 +611,7 @@ function meta::rel::metamodel::union(exprs: Expr[1..*]): Union[1] {
   ^Union(exprs=$exprs);
 }
 
-function meta::rel::metamodel::group(parent: Expr[1]): ExprGroup[1] {
+function meta::rel::metamodel::parenthesise(parent: Expr[1]): ExprGroup[1] {
   ^ExprGroup(parent=$parent);
 }
 
