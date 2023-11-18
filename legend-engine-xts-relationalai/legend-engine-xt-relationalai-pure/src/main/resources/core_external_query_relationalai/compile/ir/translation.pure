@@ -28,23 +28,22 @@ function meta::rel::compile::ir::intoPExpr(spec: ValueSpecification[1]): Result<
 
 function meta::rel::compile::ir::intoPExpr(spec: ValueSpecification[1], set: RelSetImplementation[0..1]): Result<PExpr|0..1>[1] {
   $spec->match([
-    {routed: meta::pure::router::store::metamodel::StoreMappingRoutedValueSpecification[1] |
+    routed: meta::pure::router::store::metamodel::StoreMappingRoutedValueSpecification[1] |
       $routed.sets
         ->first()
         ->okOr(| 'No set implementation supplied for value specification ' + $routed.id->quote())
         ->tryCast(@RelSetImplementation)
-        ->andThen({this: RelSetImplementation[1] |
+        ->andThen(this: RelSetImplementation[1] |
           $routed.value->match([
-            {func: FunctionExpression[1] | $func->intoPExpr($this); },
-            {var: VariableExpression[1] | $this->setAccess($var.name)->ok(); },
-            {other: ValueSpecification[1] | $other->intoPExpr($this); }
-          ]);
-        });
-    },
-    {value: InstanceValue[1] | $value->intoPExpr($set); },
-    {func: FunctionExpression[1] | $func->intoPExpr($set); },
-    {variable: VariableExpression[1] | variablePlaceholder($variable.name)->ok(); },
-    {other: Any[1] | $other->intoPExpr($set); }
+            func: FunctionExpression[1] | $func->intoPExpr($this),
+            var: VariableExpression[1] | $this->setAccess($var.name)->ok(),
+            other: ValueSpecification[1] | $other->intoPExpr($this)
+          ])
+        ),
+    value: InstanceValue[1] | $value->intoPExpr($set),
+    func: FunctionExpression[1] | $func->intoPExpr($set),
+    variable: VariableExpression[1] | variablePlaceholder($variable.name)->ok(),
+    other: Any[1] | $other->intoPExpr($set)
   ])
 }
 
@@ -78,11 +77,11 @@ function <<access.private>> meta::rel::compile::ir::handleCaseFilter(func: Funct
 
   $param0
     ->intoPExpr()
-    ->andThen({parent: PExpr[1] |
+    ->andThen(parent: PExpr[1] |
       $param1
         ->intoScoped($parent)
-        ->then(scoped: PExprScoped[1] | $parent->filter($scoped));
-    });
+        ->then(scoped: PExprScoped[1] | $parent->filter($scoped))
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseGetAll(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -95,7 +94,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGetAll(func: Funct
       $vs.sets
         ->first()
         ->okOr(| 'No set implementation supplied.')
-        ->tryCast(@RelSetImplementation);
+        ->tryCast(@RelSetImplementation)
     )
     ->then(set | all($set));
 
@@ -109,11 +108,11 @@ function <<access.private>> meta::rel::compile::ir::handleCaseMap(func: Function
 
   $param0
     ->intoPExpr()
-    ->andThen({parent: PExpr[1] |
+    ->andThen(parent: PExpr[1] |
       $param1
         ->intoScoped($parent)
-        ->then(scoped: PExprScoped[1] | $parent->mapExpr($scoped));
-    });
+        ->then(scoped: PExprScoped[1] | $parent->mapExpr($scoped))
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseMatch(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -135,11 +134,11 @@ function <<access.private>> meta::rel::compile::ir::handleCaseExists(func: Funct
 
   $param0
     ->intoPExpr()
-    ->andThen({parent: PExpr[1] |
+    ->andThen(parent: PExpr[1] |
       $param1
         ->intoScoped($parent)
-        ->then({predicate: PExprScoped[1] | $parent->exists($predicate); });
-    });
+        ->then(predicate: PExprScoped[1] | $parent->exists($predicate))
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseForAll(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -150,11 +149,11 @@ function <<access.private>> meta::rel::compile::ir::handleCaseForAll(func: Funct
 
   $param0
     ->intoPExpr()
-    ->andThen({parent: PExpr[1] |
+    ->andThen(parent: PExpr[1] |
       $param1
         ->intoScoped($parent)
-        ->then({predicate: PExprScoped[1] | $parent->forAll($predicate); });
-    });
+        ->then(predicate: PExprScoped[1] | $parent->forAll($predicate))
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy1(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -214,7 +213,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy2(func: Fun
 
   $param0
     ->intoPExpr()
-    ->andThen({parent: PExpr[1] |
+    ->andThen(parent: PExpr[1] |
       $param1
         ->tryCast(@InstanceValue)
         ->andThen(v: InstanceValue[1] | 
@@ -222,14 +221,14 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy2(func: Fun
             ->map(s | $s->tryCast(@String))
             ->collect()
         )
-        ->andThem({columns: String[*] |
+        ->andThem(columns: String[*] |
           $param2
             ->map(vs: ValueSpecification[1] | $vs->intoAggregates($parent)->collect())
-            ->them({aggregates: PExprAggregate[*] | 
-              $parent->groupBy($columns, $aggregates);
-            });
-        })
-    });
+            ->them(aggregates: PExprAggregate[*] | 
+              $parent->groupBy($columns, $aggregates)
+            )
+        )
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseBinaryOperator(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -252,17 +251,16 @@ function <<access.private>> meta::rel::compile::ir::handleCaseBinaryOperator(fun
   [$left, $right]
     ->evaluateAndDeactivate()
     ->tryCastm(@ValueSpecification)
-    ->andThem({specs: ValueSpecification[*] |
+    ->andThem(specs: ValueSpecification[*] |
       $specs
         ->map(spec | $spec->intoPExpr())
         ->collect()
-    })
-    ->andThem({arguments: PExpr[*] |
+    )
+    ->andThem(arguments: PExpr[*] |
       $func
         ->getFunctionExpr()
         ->then(fn | $arguments->fexpr($fn));
-    });
-
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseUnaryOperator(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -274,11 +272,11 @@ function <<access.private>> meta::rel::compile::ir::handleCaseUnaryOperator(func
 
   $param0
     ->intoPExpr()
-    ->andThen({inner: PExpr[1] |
+    ->andThen(inner: PExpr[1] |
       $func
         ->getFunctionExpr()
-        ->then(fn | $inner->fexpr($fn));
-    });
+        ->then(fn | $inner->fexpr($fn))
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseBigOperator1(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -292,16 +290,16 @@ function <<access.private>> meta::rel::compile::ir::handleCaseBigOperator1(func:
 
   $param0
     ->tryCast(@InstanceValue)
-    ->andThen({spec: InstanceValue[1] | 
+    ->andThen(spec: InstanceValue[1] | 
       $spec.values
         ->map(v: ValueSpecification[1] | $v->intoPExpr())
-        ->collect(); 
-    })
-    ->andThem({params: PExpr[*] |
+        ->collect()
+    )
+    ->andThem(params: PExpr[*] |
       $func
         ->getFunctionExpr()
-        ->then(fn | $params->fexpr($fn));
-    });
+        ->then(fn | $params->fexpr($fn))
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseBigOperator2(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -315,11 +313,11 @@ function <<access.private>> meta::rel::compile::ir::handleCaseBigOperator2(func:
 
   $param0
     ->intoPExpr()
-    ->andThen({parent: PExpr[1] | 
+    ->andThen(parent: PExpr[1] | 
       $func
         ->getFunctionExpr()
-        ->then(fun | $parent->fexpr($fun));
-    });
+        ->then(fun | $parent->fexpr($fun))
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseIf(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -331,15 +329,15 @@ function <<access.private>> meta::rel::compile::ir::handleCaseIf(func: FunctionE
 
   $param0
     ->intoPExpr()
-    ->andThen({condition: PExpr[1] |
+    ->andThen(condition: PExpr[1] |
       $param1
         ->intoScoped()
-        ->andThen({then: PExprScoped[1] |
+        ->andThen(then: PExprScoped[1] |
           $param2
             ->intoScoped()
-            ->then(else: PExprScoped[1] | $condition->ifThenElse($then, $else));
-        });
-    });
+            ->then(else: PExprScoped[1] | $condition->ifThenElse($then, $else))
+        )
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseInstanceOf(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -407,13 +405,13 @@ function <<access.private>> meta::rel::compile::ir::handleCaseSerialize(func: Fu
 
   $param0
     ->intoPExpr()
-    ->then({parent: PExpr[1] | 
+    ->then(parent: PExpr[1] | 
       compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
         $parent
           ->meta::rel::compile::compile($callback, $state)
-          ->then({state: meta::rel::compile::CompilationState[1] | $state});
-      });
-    });
+          ->then(state: meta::rel::compile::CompilationState[1] | $state)
+      })
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseGraphFetch(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -423,14 +421,14 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGraphFetch(func: F
 
   $param0
     ->intoPExpr()
-    ->then({parent: PExpr[1] | 
+    ->then(parent: PExpr[1] | 
       compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
         // TODO: Implement!
         $parent
           ->meta::rel::compile::compile($callback, $state)
-          ->then({state: meta::rel::compile::CompilationState[1] | $state});
-      });
-    });
+          ->then(state: meta::rel::compile::CompilationState[1] | $state)
+      })
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseExtractEnumValue(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
@@ -629,13 +627,13 @@ function meta::rel::compile::ir::intoPExpr(func: FunctionExpression[1], set: Rel
 function meta::rel::compile::ir::intoPExpr(spec: InstanceValue[1], set: RelSetImplementation[0..1]): Result<PExpr|0..1>[1] {
   $spec.values
     ->okOr(| 'Expected value within `InstanceValue`.')
-    ->andThem({values: Any[*] | 
+    ->andThem(values: Any[*] | 
       if ($values->size() != 1,
         | error('Expected exactly one value in `InstanceValue`.'),
         | $values->toOne()->ok()
-      );
-    })
-    ->andThen(value: Any[1] | $value->intoPExpr($set));
+      )
+    )
+    ->andThen(value: Any[1] | $value->intoPExpr($set))
 }
 
 function meta::rel::compile::ir::intoPExpr(value: Any[1], set: RelSetImplementation[0..1]): Result<PExpr|0..1>[1] {
@@ -648,12 +646,12 @@ function meta::rel::compile::ir::intoPExpr(value: Any[1], set: RelSetImplementat
     d: DateTime[1] | ok(dateTime($d)),
     {class: Class<Any>[1] |
       $set
-        ->map({set: RelSetImplementation[1] |
+        ->map(set: RelSetImplementation[1] |
           compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
             ^$state(current=$set.classExpr)
-              ->ok();
-          });
-        })
+              ->ok()
+          })
+        )
         ->okOr(| format('Encountered class `%s` but no set implementation has been provided.', $class.name))
     },
     {a: Any[1] | 
@@ -670,7 +668,7 @@ function meta::rel::compile::ir::intoPExpr(value: Any[1], set: RelSetImplementat
 }
 
 function meta::rel::compile::ir::intoScoped(spec: ValueSpecification[1]): Result<PExprScoped|0..1>[1] {
-  $spec->intoScoped([]);
+  $spec->intoScoped([])
 }
 
 function meta::rel::compile::ir::intoScoped(spec: ValueSpecification[1], parent: PExpr[0..1]): Result<PExprScoped|0..1>[1] {
@@ -678,18 +676,18 @@ function meta::rel::compile::ir::intoScoped(spec: ValueSpecification[1], parent:
     {spec: FunctionRoutedValueSpecification[1] |
       $spec.value
         ->tryCast(@InstanceValue)
-        ->andThen({value: InstanceValue[1] | 
+        ->andThen(value: InstanceValue[1] | 
           $value.values
             ->first()
             ->okOr(| 'Expected one value in `InstanceValue`.')
             ->tryCast(@FunctionDefinition<Any>)
-        })
-        ->andThen(func: FunctionDefinition<Any>[1] | $func->intoScoped($parent));
+        )
+        ->andThen(func: FunctionDefinition<Any>[1] | $func->intoScoped($parent))
     },
     {spec: RoutedValueSpecification[1] |
       $spec.value
         ->tryCast(@FunctionRoutedValueSpecification)
-        ->andThen({inner: FunctionRoutedValueSpecification[1] | $inner->intoScoped($parent)});
+        ->andThen(inner: FunctionRoutedValueSpecification[1] | $inner->intoScoped($parent))
     }
   ]);
 }
@@ -698,24 +696,24 @@ function meta::rel::compile::ir::intoScoped(func: FunctionDefinition<Any>[1], pa
   $func.expressionSequence
     ->evaluateAndDeactivate()
     ->okOr(|'Encountered empty function body while evaluating expression.')
-    ->andThem({exprs: ValueSpecification[*] |
+    ->andThem(exprs: ValueSpecification[*] |
       if ($exprs->size() != 1,
         | error('More than one expression in function body not supported yet.'),
         | $exprs->toOne()->ok()
-      );
-    })
-    ->andThen({spec: ValueSpecification[1] | 
+      )
+    )
+    ->andThen(spec: ValueSpecification[1] | 
       $spec
         ->intoPExpr()
-        ->andThen({inner: PExpr[1] |
+        ->andThen(inner: PExpr[1] |
           $func
             ->functionType()
             .parameters
             ->evaluateAndDeactivate()
             ->tryCastm(@VariableExpression)
             ->them(vars: VariableExpression[*] | $inner->scoped($vars.name, $parent));
-        });
-    });
+        )
+    )
 }
 
 function meta::rel::compile::ir::intoScopes(spec: ValueSpecification[1]): Result<PExprScoped|0..1>[*] {
@@ -724,15 +722,14 @@ function meta::rel::compile::ir::intoScopes(spec: ValueSpecification[1]): Result
 
 function meta::rel::compile::ir::intoScopes(spec: ValueSpecification[1], parent: PExpr[0..1]): Result<PExprScoped|0..1>[*] {
   $spec->match([
-    {spec: InstanceValue[1] | 
+    spec: InstanceValue[1] | 
       $spec.values
-        ->map({v | 
-          $v->map(f: ValueSpecification[1] | $f->intoScoped($parent));
-        })
-    },
-    {spec: ExtendedRoutedValueSpecification[1] | $spec.value->intoScopes($parent); },
-    {other: ValueSpecification[1] | $other->intoScoped($parent); }
-  ]);
+        ->map(v | 
+          $v->map(f: ValueSpecification[1] | $f->intoScoped($parent))
+        ),
+    spec: ExtendedRoutedValueSpecification[1] | $spec.value->intoScopes($parent),
+    other: ValueSpecification[1] | $other->intoScoped($parent)
+  ])
 }
 
 function meta::rel::compile::ir::intoAggregates(spec: ValueSpecification[1], parent: PExpr[1]): Result<PExprAggregate|0..1>[*] {
@@ -748,7 +745,7 @@ function meta::rel::compile::ir::intoAggregates(spec: ValueSpecification[1], par
                 ->at(1)
                 ->intoScoped($parent)
                 ->then(aggFn: PExprScoped[1] | aggregate($map, $aggFn));
-            });
+            })
         }),
         case($fexpr.func == agg_String_1__FunctionDefinition_1__FunctionDefinition_1__AggregateValue_1_, {|
           $fexpr.parametersValues
@@ -797,130 +794,130 @@ function meta::rel::compile::ir::getFunctionExpr(
         {exprs: Expr[*] | 
           $exprs
             ->at(0)
-            ->sum();
-        }->ok();
+            ->sum()
+        }->ok()
       }),
       case($fn.func == count_Any_MANY__Integer_1_, {|
         {exprs: Expr[*] | 
           $exprs
             ->at(0)
-            ->count();
+            ->count()
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == max_Integer_MANY__Integer_$0_1$_ || $fn.func == max_Float_MANY__Float_$0_1$_,  {|
         {exprs: Expr[*] | 
           $exprs
             ->at(0)
-            ->max();
+            ->max()
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == min_Integer_MANY__Integer_$0_1$_ || $fn.func == min_Float_MANY__Float_$0_1$_,  {|
         {exprs: Expr[*] | 
           $exprs
             ->at(0)
-            ->min();
+            ->min()
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == equal_Any_MANY__Any_MANY__Boolean_1_, {|
         {exprs: Expr[*] |
           $exprs
             ->at(0)
-            ->equals($exprs->at(1));
+            ->equals($exprs->at(1))
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == and_Boolean_1__Boolean_1__Boolean_1_, {|
         {exprs: Expr[*] |
           $exprs
             ->at(0)
-            ->and($exprs->at(1));
+            ->and($exprs->at(1))
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == or_Boolean_1__Boolean_1__Boolean_1_, {|
         {exprs: Expr[*] | 
           $exprs
             ->at(0)
             ->or($exprs->at(1))
-            ->annotate(Boolean); 
+            ->annotate(Boolean)
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == greaterThan_Number_1__Number_1__Boolean_1_ || $fn.func == greaterThan_Date_1__Date_1__Boolean_1_, {|
         {exprs: Expr[*] |
           $exprs
             ->at(0)
-            ->greaterThan($exprs->at(1));
+            ->greaterThan($exprs->at(1))
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == greaterThanEqual_Number_1__Number_1__Boolean_1_ || $fn.func == greaterThanEqual_Date_1__Date_1__Boolean_1_, {|
         {exprs: Expr[*] |
           $exprs
             ->at(0)
-            ->greaterThanEqual($exprs->at(1));
+            ->greaterThanEqual($exprs->at(1))
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == lessThan_Number_1__Number_1__Boolean_1_ || $fn.func == lessThan_Date_1__Date_1__Boolean_1_, {|
         {exprs: Expr[*] |
           $exprs
             ->at(0)
-            ->lessThan($exprs->at(1));
+            ->lessThan($exprs->at(1))
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == lessThanEqual_Number_1__Number_1__Boolean_1_ || $fn.func == lessThanEqual_Date_1__Date_1__Boolean_1_, {|
         {exprs: Expr[*] |
           $exprs
             ->at(0)
-            ->lessThanEqual($exprs->at(1));
+            ->lessThanEqual($exprs->at(1))
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == plus_Number_MANY__Number_1_ || $fn.func == plus_Integer_MANY__Integer_1_ ||
           $fn.func == plus_Float_MANY__Float_1_, {|
         {exprs: Expr[*] | 
-          $exprs->plus();
+          $exprs->plus()
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == minus_Number_MANY__Number_1_ || $fn.func == minus_Integer_MANY__Integer_1_ ||
           $fn.func == minus_Float_MANY__Float_1_, {|
         {exprs: Expr[*] | 
-          $exprs->minus();
+          $exprs->minus()
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == plus_String_MANY__String_1_, {|
         {exprs: Expr[*] | 
-          $exprs->concat();
+          $exprs->concat()
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == times_Number_MANY__Number_1_ || $fn.func == times_Integer_MANY__Integer_1_ ||
           $fn.func == times_Float_MANY__Float_1_, {|
         {exprs: Expr[*] | 
-          $exprs->times();
+          $exprs->times()
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == divide_Number_1__Number_1__Float_1_, {|
         {exprs: Expr[*] |
-          $exprs->at(0)->divide($exprs->at(1));
+          $exprs->at(0)->divide($exprs->at(1))
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == not_Boolean_1__Boolean_1_, {|
         {exprs: Expr[*] | 
           $exprs
             ->at(0)
-            ->not(); 
+            ->not()
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == isEmpty_Any_$0_1$__Boolean_1_, {|
         {exprs: Expr[*] |
@@ -928,24 +925,24 @@ function meta::rel::compile::ir::getFunctionExpr(
             ->at(0)
             ->parenthesise()
             ->exists()
-            ->not();
+            ->not()
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == toOne_T_MANY__T_1_, {|
         {exprs: Expr[*] |
           $exprs
-            ->at(0);
+            ->at(0)
         }
-        ->ok();
+        ->ok()
       }),
       case($fn.func == toString_Any_1__String_1_, {|
         {exprs: Expr[*] |
           $exprs
             ->at(0)
-            ->string();
+            ->string()
         }
-        ->ok();
+        ->ok()
       })
     ], {|
       let message = 
