@@ -15,12 +15,10 @@ function <<access.private>> meta::rel::utils::failMessage<T>(result: Result<T|*>
   let waypoint =
     if($result.waypoint->isEmpty(),
       | '(waypoint unknown)',
-      | 'waypooint \''+$result.waypoint->at(0)+'\''
+      | 'waypooint \''+$result.waypoint->makeString(' -> ')+'\''
     );
   'Failure at ' + $waypoint + ': ' +
-    ($result.errors
-      ->map(e | $e->toString())
-      ->joinStrings());
+    $result.errors->joinStrings();
 }
 
 function meta::rel::utils::okOrElse<T|m>(value: T[m], else: FunctionDefinition<{->Result<T|m>[1]}>[1]): Result<T|m>[1] {
