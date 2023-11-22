@@ -15,8 +15,7 @@ function meta::rel::trace::emptyTrace(): Trace[1] {
   * Append a named staged to the traced computation. 
   */
 function meta::rel::utils::stage(trace: Trace[1], stageName: String[1]): Trace[1] {
-  let tmp = $trace.stages->add($stageName);
-  ^$trace(stages=$trace.stages->add($stageName));
+  ^$trace(stages=$trace.stages->add($stageName))
 }
 
 function meta::rel::utils::traceLog(trace: Trace[1]): String[1] {
