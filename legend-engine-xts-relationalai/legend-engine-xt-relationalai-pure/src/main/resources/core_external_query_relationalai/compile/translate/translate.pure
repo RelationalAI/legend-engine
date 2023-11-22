@@ -42,6 +42,7 @@ function meta::rel::compile::compile(
       ->ok(),
     d: ConstStrictDate[1]      | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(StrictDate))->ok(),
     d: ConstDateTime[1]        | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(DateTime))->ok(),
+    d: ConstEmpty[1]           | ^$state(current=meta::rel::metamodel::relfalse())->ok(),
     e: PExprAt[1]              | $e->compile($callback, $state),
     e: PExprAll[1]             | $e->compile($callback, $state),
     e: PExprCast[1]            | $e->compile($callback, $state),

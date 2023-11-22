@@ -49,6 +49,11 @@ Class meta::rel::compile::ir::ConstDateTime extends meta::rel::compile::ir::Cons
   value: DateTime[1];
 }
 
+/** Marker for the empty collection. */
+Class meta::rel::compile::ir::ConstEmpty extends meta::rel::compile::ir::Constant {
+  /* No properties. */
+}
+
 /**
   * Expression asking to fetch all elements of a certain type.
   */
@@ -277,6 +282,10 @@ function meta::rel::compile::ir::dateTime(value: DateTime[1]): ConstDateTime[1] 
   ^ConstDateTime(value=$value)
 }
 
+function meta::rel::compile::ir::constEmpty(): ConstEmpty[1] {
+  ^ConstEmpty()
+}
+
 function meta::rel::compile::ir::variablePlaceholder(identifier: String[1]): VariablePlaceholder[1] {
   ^VariablePlaceholder(identifier=$identifier)
 }
@@ -402,6 +411,7 @@ function meta::rel::compile::ir::set(expr: PExpr[1]): RelSetImplementation[0..1]
     {scoped: PExprScoped[1] | $scoped.parent->map(p | $p->set())},
     {all: PExprAll[1] | $all.set},
     {access: PExprPropertyAccess[1] | $access.set},
+    {cast: PExprCast[1] | $cast.set},
     {map: PExprMap[1] | $map.parent->set()},
     {filter: PExprFilter[1] | $filter.parent->set()},
     {exists: PExprExists[1] | $exists.parent->set()},

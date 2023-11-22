@@ -64,15 +64,18 @@ function meta::rel::compile::ir::instanceValueToPExpr(
   trace: Trace[1]
 ): Result<PExpr|0..1>[1] {
   let newTrace = $trace->stage('instanceValueToPExpr(InstanceValue[1],RelSetImplementation[1],Trace[1])');
-  $spec.values
-    ->okOr(| errorTrace('Expected value within `InstanceValue`.', $newTrace))
-    ->andThem(values: Any[*] | 
-      if ($values->size() != 1,
-        | error('Expected exactly one value in `InstanceValue`.', $newTrace),
-        | $values->toOne()->ok()
-      )
-    )
-    ->andThen(value: Any[1] | $value->valueToPExpr($set, $newTrace));
+  if($spec.values->isEmpty(),
+    | constEmpty()->ok(),
+    | $spec.values
+        ->okm()
+        ->andThem(values: Any[*] | 
+          if ($values->size() != 1,
+            | error('Expected exactly one value in `InstanceValue`.', $newTrace),
+            | $values->toOne()->ok()
+          )
+        )
+        ->andThen(value: Any[1] | $value->valueToPExpr($set, $newTrace))
+  );
 }
 
 function meta::rel::compile::ir::valueToPExpr(
