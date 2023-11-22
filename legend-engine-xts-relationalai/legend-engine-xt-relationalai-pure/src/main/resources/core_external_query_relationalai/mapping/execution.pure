@@ -13,6 +13,7 @@ import meta::rel::metamodel::*;
 import meta::rel::execute::*;
 import meta::rel::mapping::*;
 import meta::rel::contract::*;
+import meta::rel::trace::*;
 
 Class meta::rel::mapping::QueryActivity extends meta::pure::mapping::Activity {
   relSource: String[1];
@@ -29,18 +30,20 @@ function meta::rel::mapping::execution(
 ): meta::pure::mapping::Result<Any|*>[1] {
   if (!$sq.store->instanceOf(RAIDatabase), | fail('Rel queries can only be executed against an instance of `RAIDatabase`'), | '');
 
-  $sq.fe->execution($mapping, $debug);
+  $sq.fe->execution($mapping, $debug, meta::rel::trace::emptyTrace());
 }
 
 function <<access.private>> meta::rel::mapping::execution(
   query: FunctionExpression[1],
   mapping: meta::pure::mapping::Mapping[1],
-  debug: DebugContext[1]
+  debug: DebugContext[1],
+  trace: Trace[1]
 ): meta::pure::mapping::Result<Any|*>[1] {
   let state = CompilationState($debug);
 
   let result = $query
-    ->intoPExpr()
+    ->functionExprToPExpr($trace)
+    //->waypoint('Compiled into PExpr execution(FunctionExpression,Mapping,DebugContext).')
     ->andThen({node: PExpr[1] |
       //$debug->debug(| 'PURE Expression plan:');
       //$debug->debug(| $node->meta::rel::compile::ir::utils::display());
@@ -129,7 +132,7 @@ function <<access.private>> meta::rel::mapping::execution(
 
 
   if ($result->isOk(), {|
-    let unwrapped = $result->unwrap();
+    let unwrapped = $result->unwrap($trace);
     let compiled = $unwrapped.program->render();
 
     ^meta::pure::mapping::Result<Any|*>(
@@ -138,7 +141,7 @@ function <<access.private>> meta::rel::mapping::execution(
     );
   }, {|
     // Fail with error message
-    $result->unwrap();
+    $result->unwrap($trace);
     ^meta::pure::mapping::Result<Any|*>();
   });
 }

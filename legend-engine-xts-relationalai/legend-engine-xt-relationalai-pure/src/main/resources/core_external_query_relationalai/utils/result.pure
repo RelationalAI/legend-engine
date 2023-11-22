@@ -1,23 +1,14 @@
 import meta::rel::utils::*;
-
+import meta::rel::trace::*;
 
 Class meta::rel::utils::Result<T|n> { 
   <<equality.Key>> values: T[n];
   <<equality.Key>> errors: String[*];
-  <<equality.Key>> waypoint: String[*];
 }
 
-function meta::rel::utils::waypoint<T|n>(result: Result<T|n>[1], stageName: String[1]): Result<T|n>[1] {
-  ^$result(waypoint=$result.waypoint->add($stageName));
-}
-
-function <<access.private>> meta::rel::utils::failMessage<T>(result: Result<T|*>[1]): String[1] {
-  let waypoint =
-    if($result.waypoint->isEmpty(),
-      | '(waypoint unknown)',
-      | 'waypooint \''+$result.waypoint->makeString(' -> ')+'\''
-    );
-  'Failure at ' + $waypoint + ': ' +
+function <<access.private>> meta::rel::utils::failMessage<T>(result: Result<T|*>[1], trace: Trace[1]): String[1] {
+  let stage = $trace->traceLog();
+  'Failure at stage ' + $stage + ': ' +
     $result.errors->joinStrings();
 }
 
@@ -97,17 +88,17 @@ function meta::rel::utils::else<S|m>(result: Result<S|m>[1], else: FunctionDefin
   if($result.errors->isEmpty(), | $result, | $else->eval($result.errors));
 }
 
-function meta::rel::utils::unwrap<T>(result: Result<T|0..1>[1]): T[1] {
+function meta::rel::utils::unwrap<T>(result: Result<T|0..1>[1], trace: Trace[1]): T[1] {
   if($result.errors->isEmpty(), 
     | $result.values->toOne(), 
-    | fail($result->failMessage())
+    | fail($result->failMessage($trace))
   )
 }
 
-function meta::rel::utils::unwrapm<T>(result: Result<T|*>[1]): T[*] {
+function meta::rel::utils::unwrapm<T>(result: Result<T|*>[1], trace: Trace[1]): T[*] {
   if($result.errors->isEmpty(), 
     | $result.values, 
-    | fail($result->failMessage())
+    | fail($result->failMessage($trace))
   )
 }
 

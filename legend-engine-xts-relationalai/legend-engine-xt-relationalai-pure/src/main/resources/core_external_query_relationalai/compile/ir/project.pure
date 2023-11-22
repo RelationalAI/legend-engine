@@ -1,11 +1,16 @@
+import meta::rel::compile::ir::utils::*;
 import meta::pure::router::store::metamodel::*;
 import meta::rel::compile::ir::*;
 import meta::rel::mapping::*;
 import meta::rel::utils::*;
 import meta::rel::utils::lang::*;
+import meta::rel::trace::*;
 import meta::pure::router::metamodel::*;
 
-function <<access.private>> meta::rel::compile::ir::handleCaseProject1(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+function <<access.private>> meta::rel::compile::ir::handleCaseProject1(
+  func: FunctionExpression[1],
+  trace: Trace[1]
+): Result<PExpr|0..1>[1] {
   assert($func.func == project_T_MANY__Path_MANY__TabularDataSet_1_);
 
   let param0 = $func.parametersValues->at(0);
@@ -13,7 +18,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject1(func: Fun
   let param1 = $func.parametersValues->at(1);
 
   $param0
-    ->intoPExpr()
+    ->valueSpecToPExpr($trace)
     ->andThen({parent: PExpr[1] |
       switch([
         case($param1->instanceOf(ExtendedRoutedValueSpecification), 
@@ -93,7 +98,10 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject1(func: Fun
     });
 }
 
-function <<access.private>> meta::rel::compile::ir::handleCaseProject2(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+function <<access.private>> meta::rel::compile::ir::handleCaseProject2(
+  func: FunctionExpression[1],
+  trace: Trace[1]
+): Result<PExpr|0..1>[1] {
   assert($func.func == project_T_MANY__ColumnSpecification_MANY__TabularDataSet_1_ ||
          $func.func == project_TabularDataSet_1__ColumnSpecification_MANY__TabularDataSet_1_);
 
@@ -102,7 +110,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject2(func: Fun
   let param1 = $func.parametersValues->at(1);
 
   $param0
-    ->intoPExpr()
+    ->valueSpecToPExpr($trace)
     ->andThen({parent: PExpr[1] |
       $param1
         ->tryCast(@InstanceValue)
@@ -122,7 +130,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject2(func: Fun
               $columns.func
                 ->map(f | 
                   $f->tryCast(@FunctionDefinition<Any>)
-                    ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->intoScoped($parent))
+                    ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->functionDefToScoped($parent, $trace))
                 )
                 ->collect()
                 ->them(fexprs | $parent->project($columns.name->zip($fexprs)));
@@ -131,7 +139,10 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject2(func: Fun
     });
 }
 
-function <<access.private>> meta::rel::compile::ir::handleCaseProject3(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+function <<access.private>> meta::rel::compile::ir::handleCaseProject3(
+  func: FunctionExpression[1],
+  trace: Trace[1]
+): Result<PExpr|0..1>[1] {
   assert($func.func == project_K_MANY__Function_MANY__String_MANY__TabularDataSet_1_);
 
   let param0 = $func.parametersValues->at(0);
@@ -141,7 +152,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject3(func: Fun
   let param2 = $func.parametersValues->at(2);
 
   $param0
-    ->intoPExpr()
+    ->valueSpecToPExpr($trace)
     ->andThen({parent: PExpr[1] |
       switch([
           case($param1->instanceOf(InstanceValue), |
@@ -172,7 +183,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject3(func: Fun
           ->map(v |
             // Type Result<Project>
             $v->tryCast(@FunctionDefinition<Any>)
-              ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->intoScoped($parent))
+              ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->functionDefToScoped($parent, $trace))
           )
           ->collect()
           ->andThem(fexprs: PExprScoped[*] |

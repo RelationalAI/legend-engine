@@ -2,13 +2,15 @@ import meta::rel::utils::*;
 import meta::rel::utils::collection::*;
 
 function <<test.Test>> meta::rel::test::utils::testResult(): Any[*] {
+  let emptyTrace = meta::rel::trace::emptyTrace();
+
   assertEquals(ok(1), ok(1));
   
-  assertEquals(1, ok(1)->unwrap());
+  assertEquals(1, ok(1)->unwrap($emptyTrace));
   
   assertEquals(
     2,
-    ok(1)->then(v | $v + 1)->unwrap()
+    ok(1)->then(v | $v + 1)->unwrap($emptyTrace)
   );
 
   assertEquals(
@@ -24,7 +26,7 @@ function <<test.Test>> meta::rel::test::utils::testResult(): Any[*] {
 
   assertEquals(
     2,
-    ok(1)->andThen(v: Integer[1] | ok($v + 1))->unwrap()
+    ok(1)->andThen(v: Integer[1] | ok($v + 1))->unwrap($emptyTrace)
   );
 
   assertEquals(

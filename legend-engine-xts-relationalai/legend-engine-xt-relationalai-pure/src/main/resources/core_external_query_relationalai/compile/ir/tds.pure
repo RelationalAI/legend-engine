@@ -1,5 +1,6 @@
 import meta::rel::compile::ir::*;
 import meta::rel::compile::ir::tds::*;
+import meta::rel::trace::*;
 import meta::rel::utils::*;
 import meta::rel::utils::lang::*;
 
@@ -28,27 +29,27 @@ function meta::rel::compile::ir::tds::filter(parent: PExpr[1], predicate: PExprS
   ^TDSFilter(parent=$parent, predicate=$predicate);
 }
 
-function meta::rel::compile::ir::tds::intoPExpr(func: FunctionExpression[1]): Result<PExpr|0..1>[1] {
+function meta::rel::compile::ir::tds::intoPExpr(func: FunctionExpression[1], trace: Trace[1]): Result<PExpr|0..1>[1] {
   switch([
     case($func.func == meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_, {|
       $func.parametersValues
         ->at(0)
-        ->intoPExpr()
+        ->valueSpecToPExpr($trace)
         ->andThen(left: PExpr[1] |
           $func.parametersValues
             ->at(1)
-            ->intoPExpr()
+            ->valueSpecToPExpr($trace)
             ->andThen(right: PExpr[1] | 
               $func.parametersValues
                 ->at(2)
                 ->reactivate(^Map<String, List<Any>>())
                 ->tryCastm(@meta::relational::metamodel::join::JoinType)
-                ->them({js | $js->toOne()})
+                ->them(js | $js->toOne())
                 ->andThen(joinType: meta::relational::metamodel::join::JoinType[1] |
                   $func.parametersValues
                     ->at(3)
-                    ->intoScoped()
-                    ->then(condition: PExprScoped[1] | join($left, $right, $joinType, $condition));
+                    ->valueSpecToScoped($trace)
+                    ->then(condition: PExprScoped[1] | join($left, $right, $joinType, $condition))
                 )
             )
         )
@@ -56,11 +57,11 @@ function meta::rel::compile::ir::tds::intoPExpr(func: FunctionExpression[1]): Re
     case($func.func == meta::pure::tds::filter_TabularDataSet_1__Function_1__TabularDataSet_1_, {|
       $func.parametersValues
         ->at(0)
-        ->intoPExpr()
+        ->valueSpecToPExpr($trace)
         ->andThen(parent: PExpr[1] |
           $func.parametersValues
             ->at(1)
-            ->intoScoped()
+            ->valueSpecToScoped($trace)
             ->then(predicate: PExprScoped[1] |
               meta::rel::compile::ir::tds::filter($parent, $predicate)
             )

@@ -852,11 +852,11 @@ function meta::rel::compile::compile(
   $ifThenElse.condition
     ->compile($callback, $state)
     ->andThen({state: CompilationState[1] |
-      let condition = $state->current()->unwrap();
+      let condition = $state->current()->unwrap(meta::rel::trace::emptyTrace()); // FIXME: Provide trace.
       $ifThenElse.then
         ->compile($callback, $state)
         ->andThen({state: CompilationState[1] |
-          let then = $state->current()->unwrap();
+          let then = $state->current()->unwrap(meta::rel::trace::emptyTrace()); // FIXME: Provide trace.
 
           $ifThenElse.else
             ->compile($callback, $state)
