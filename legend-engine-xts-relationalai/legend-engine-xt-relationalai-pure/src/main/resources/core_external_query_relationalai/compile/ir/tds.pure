@@ -30,15 +30,16 @@ function meta::rel::compile::ir::tds::filter(parent: PExpr[1], predicate: PExprS
 }
 
 function meta::rel::compile::ir::tds::intoPExpr(func: FunctionExpression[1], trace: Trace[1]): Result<PExpr|0..1>[1] {
+  let newTrace = $trace->stage('intoPExpr(FunctionExpression[1],Trace[1])');
   switch([
     case($func.func == meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_, {|
       $func.parametersValues
         ->at(0)
-        ->valueSpecToPExpr($trace)
+        ->valueSpecToPExpr($newTrace)
         ->andThen(left: PExpr[1] |
           $func.parametersValues
             ->at(1)
-            ->valueSpecToPExpr($trace)
+            ->valueSpecToPExpr($newTrace)
             ->andThen(right: PExpr[1] | 
               $func.parametersValues
                 ->at(2)
@@ -48,7 +49,7 @@ function meta::rel::compile::ir::tds::intoPExpr(func: FunctionExpression[1], tra
                 ->andThen(joinType: meta::relational::metamodel::join::JoinType[1] |
                   $func.parametersValues
                     ->at(3)
-                    ->valueSpecToScoped($trace)
+                    ->valueSpecToScoped($newTrace)
                     ->then(condition: PExprScoped[1] | join($left, $right, $joinType, $condition))
                 )
             )
@@ -57,11 +58,11 @@ function meta::rel::compile::ir::tds::intoPExpr(func: FunctionExpression[1], tra
     case($func.func == meta::pure::tds::filter_TabularDataSet_1__Function_1__TabularDataSet_1_, {|
       $func.parametersValues
         ->at(0)
-        ->valueSpecToPExpr($trace)
+        ->valueSpecToPExpr($newTrace)
         ->andThen(parent: PExpr[1] |
           $func.parametersValues
             ->at(1)
-            ->valueSpecToScoped($trace)
+            ->valueSpecToScoped($newTrace)
             ->then(predicate: PExprScoped[1] |
               meta::rel::compile::ir::tds::filter($parent, $predicate)
             )
@@ -73,7 +74,8 @@ function meta::rel::compile::ir::tds::intoPExpr(func: FunctionExpression[1], tra
         $func.func
           ->elementToPath()
           ->else(| '<<unknown>>')
-          ->quote()
+          ->quote(),
+      $newTrace
     )
-  )
+  );
 }

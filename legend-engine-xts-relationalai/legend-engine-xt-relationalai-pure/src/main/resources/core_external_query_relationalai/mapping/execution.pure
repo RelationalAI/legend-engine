@@ -41,13 +41,15 @@ function <<access.private>> meta::rel::mapping::execution(
 ): meta::pure::mapping::Result<Any|*>[1] {
   let state = CompilationState($debug);
 
+  let newTrace = $trace->stage('execution(FunctionExpression[1],Mapping[1],DebugContext[1],Trace[1])');
+
   let result = $query
-    ->functionExprToPExpr($trace)
+    ->functionExprToPExpr($newTrace)
     //->waypoint('Compiled into PExpr execution(FunctionExpression,Mapping,DebugContext).')
     ->andThen({node: PExpr[1] |
       //$debug->debug(| 'PURE Expression plan:');
       //$debug->debug(| $node->meta::rel::compile::ir::utils::display());
-      $node->compile({_a: Any[1] | error('Unexpected error during compilation.'); }, $state);
+      $node->compile({_a: Any[1] | error('Unexpected error during compilation.', $newTrace); }, $state);
     })
     ->andThen({state: CompilationState[1] |
       $debug->debug(| 'Column names:');
@@ -132,7 +134,7 @@ function <<access.private>> meta::rel::mapping::execution(
 
 
   if ($result->isOk(), {|
-    let unwrapped = $result->unwrap($trace);
+    let unwrapped = $result->unwrap();
     let compiled = $unwrapped.program->render();
 
     ^meta::pure::mapping::Result<Any|*>(
@@ -141,7 +143,7 @@ function <<access.private>> meta::rel::mapping::execution(
     );
   }, {|
     // Fail with error message
-    $result->unwrap($trace);
+    $result->unwrap();
     ^meta::pure::mapping::Result<Any|*>();
   });
 }

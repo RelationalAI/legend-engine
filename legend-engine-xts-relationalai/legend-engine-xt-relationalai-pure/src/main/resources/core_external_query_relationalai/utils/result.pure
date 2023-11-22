@@ -3,13 +3,27 @@ import meta::rel::trace::*;
 
 Class meta::rel::utils::Result<T|n> { 
   <<equality.Key>> values: T[n];
-  <<equality.Key>> errors: String[*];
+  <<equality.Key>> errors: QueryRewriteError[*];
 }
 
-function <<access.private>> meta::rel::utils::failMessage<T>(result: Result<T|*>[1], trace: Trace[1]): String[1] {
-  let stage = $trace->traceLog();
-  'Failure at stage ' + $stage + ': ' +
-    $result.errors->joinStrings();
+Class meta::rel::utils::QueryRewriteError {
+  message: String[1];
+  trace: Trace[0..1];
+}
+
+function meta::rel::utils::queryRewriteError(message: String[1], trace: Trace[0..1]): QueryRewriteError[1] {
+  ^QueryRewriteError(message=$message, trace=$trace)
+}
+
+function meta::rel::utils::queryRewriteError(message: String[1]): QueryRewriteError[1] {
+  ^QueryRewriteError(message=$message)
+}
+
+function <<access.private>> meta::rel::utils::failMessage<T>(result: Result<T|*>[1]): String[1] {
+  $result.errors->map({e: QueryRewriteError[1] | 
+    let stage = $e.trace->traceLog();
+    'Failure at stage ' + $stage + ': ' + $e.message;
+  })->joinStrings();
 }
 
 function meta::rel::utils::okOrElse<T|m>(value: T[m], else: FunctionDefinition<{->Result<T|m>[1]}>[1]): Result<T|m>[1] {
@@ -27,7 +41,9 @@ function meta::rel::utils::okOr<T|m>(value: T[m], message: FunctionDefinition<{-
   /*
    * TODO: We should delay the evaluation of the message until the error is reported.
    */
-  $value->okOrElse(| ^Result<T|m>(errors=[$message->eval()]))
+  $value->okOrElse(|
+    ^Result<T|m>(errors=[queryRewriteError($message->eval())])
+  )
 }
 
 function meta::rel::utils::ok<T>(value: T[1]): Result<T|0..1>[1] {
@@ -38,8 +54,9 @@ function meta::rel::utils::okm<T>(values: T[*]): Result<T|*>[1] {
   ^Result<T|*>(values=$values);
 }
 
-function meta::rel::utils::error(errors: String[*]): Result<Nil|0..1>[1] {
-  ^Result<Nil|0..1>(errors=$errors);
+function meta::rel::utils::error(message: String[1], trace: Trace[1]): Result<Nil|0..1>[1] {
+  let error = ^QueryRewriteError(message=$message, trace=$trace);
+  ^Result<Nil|0..1>(errors=[$error]);
 }
 
 function meta::rel::utils::andThen<S,T|n>(result: Result<S|0..1>[1], fn: FunctionDefinition<{S[1]->Result<T|n>[1]}>[1]): Result<T|n>[1] {
@@ -88,17 +105,17 @@ function meta::rel::utils::else<S|m>(result: Result<S|m>[1], else: FunctionDefin
   if($result.errors->isEmpty(), | $result, | $else->eval($result.errors));
 }
 
-function meta::rel::utils::unwrap<T>(result: Result<T|0..1>[1], trace: Trace[1]): T[1] {
+function meta::rel::utils::unwrap<T>(result: Result<T|0..1>[1]): T[1] {
   if($result.errors->isEmpty(), 
     | $result.values->toOne(), 
-    | fail($result->failMessage($trace))
+    | fail($result->failMessage())
   )
 }
 
-function meta::rel::utils::unwrapm<T>(result: Result<T|*>[1], trace: Trace[1]): T[*] {
+function meta::rel::utils::unwrapm<T>(result: Result<T|*>[1]): T[*] {
   if($result.errors->isEmpty(), 
     | $result.values, 
-    | fail($result->failMessage($trace))
+    | fail($result->failMessage())
   )
 }
 
@@ -124,14 +141,19 @@ function meta::rel::utils::collect<T>(results: Result<T|0..1>[*]): Result<T|*>[1
 }
 
 function meta::rel::utils::tryCast<T>(source: Any[1], object: T[1]): Result<T|0..1>[1] {
+  tryCast($source, $object, emptyTrace());
+}
+
+function meta::rel::utils::tryCast<T>(source: Any[1], object: T[1], trace: Trace[1]): Result<T|0..1>[1] {
   if ($source->instanceOf($object->type()), 
     | ^Result<T|0..1>(values=$source->cast($object)), 
     {|
-      let error = 'Cannot cast object of type ' +
+      let message = 'Cannot cast object of type ' +
         $source->type().name->orElse('<<unknown>>') + 
         ' into class ' + 
         $object->type().name->orElse('<<unknown>>');
-      ^Result<T|0..1>(errors=[$error]);
+      //^Result<T|0..1>(errors=[$message]);
+      error($message, $trace);
     }
   );
 }

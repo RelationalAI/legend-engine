@@ -141,9 +141,11 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject2(
 
 function <<access.private>> meta::rel::compile::ir::handleCaseProject3(
   func: FunctionExpression[1],
-  trace: Trace[1]
+  tracex: Trace[1]
 ): Result<PExpr|0..1>[1] {
   assert($func.func == project_K_MANY__Function_MANY__String_MANY__TabularDataSet_1_);
+
+  let newTrace = $tracex->stage('handleCaseProject3(FunctionExpression[1],Trace[1])');
 
   let param0 = $func.parametersValues->at(0);
   // Second argument is the function (what is this??).
@@ -152,7 +154,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject3(
   let param2 = $func.parametersValues->at(2);
 
   $param0
-    ->valueSpecToPExpr($trace)
+    ->valueSpecToPExpr($newTrace)
     ->andThen({parent: PExpr[1] |
       switch([
           case($param1->instanceOf(InstanceValue), |
@@ -176,14 +178,14 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject3(
               .value
               ->tryCast(@InstanceValue)
           )
-        ], {| error('Match error: Unexpected type') }
+        ], {| error('Match error: Unexpected type', $newTrace) }
       )
       ->andThem({i: InstanceValue[*] |
         $i.values
           ->map(v |
             // Type Result<Project>
             $v->tryCast(@FunctionDefinition<Any>)
-              ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->functionDefToScoped($parent, $trace))
+              ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->functionDefToScoped($parent, $newTrace))
           )
           ->collect()
           ->andThem(fexprs: PExprScoped[*] |

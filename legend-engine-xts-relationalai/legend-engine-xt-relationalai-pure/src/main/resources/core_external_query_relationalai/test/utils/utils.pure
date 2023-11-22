@@ -2,15 +2,13 @@ import meta::rel::utils::*;
 import meta::rel::utils::collection::*;
 
 function <<test.Test>> meta::rel::test::utils::testResult(): Any[*] {
-  let emptyTrace = meta::rel::trace::emptyTrace();
-
   assertEquals(ok(1), ok(1));
   
-  assertEquals(1, ok(1)->unwrap($emptyTrace));
+  assertEquals(1, ok(1)->unwrap());
   
   assertEquals(
     2,
-    ok(1)->then(v | $v + 1)->unwrap($emptyTrace)
+    ok(1)->then(v | $v + 1)->unwrap()
   );
 
   assertEquals(
@@ -26,7 +24,7 @@ function <<test.Test>> meta::rel::test::utils::testResult(): Any[*] {
 
   assertEquals(
     2,
-    ok(1)->andThen(v: Integer[1] | ok($v + 1))->unwrap($emptyTrace)
+    ok(1)->andThen(v: Integer[1] | ok($v + 1))->unwrap()
   );
 
   assertEquals(
@@ -35,8 +33,8 @@ function <<test.Test>> meta::rel::test::utils::testResult(): Any[*] {
   );
 
   assertEquals(
-    ^Result<Any|*>(errors=['2']),
-    [ok(1), ^Result<Any|0..1>(errors=['2']), ok(3)]->collect()
+    ^Result<Any|*>(errors=[queryRewriteError('2')]),
+    [ok(1), ^Result<Any|0..1>(errors=[queryRewriteError('2')]), ok(3)]->collect()
   );
 
   assertEquals(
