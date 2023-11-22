@@ -55,7 +55,7 @@ function <<access.private>> meta::rel::mapping::execution(
       $debug->debug(| 'Column names:');
       $debug->debug(| $state.cols.names);
       $state.current
-        ->okOr(| 'No current expression.')
+        ->okOr(| errorTrace('No current expression.', $newTrace))
         ->andThen({expr: Expr[1] |
           let type = $query.genericType.rawType;
 
@@ -97,7 +97,7 @@ function <<access.private>> meta::rel::mapping::execution(
                 // Handles case 1.
                 $mapping
                   ->meta::pure::mapping::_classMappingByClass($class)
-                  ->okOr(| format('No class mapping found for `%s`', $class.name))
+                  ->okOr(| errorTrace(format('No class mapping found for `%s`', $class.name), $newTrace))
                   ->tryCastm(@RelSetImplementation)
                   ->them({sets: RelSetImplementation[*] | $sets->first()->toOne(); })
                   ->andThen({set: RelSetImplementation[1] |

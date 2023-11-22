@@ -90,9 +90,9 @@ function meta::rel::compile::compile(
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
   $all.set.classExpr
-    ->okOr(
-      | 'Mappings with empty class expressions not yet supported. No class expression found ' +
-      'for class ' + $all.set.class.name->else(| '<<unknown>>')->quote()
+    ->okOr(|
+        errorTrace('Mappings with empty class expressions not yet supported. No class expression found ' +
+          'for class ' + $all.set.class.name->else(| '<<unknown>>')->quote())
     )
     ->then(expr: Expr[1] | ^$state(current=$expr->annotate($all.set.class)))
 }
@@ -104,9 +104,9 @@ function meta::rel::compile::compile(
 ): Result<CompilationState|0..1>[1] {
   let bound = var($state.variableFactory->next());
   $cast.set.classExpr
-    ->okOr(
-      | 'Mappings with empty class expressions not yet supported. No class expression found ' +
-      'for class ' + $cast.set.class.name->else(| '<<unknown>>')->quote()
+    ->okOr(|
+      errorTrace('Mappings with empty class expressions not yet supported. No class expression found ' +
+        'for class ' + $cast.set.class.name->else(| '<<unknown>>')->quote())
     )
     ->andThen(classExpr: Expr[1] |
 
@@ -296,17 +296,17 @@ function meta::rel::compile::compile(
     ->compile($callback, $state)
     ->step(parent: Expr[1] |
       $access.property.name
-        ->okOr(| 'No name specified for property.')
+        ->okOr(| errorTrace('No name specified for property.'))
         ->andThen(propertyName: String[1] |
           $access.parent
             ->set()
             ->map(set | $set->meta::pure::mapping::propertyMappingsByPropertyName($propertyName); )
-            ->okOr(| format('No property mapping found for property %s', [$propertyName->quote()]))
+            ->okOr(| errorTrace(format('No property mapping found for property %s', $propertyName->quote())))
             ->them(inner: meta::pure::mapping::PropertyMapping[*] | $inner->first()->toOne())
             ->tryCast(@RelPropertyMapping)
             ->andThen(mapping: RelPropertyMapping[1] | 
               $access.property.genericType.rawType
-                ->okOr(| 'Could not determine type of property ' + $propertyName)
+                ->okOr(| errorTrace('Could not determine type of property ' + $propertyName))
                 ->then(type: Type[1] |
                   $mapping
                     .target

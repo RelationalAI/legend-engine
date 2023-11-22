@@ -11,18 +11,18 @@ Class meta::rel::utils::QueryRewriteError {
   trace: Trace[0..1];
 }
 
-function meta::rel::utils::queryRewriteError(message: String[1], trace: Trace[0..1]): QueryRewriteError[1] {
+function meta::rel::utils::errorTrace(message: String[1], trace: Trace[0..1]): QueryRewriteError[1] {
   ^QueryRewriteError(message=$message, trace=$trace)
 }
 
-function meta::rel::utils::queryRewriteError(message: String[1]): QueryRewriteError[1] {
+function meta::rel::utils::errorTrace(message: String[1]): QueryRewriteError[1] {
   ^QueryRewriteError(message=$message)
 }
 
 function <<access.private>> meta::rel::utils::failMessage<T>(result: Result<T|*>[1]): String[1] {
   $result.errors->map({e: QueryRewriteError[1] | 
-    let stage = $e.trace->traceLog();
-    'Failure at stage ' + $stage + ': ' + $e.message;
+    let stage = $e.trace->traceLog()->makeString('\n  ', '\n  ', '');
+    '\nFailure at stage:' + $stage + '\n' + $e.message;
   })->joinStrings();
 }
 
@@ -37,12 +37,9 @@ function meta::rel::utils::okOrElse<T|m>(value: T[m], else: FunctionDefinition<{
   );
 }
 
-function meta::rel::utils::okOr<T|m>(value: T[m], message: FunctionDefinition<{->String[1]}>[1]): Result<T|m>[1] {
-  /*
-   * TODO: We should delay the evaluation of the message until the error is reported.
-   */
+function meta::rel::utils::okOr<T|m>(value: T[m], error: FunctionDefinition<{->QueryRewriteError[1]}>[1]): Result<T|m>[1] {
   $value->okOrElse(|
-    ^Result<T|m>(errors=[queryRewriteError($message->eval())])
+    ^Result<T|m>(errors=[$error->eval()])
   )
 }
 
@@ -55,8 +52,7 @@ function meta::rel::utils::okm<T>(values: T[*]): Result<T|*>[1] {
 }
 
 function meta::rel::utils::error(message: String[1], trace: Trace[1]): Result<Nil|0..1>[1] {
-  let error = ^QueryRewriteError(message=$message, trace=$trace);
-  ^Result<Nil|0..1>(errors=[$error]);
+  ^Result<Nil|0..1>(errors=[errorTrace($message, $trace)]);
 }
 
 function meta::rel::utils::andThen<S,T|n>(result: Result<S|0..1>[1], fn: FunctionDefinition<{S[1]->Result<T|n>[1]}>[1]): Result<T|n>[1] {

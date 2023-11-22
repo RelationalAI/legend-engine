@@ -42,7 +42,7 @@ function meta::rel::compile::ir::valueSpecToPExpr(
     routed: meta::pure::router::store::metamodel::StoreMappingRoutedValueSpecification[1] |
       $routed.sets
         ->first()
-        ->okOr(| 'No set implementation supplied for value specification ' + $routed.id->quote())
+        ->okOr(| errorTrace('No set implementation supplied for value specification ' + $routed.id->quote(), $newTrace))
         ->tryCast(@RelSetImplementation)
         ->andThen(this: RelSetImplementation[1] |
           $routed.value->match([
@@ -65,7 +65,7 @@ function meta::rel::compile::ir::instanceValueToPExpr(
 ): Result<PExpr|0..1>[1] {
   let newTrace = $trace->stage('instanceValueToPExpr(InstanceValue[1],RelSetImplementation[1],Trace[1])');
   $spec.values
-    ->okOr(| 'Expected value within `InstanceValue`.')
+    ->okOr(| errorTrace('Expected value within `InstanceValue`.', $newTrace))
     ->andThem(values: Any[*] | 
       if ($values->size() != 1,
         | error('Expected exactly one value in `InstanceValue`.', $newTrace),
@@ -96,7 +96,7 @@ function meta::rel::compile::ir::valueToPExpr(
               ->ok()
           })
         )
-        ->okOr(| format('Encountered class `%s` but no set implementation has been provided.', $class.name))
+        ->okOr(| errorTrace(format('Encountered class `%s` but no set implementation has been provided.', $class.name), $newTrace))
     },
     {a: Any[1] | 
       let message =
@@ -128,14 +128,14 @@ function meta::rel::compile::ir::functionExprToPExpr(
   $func.func->match([
     {property: Property<Nil, Any|*>[1] |
       $property.name
-        ->okOr(| 'Encountered empty name for property.')
+        ->okOr(| errorTrace('Encountered empty name for property.', $newTrace))
         ->andThen({name: String[1] |
           $func.parametersValues
             ->at(0)
             ->tryCast(@ExtendedRoutedValueSpecification)
             ->andThen({paramSpec: RoutedValueSpecification[1] |
               $set
-                ->okOr(| 'No set specified for property ' + $name->quote())
+                ->okOr(| errorTrace('No set specified for property ' + $name->quote(), $newTrace))
                 ->andThen({set: RelSetImplementation[1] |
                   $paramSpec
                     ->valueSpecToPExpr($newTrace)
@@ -341,7 +341,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGetAll(func: Funct
     ->map(vs: meta::pure::router::store::metamodel::StoreMappingRoutedValueSpecification[1] |
       $vs.sets
         ->first()
-        ->okOr(| 'No set implementation supplied.')
+        ->okOr(| errorTrace('No set implementation supplied.', $newTrace))
         ->tryCast(@RelSetImplementation)
     )
     ->then(set | all($set));
@@ -662,7 +662,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseCast(func: Functio
           ->andThen(spec: StoreMappingRoutedValueSpecification[1] |
             $spec.sets
               ->first()
-              ->okOr(| 'No set implementation specified for argument of `cast`.')
+              ->okOr(| errorTrace('No set implementation specified for argument of `cast`.', $newTrace))
               ->tryCast(@RelSetImplementation)
               ->then(set: RelSetImplementation[1] |
                 castExpr($parent, $set)
@@ -768,7 +768,7 @@ function meta::rel::compile::ir::valueSpecToScoped(
         ->andThen(value: InstanceValue[1] | 
           $value.values
             ->first()
-            ->okOr(| 'Expected one value in `InstanceValue`.')
+            ->okOr(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
             ->tryCast(@FunctionDefinition<Any>)
         )
         ->andThen(func: FunctionDefinition<Any>[1] | $func->functionDefToScoped($parent, $newTrace))
@@ -789,7 +789,7 @@ function meta::rel::compile::ir::functionDefToScoped(
   let newTrace = $trace->stage('functionDefToScoped(FunctionDefinition<Any>[1],PExpr[0..1],Trace[1])');
   $func.expressionSequence
     ->evaluateAndDeactivate()
-    ->okOr(|'Encountered empty function body while evaluating expression.')
+    ->okOr(| errorTrace('Encountered empty function body while evaluating expression.', $newTrace))
     ->andThem(exprs: ValueSpecification[*] |
       if ($exprs->size() != 1,
         | error('More than one expression in function body not supported yet.', $newTrace),

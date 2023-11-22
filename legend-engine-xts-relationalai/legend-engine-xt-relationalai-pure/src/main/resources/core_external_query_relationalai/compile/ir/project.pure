@@ -13,6 +13,8 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject1(
 ): Result<PExpr|0..1>[1] {
   assert($func.func == project_T_MANY__Path_MANY__TabularDataSet_1_);
 
+  let newTrace = $trace->stage('handleCaseProject1(FunctionExpression[1],Trace[1])');
+
   let param0 = $func.parametersValues->at(0);
   // Second argument is the path.
   let param1 = $func.parametersValues->at(1);
@@ -36,11 +38,11 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject1(
             ->cast(@meta::pure::metamodel::path::Path<Nil,Any|1>)
         )
       ], {| $param1->reactivate(); })
-      ->okOr(| 'Encountered unknown argument during compilation of `project_T_MANY__Path_MANY__TabularDataSet_1_`.')
+      ->okOr(| errorTrace('Encountered unknown argument during compilation of `project_T_MANY__Path_MANY__TabularDataSet_1_`.', $newTrace))
       ->andThem({paths: meta::pure::metamodel::path::Path<Nil,Any|1>[*] |
         $parent
           ->set()
-          ->okOr(| 'Expected set in parent expression of `project_T_MANY__Path_MANY__TabularDataSet_1_`.')
+          ->okOr(| errorTrace('Expected set in parent expression of `project_T_MANY__Path_MANY__TabularDataSet_1_`.', $newTrace))
           ->andThen({set: RelSetImplementation[1] |
             $paths
               ->map({path |
@@ -55,7 +57,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject1(
                             $property
                               .genericType
                               .rawType
-                              ->okOr(| format('No type information for property `%s`.', $property.name))
+                              ->okOr(| errorTrace(format('No type information for property `%s`.', $property.name), $newTrace))
                               ->then({type: Type[1] |
                                 let next = 
                                   $set
@@ -104,6 +106,8 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject2(
 ): Result<PExpr|0..1>[1] {
   assert($func.func == project_T_MANY__ColumnSpecification_MANY__TabularDataSet_1_ ||
          $func.func == project_TabularDataSet_1__ColumnSpecification_MANY__TabularDataSet_1_);
+
+  let newTrace = $trace->stage('handleCaseProject1(FunctionExpression[1],Trace[1])');
 
   let param0 = $func.parametersValues->at(0);
   // Second argument is the column specification.
