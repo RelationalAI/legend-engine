@@ -406,28 +406,28 @@ function meta::rel::compile::ir::ifThenElse(condition: PExpr[1], then: PExprScop
 
 function meta::rel::compile::ir::set(expr: PExpr[1]): RelSetImplementation[0..1] {
   $expr->match([
-    {at: PExprAt[1] | $at.parent->set()},
-    {access: PExprSetAccess[1] | $access.set},
-    {scoped: PExprScoped[1] | $scoped.parent->map(p | $p->set())},
-    {all: PExprAll[1] | $all.set},
-    {access: PExprPropertyAccess[1] | $access.set},
-    {cast: PExprCast[1] | $cast.set},
-    {map: PExprMap[1] | $map.parent->set()},
-    {filter: PExprFilter[1] | $filter.parent->set()},
-    {exists: PExprExists[1] | $exists.parent->set()},
-    {forAll: PExprForAll[1] | $forAll.parent->set()},
-    {project: PExprProject[1] | $project.parent->set()},
-    {groupBy: PExprGroupBy[1] | $groupBy.parent->set()},
-    {step: PExprCompilationStep[1] | $step.property->map(fun | $fun->eval('set', []))->first()->cast(@RelSetImplementation)}
+    e: PExprAt[1]             | $e.parent->set(),
+    e: PExprSetAccess[1]      | $e.set,
+    e: PExprScoped[1]         | $e.parent->map(p | $p->set()),
+    e: PExprAll[1]            | $e.set,
+    e: PExprPropertyAccess[1] | $e.set,
+    e: PExprCast[1]           | $e.set,
+    e: PExprMap[1]            | $e.parent->set(),
+    e: PExprFilter[1]         | $e.parent->set(),
+    e: PExprExists[1]         | $e.parent->set(),
+    e: PExprForAll[1]         | $e.parent->set(),
+    e: PExprProject[1]        | $e.parent->set(),
+    e: PExprGroupBy[1]        | $e.parent->set(),
+    step: PExprCompilationStep[1] | $step.property->map(fun | $fun->eval('set', []))->first()->cast(@RelSetImplementation)
   ])
 }
 
 function meta::rel::compile::ir::root(expr: PExpr[1]): PExpr[1] {
   $expr->match([
-    {access: PExprSetAccess[1] | $access},
-    {scoped: PExprScoped[1] | $scoped.parent->map(p | $p->root())->orElse($scoped)},
-    {variable: VariablePlaceholder[1] | $variable},
-    {access: PExprPropertyAccess[1] | $access.parent->root()},
-    {access: PExprColumnAccess[1] | $access.parent->root()}
+    access: PExprSetAccess[1]        | $access,
+    scoped: PExprScoped[1]           | $scoped.parent->map(p | $p->root())->orElse($scoped),
+    variable: VariablePlaceholder[1] | $variable,
+    access: PExprPropertyAccess[1]   | $access.parent->root(),
+    access: PExprColumnAccess[1]     | $access.parent->root()
   ])
 }
