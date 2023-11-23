@@ -43,7 +43,7 @@ function meta::rel::compile::ir::valueSpecToPExpr(
       $routed.sets
         ->first()
         ->okOr(| errorTrace('No set implementation supplied for value specification ' + $routed.id->quote(), $newTrace))
-        ->tryCast(@RelSetImplementation)
+        ->tryCast(@RelSetImplementation, $newTrace)
         ->andThen(this: RelSetImplementation[1] |
           $routed.value->match([
             func: FunctionExpression[1]  | $func->functionExprToPExpr($this, $newTrace),
@@ -135,7 +135,7 @@ function meta::rel::compile::ir::functionExprToPExpr(
         ->andThen({name: String[1] |
           $func.parametersValues
             ->at(0)
-            ->tryCast(@ExtendedRoutedValueSpecification)
+            ->tryCast(@ExtendedRoutedValueSpecification, $newTrace)
             ->andThen({paramSpec: RoutedValueSpecification[1] |
               $set
                 ->okOr(| errorTrace('No set specified for property ' + $name->quote(), $newTrace))
@@ -304,11 +304,11 @@ function <<access.private>> meta::rel::compile::ir::handleCaseAt(func: FunctionE
     ->valueSpecToPExpr($newTrace)
     ->andThen({parent: PExpr[1] |
       $param1
-        ->tryCast(@InstanceValue)
+        ->tryCast(@InstanceValue, $newTrace)
         ->andThen(v: InstanceValue[1] | 
           $v.values
             ->toOne()
-            ->tryCast(@Integer)
+            ->tryCast(@Integer, $newTrace)
         )
         ->then(index: Integer[1] |
           $parent->atExpr($index)
@@ -345,7 +345,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGetAll(func: Funct
       $vs.sets
         ->first()
         ->okOr(| errorTrace('No set implementation supplied.', $newTrace))
-        ->tryCast(@RelSetImplementation)
+        ->tryCast(@RelSetImplementation, $newTrace)
     )
     ->then(set | all($set));
 }
@@ -436,10 +436,10 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy1(func: Fun
             ->collect()
             ->andThem({aggregates: PExprAggregate[*] | 
               $param3
-                ->tryCast(@InstanceValue)
+                ->tryCast(@InstanceValue, $newTrace)
                 ->andThen(i: InstanceValue[1] | 
                   $i.values
-                    ->map(v | $v->tryCast(@String))
+                    ->map(v | $v->tryCast(@String, $newTrace))
                     ->collect()
                 )
                 ->andThem({names: String[*] | 
@@ -477,10 +477,10 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy2(func: Fun
     ->valueSpecToPExpr($newTrace)
     ->andThen(parent: PExpr[1] |
       $param1
-        ->tryCast(@InstanceValue)
+        ->tryCast(@InstanceValue, $newTrace)
         ->andThen(v: InstanceValue[1] | 
           $v.values
-            ->map(s | $s->tryCast(@String))
+            ->map(s | $s->tryCast(@String, $newTrace))
             ->collect()
         )
         ->andThem(columns: String[*] |
@@ -514,7 +514,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseBinaryOperator(fun
 
   [$left, $right]
     ->evaluateAndDeactivate()
-    ->tryCastm(@ValueSpecification)
+    ->tryCastm(@ValueSpecification, $newTrace)
     ->andThem(specs: ValueSpecification[*] |
       $specs
         ->map(spec | $spec->valueSpecToPExpr($newTrace))
@@ -557,7 +557,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseBigOperator1(func:
   let param0 = $func.parametersValues->at(0);
 
   $param0
-    ->tryCast(@InstanceValue)
+    ->tryCast(@InstanceValue, $newTrace)
     ->andThen(spec: InstanceValue[1] | 
       $spec.values
         ->map(v: ValueSpecification[1] | $v->valueSpecToPExpr($newTrace))
@@ -624,7 +624,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseInstanceOf(func: F
     ->valueSpecToPExpr($newTrace)
     ->andThen({obj: PExpr[1] |
       $type
-        ->tryCast(@ExtendedRoutedValueSpecification)
+        ->tryCast(@ExtendedRoutedValueSpecification, $newTrace)
         ->andThen({spec: ExtendedRoutedValueSpecification[1] |
           $spec
             ->valueSpecToPExpr($newTrace)
@@ -661,12 +661,12 @@ function <<access.private>> meta::rel::compile::ir::handleCaseCast(func: Functio
     ->valueSpecToPExpr($newTrace)
     ->andThen(parent: PExpr[1] |
         $param1
-          ->tryCast(@StoreMappingRoutedValueSpecification)
+          ->tryCast(@StoreMappingRoutedValueSpecification, $newTrace)
           ->andThen(spec: StoreMappingRoutedValueSpecification[1] |
             $spec.sets
               ->first()
               ->okOr(| errorTrace('No set implementation specified for argument of `cast`.', $newTrace))
-              ->tryCast(@RelSetImplementation)
+              ->tryCast(@RelSetImplementation, $newTrace)
               ->then(set: RelSetImplementation[1] |
                 castExpr($parent, $set)
               )
@@ -720,14 +720,14 @@ function <<access.private>> meta::rel::compile::ir::handleCaseExtractEnumValue(f
   let param1 = $func.parametersValues->at(1);
 
   $param0
-    ->tryCast(@InstanceValue)
+    ->tryCast(@InstanceValue, $newTrace)
     ->andThen({value: InstanceValue[1] |
       let enum = $value.values
         ->at(0)
         ->cast(@Enumeration<Any>);
 
       $param1
-        ->tryCast(@InstanceValue)
+        ->tryCast(@InstanceValue, $newTrace)
         ->then({val: InstanceValue[1] |
           let enumValue = $val.values
             ->at(0)
@@ -767,18 +767,17 @@ function meta::rel::compile::ir::valueSpecToScoped(
   $spec->match([
     {spec: FunctionRoutedValueSpecification[1] |
       $spec.value
-        ->tryCast(@InstanceValue)
+        ->tryCast(@InstanceValue, $newTrace)
         ->andThen(value: InstanceValue[1] | 
           $value.values
             ->first()
             ->okOr(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
-            ->tryCast(@FunctionDefinition<Any>)
+            ->tryCast(@FunctionDefinition<Any>, $newTrace)
         )
-        ->andThen(func: FunctionDefinition<Any>[1] | $func->functionDefToScoped($parent, $newTrace))
     },
     {spec: RoutedValueSpecification[1] |
       $spec.value
-        ->tryCast(@FunctionRoutedValueSpecification)
+        ->tryCast(@FunctionRoutedValueSpecification, $newTrace)
         ->andThen(inner: FunctionRoutedValueSpecification[1] | $inner->valueSpecToScoped($parent, $newTrace))
     }
   ]);
@@ -807,7 +806,7 @@ function meta::rel::compile::ir::functionDefToScoped(
             ->functionType()
             .parameters
             ->evaluateAndDeactivate()
-            ->tryCastm(@VariableExpression)
+            ->tryCastm(@VariableExpression, $newTrace)
             ->them(vars: VariableExpression[*] | $inner->scoped($vars.name, $parent));
         )
     );
@@ -861,11 +860,11 @@ function meta::rel::compile::ir::intoAggregates(
         case($fexpr.func == agg_String_1__FunctionDefinition_1__FunctionDefinition_1__AggregateValue_1_, {|
           $fexpr.parametersValues
             ->at(0)
-            ->tryCast(@InstanceValue)
+            ->tryCast(@InstanceValue, $newTrace)
             ->andThen(v: InstanceValue[1] | 
               $v.values
                 ->toOne()
-                ->tryCast(@String)
+                ->tryCast(@String, $newTrace)
             )
             ->andThen({name: String[1] |
               $fexpr.parametersValues
@@ -887,7 +886,7 @@ function meta::rel::compile::ir::intoAggregates(
     },
     {value: InstanceValue[1] |
       $value.values
-        ->tryCastm(@ValueSpecification)
+        ->tryCastm(@ValueSpecification, $newTrace)
         ->map(casted: Result<ValueSpecification|0..1>[1] | 
           $casted->andMany(v: ValueSpecification[1] |
             $v->intoAggregates($parent, $trace)

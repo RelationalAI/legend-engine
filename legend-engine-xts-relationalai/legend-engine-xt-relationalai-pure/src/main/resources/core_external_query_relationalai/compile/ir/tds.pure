@@ -44,7 +44,7 @@ function meta::rel::compile::ir::tds::intoPExpr(func: FunctionExpression[1], tra
               $func.parametersValues
                 ->at(2)
                 ->reactivate(^Map<String, List<Any>>())
-                ->tryCastm(@meta::relational::metamodel::join::JoinType)
+                ->tryCastm(@meta::relational::metamodel::join::JoinType, $newTrace)
                 ->them(js | $js->toOne())
                 ->andThen(joinType: meta::relational::metamodel::join::JoinType[1] |
                   $func.parametersValues

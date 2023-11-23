@@ -98,11 +98,11 @@ function <<access.private>> meta::rel::mapping::execution(
                 $mapping
                   ->meta::pure::mapping::_classMappingByClass($class)
                   ->okOr(| errorTrace(format('No class mapping found for `%s`', $class.name), $newTrace))
-                  ->tryCastm(@RelSetImplementation)
+                  ->tryCastm(@RelSetImplementation, $newTrace)
                   ->them({sets: RelSetImplementation[*] | $sets->first()->toOne(); })
                   ->andThen({set: RelSetImplementation[1] |
                     $set
-                      ->propertyOutputs()
+                      ->propertyOutputs($newTrace)
                       ->them({rules: Pair<Label,Rule>[*] |
                         ^$state(
                           program=$state
@@ -161,10 +161,12 @@ function <<access.private>> meta::rel::mapping::execution(
   * `output[:query]`
   */
 function <<access.private>> meta::rel::mapping::propertyOutputs(
-  set: RelSetImplementation[1]
+  set: RelSetImplementation[1],
+  trace: Trace[1]
 ): Result<Pair<Label, Rule>|*>[1] {
+  let newTrace = $trace->stage('propertyOutputs(RelSetImplementation[1],Trace[1])');
   $set.propertyMappings
-    ->tryCastm(@RelPropertyMapping)
+    ->tryCastm(@RelPropertyMapping, $newTrace)
     ->them({properties: RelPropertyMapping[*] |
       let primitiveProperties =
         $properties

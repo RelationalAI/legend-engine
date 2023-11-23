@@ -13,6 +13,7 @@
   * tracks outputs of previous compilation steps. 
   */
 
+import meta::rel::trace::*;
 import meta::rel::utils::*;
 import meta::rel::utils::collection::*;
 import meta::rel::utils::lang::*;
@@ -126,21 +127,23 @@ function meta::rel::compile::compile(
 function <<access.private>> meta::rel::compile::addCallbackBinding(
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   key: String[1],
-  value: Variable[1]
+  value: Variable[1],
+  trace: Trace[1]
 ): FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1] {
+  let newTrace = $trace->stage('addCallbackBinding(FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],String[1],Variable[1],Trace[1])');
   /*
    * Add the mapping `key -> value` to the callback function.
    */
   {a: Any[1] |
     $a
-      ->tryCast(@String)
+      ->tryCast(@String, $newTrace)
       ->andThen(var: String[1] |
         if ($var == $key, 
           | ok($value), 
           | $callback->eval($a)
         )
       )
-  }
+  };
 }
 
 function meta::rel::compile::compile(
@@ -148,6 +151,7 @@ function meta::rel::compile::compile(
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
+  let trace = emptyTrace()->stage('compile(PExprFilter[1],FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
   $filter.parent
     ->compile($callback, $state)
     ->step({parent: Expr[1] |
@@ -155,7 +159,7 @@ function meta::rel::compile::compile(
 
       $filter.predicate
         ->compile(
-          $callback->addCallbackBinding($filter.predicate.variables->toOne(), $bound),
+          $callback->addCallbackBinding($filter.predicate.variables->toOne(), $bound, $trace),
           $state
         )
         ->step({predicate: Expr[1] | 
@@ -171,7 +175,7 @@ function meta::rel::compile::compile(
             ->ok();*/
         })
         ->current();
-    })
+    });
 }
 
 function meta::rel::compile::compile<|n>(
@@ -191,6 +195,7 @@ function meta::rel::compile::compile(
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
+  let trace = emptyTrace()->stage('compile(PExprFilter[1],FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
   $exists.parent
     ->compile($callback, $state)
     ->step({parent: Expr[1] |
@@ -198,7 +203,7 @@ function meta::rel::compile::compile(
 
       $exists.predicate
         ->compile(
-          $callback->addCallbackBinding($exists.predicate.variables->toOne(), $bound),
+          $callback->addCallbackBinding($exists.predicate.variables->toOne(), $bound, $trace),
           $state
         )
         ->step({predicate: Expr[1] | 
@@ -221,7 +226,7 @@ function meta::rel::compile::compile(
               ->ok()
         })
         ->current();
-    })
+    });
 }
 
 function meta::rel::compile::compile(
@@ -229,6 +234,7 @@ function meta::rel::compile::compile(
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
+  let trace = emptyTrace()->stage('compile(PExprForAll[1],FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
   $forAll.parent
     ->compile($callback, $state)
     ->step({parent: Expr[1] |
@@ -236,7 +242,7 @@ function meta::rel::compile::compile(
 
       $forAll.predicate
         ->compile(
-          $callback->addCallbackBinding($forAll.predicate.variables->toOne(), $bound),
+          $callback->addCallbackBinding($forAll.predicate.variables->toOne(), $bound, $trace),
           $state
         )
         ->step({predicate: Expr[1] | 
@@ -261,7 +267,7 @@ function meta::rel::compile::compile(
             ->ok();*/
         })
         ->current();
-    })
+    });
 }
 
 function meta::rel::compile::compile(
@@ -293,6 +299,7 @@ function meta::rel::compile::compile(
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
+  let trace = emptyTrace()->stage('compile(PExprPropertyAccess[1],FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
   $access.parent
     ->compile($callback, $state)
     ->step(parent: Expr[1] |
@@ -304,7 +311,7 @@ function meta::rel::compile::compile(
             ->map(set | $set->meta::pure::mapping::propertyMappingsByPropertyName($propertyName); )
             ->okOr(| errorTrace(format('No property mapping found for property %s', $propertyName->quote())))
             ->them(inner: meta::pure::mapping::PropertyMapping[*] | $inner->first()->toOne())
-            ->tryCast(@RelPropertyMapping)
+            ->tryCast(@RelPropertyMapping, $trace)
             ->andThen(mapping: RelPropertyMapping[1] | 
               $access.property.genericType.rawType
                 ->okOr(| errorTrace('Could not determine type of property ' + $propertyName))
@@ -315,7 +322,7 @@ function meta::rel::compile::compile(
                 )              
             )
         )
-    )
+    );
 }
 
 function meta::rel::compile::compile(
@@ -323,6 +330,7 @@ function meta::rel::compile::compile(
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
+  let trace = emptyTrace()->stage('compile(PExprPropertyAccess[1],FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
   $expr.parent
     ->compile($callback, $state)
     ->step(parent: Expr[1] |
@@ -330,7 +338,7 @@ function meta::rel::compile::compile(
       
       $expr.body
         ->compile(
-          $callback->addCallbackBinding($expr.body.variables->toOne(), $bound),
+          $callback->addCallbackBinding($expr.body.variables->toOne(), $bound, $trace),
           $state
         )
         ->step({body: Expr[1] |
@@ -351,7 +359,7 @@ function meta::rel::compile::compile(
             ->ok()*/
         })
         ->current();
-    )
+    );
 }
 
 function meta::rel::compile::compile(
@@ -367,6 +375,8 @@ function meta::rel::compile::compile(
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
+  let trace = emptyTrace()->stage('compile(PExprProject[1],FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
+
   $expr.parent
     ->compile($callback, $state)
     ->andThen({state: CompilationState[1] |
@@ -381,7 +391,7 @@ function meta::rel::compile::compile(
             
             $pair.second
               ->compile({a: Any[1] |
-                $a->tryCast(@PExprColumnAccess)
+                $a->tryCast(@PExprColumnAccess, $trace)
                   ->andThen({access: PExprColumnAccess[1] |
                     $parent
                       ->appl([label($access.column), $vi])
@@ -415,7 +425,7 @@ function meta::rel::compile::compile(
 
             $pair.second
               ->compile(
-                $callback->addCallbackBinding($pair.second.variables->toOne(), $vx),
+                $callback->addCallbackBinding($pair.second.variables->toOne(), $vx, $trace),
                 $state
               )
               ->current()
@@ -441,7 +451,7 @@ function meta::rel::compile::compile(
           cols=columns($expr.projections.first)
         );
       });
-    })
+    });
 }
 
 
@@ -471,6 +481,8 @@ function meta::rel::compile::compile(
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
+  let trace = emptyTrace()->stage('compile(PExprGroupByScopes[1],FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
+
   $expr.parent
     ->compile($callback, $state)
     ->andThen({parentState: CompilationState[1] |
@@ -481,7 +493,7 @@ function meta::rel::compile::compile(
       
       $expr.group->map({g: PExprScoped[1] |
         $g->compile(
-          $callback->addCallbackBinding($g.variables->toOne(), $parentVariable),
+          $callback->addCallbackBinding($g.variables->toOne(), $parentVariable, $trace),
           $parentState
         )
         ->current();
@@ -583,11 +595,11 @@ function meta::rel::compile::compile(
         let aggVar = $factory->next()->var();
         
         $agg.aggregateFunction->compile({a: Any[1] |
-          $a->tryCast(@String)
+          $a->tryCast(@String, $trace)
             ->andThen({var: String[1] |
               if ($var == $agg.aggregateFunction.variables->toOne(), {| 
                 $agg.map->compile(
-                  $callback->addCallbackBinding($agg.map.variables->toOne(), $aggVar),
+                  $callback->addCallbackBinding($agg.map.variables->toOne(), $aggVar, $trace),
                   $state
                 )
                 ->step({mapExpr: Expr[1] |
@@ -675,6 +687,8 @@ function meta::rel::compile::compile(
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
+  let trace = emptyTrace()->stage('compile(PExprGroupByColumns[1],FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
+
   $expr.parent
     ->compile($callback, $state)
     ->andThen({parentState: CompilationState[1] |
@@ -748,7 +762,7 @@ function meta::rel::compile::compile(
           let vj = var('j');
        
           $agg.aggregateFunction->compile({a: Any[1] |
-            $a->tryCast(@String)
+            $a->tryCast(@String, $trace)
               ->andThen({var: String[1] |
                 if ($var == $agg.aggregateFunction.variables->toOne(), {|
                   $agg.map->compile({a: Any[1] |
@@ -760,7 +774,7 @@ function meta::rel::compile::compile(
                       },
                       {access: PExprColumnAccess[1] |
                         $access.parent->compile({a: Any[1] | 
-                          $a->tryCast(@String)
+                          $a->tryCast(@String, $trace)
                             ->andThen({var: String[1] | 
                               if ($var == $agg.map.variables->toOne(), {|
                                 $parent

@@ -136,10 +136,6 @@ function meta::rel::utils::collect<T>(results: Result<T|0..1>[*]): Result<T|*>[1
   }, okm([])->cast(@Result<T|*>));
 }
 
-function meta::rel::utils::tryCast<T>(source: Any[1], object: T[1]): Result<T|0..1>[1] {
-  tryCast($source, $object, emptyTrace());
-}
-
 function meta::rel::utils::tryCast<T>(source: Any[1], object: T[1], trace: Trace[1]): Result<T|0..1>[1] {
   if ($source->instanceOf($object->type()), 
     | ^Result<T|0..1>(values=$source->cast($object)), 
@@ -154,18 +150,18 @@ function meta::rel::utils::tryCast<T>(source: Any[1], object: T[1], trace: Trace
   );
 }
 
-function meta::rel::utils::tryCastm<T>(source: Any[*], object: T[1]): Result<T|*>[1] {
+function meta::rel::utils::tryCastm<T>(source: Any[*], object: T[1], trace: Trace[1]): Result<T|*>[1] {
   $source
-    ->map(o | $o->tryCast($object))
+    ->map(o | $o->tryCast($object, $trace))
     ->collect();
 }
 
-function meta::rel::utils::tryCast<T>(result: Result<Any|0..1>[1], object: T[1]): Result<T|0..1>[1] {
-  $result->andThen(inner: Any[1] | $inner->tryCast($object));
+function meta::rel::utils::tryCast<T>(result: Result<Any|0..1>[1], object: T[1], trace: Trace[1]): Result<T|0..1>[1] {
+  $result->andThen(inner: Any[1] | $inner->tryCast($object, $trace));
 }
 
-function meta::rel::utils::tryCastm<T>(result: Result<Any|*>[1], object: T[1]): Result<T|*>[1] {
-  $result->andThem(inner: Any[*] | $inner->tryCastm($object));
+function meta::rel::utils::tryCastm<T>(result: Result<Any|*>[1], object: T[1], trace: Trace[1]): Result<T|*>[1] {
+  $result->andThem(inner: Any[*] | $inner->tryCastm($object, $trace));
 }
 
 function meta::rel::utils::test<T>(

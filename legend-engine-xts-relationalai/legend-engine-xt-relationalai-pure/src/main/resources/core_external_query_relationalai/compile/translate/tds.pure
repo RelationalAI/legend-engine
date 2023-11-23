@@ -4,12 +4,14 @@ import meta::rel::compile::ir::*;
 import meta::rel::compile::ir::tds::*;
 import meta::rel::utils::*;
 import meta::rel::metamodel::*;
+import meta::rel::trace::*;
 
 function meta::rel::compile::tds::compile(
   join: Join[1], 
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
+  let trace = emptyTrace()->stage('compile(Join[1],FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
   $join.left
     ->compile($callback, $state)
     ->andThen({leftState: CompilationState[1] |
@@ -29,7 +31,7 @@ function meta::rel::compile::tds::compile(
 
           $join.condition
             ->compile({a: Any[1] |
-              $a->tryCast(@PExprColumnAccess)
+              $a->tryCast(@PExprColumnAccess, $trace)
                 ->then({access: PExprColumnAccess[1] |
                   let var = $access
                     ->root()
@@ -100,6 +102,7 @@ function meta::rel::compile::tds::compile(
   callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1]
 ): Result<CompilationState|0..1>[1] {
+  let trace = emptyTrace()->stage('compile(TDSFilter[1],FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
   $filter.parent
     ->compile($callback, $state)
     ->andThen({parentState: CompilationState[1] |
@@ -108,7 +111,7 @@ function meta::rel::compile::tds::compile(
       
       $filter.predicate
         ->compile({a: Any[1] |
-          $a->tryCast(@PExprColumnAccess)
+          $a->tryCast(@PExprColumnAccess, $trace)
             ->andThen({access: PExprColumnAccess[1] |
               let var = $access
                 ->root()

@@ -51,8 +51,8 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject1(
                     $accum
                       ->andThen({expr: PExpr[1] |
                         $element
-                          ->tryCast(@meta::pure::metamodel::path::PropertyPathElement)
-                          ->andThen(p: meta::pure::metamodel::path::PropertyPathElement[1] | $p.property->tryCast(@Property<Nil,Any|*>))
+                          ->tryCast(@meta::pure::metamodel::path::PropertyPathElement, $newTrace)
+                          ->andThen(p: meta::pure::metamodel::path::PropertyPathElement[1] | $p.property->tryCast(@Property<Nil,Any|*>, $newTrace))
                           ->andThen({property: Property<Nil,Any|*>[1] | 
                             $property
                               .genericType
@@ -117,11 +117,11 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject2(
     ->valueSpecToPExpr($trace)
     ->andThen({parent: PExpr[1] |
       $param1
-        ->tryCast(@InstanceValue)
+        ->tryCast(@InstanceValue, $newTrace)
         ->andThen({params: InstanceValue[1] |
           $params.values
             ->map({v | 
-              $v->tryCast(@InstanceValue)
+              $v->tryCast(@InstanceValue, $newTrace)
                 ->then(i: InstanceValue[1] | 
                   // Values guaranteed by function signature
                   $i.values
@@ -133,7 +133,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject2(
             ->andThem({columns: BasicColumnSpecification<Any>[*] |
               $columns.func
                 ->map(f | 
-                  $f->tryCast(@FunctionDefinition<Any>)
+                  $f->tryCast(@FunctionDefinition<Any>, $newTrace)
                     ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->functionDefToScoped($parent, $trace))
                 )
                 ->collect()
@@ -166,7 +166,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject3(
               ->cast(@InstanceValue)
               .values
               ->map( v |
-                $v->tryCast(@FunctionRoutedValueSpecification)
+                $v->tryCast(@FunctionRoutedValueSpecification, $newTrace)
                   ->then(s: FunctionRoutedValueSpecification[1] |
                     // CHECK: Is value type guarenteed?
                     $s.value->cast(@InstanceValue)
@@ -180,7 +180,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject3(
               .value
               ->cast(@FunctionRoutedValueSpecification)
               .value
-              ->tryCast(@InstanceValue)
+              ->tryCast(@InstanceValue, $newTrace)
           )
         ], {| error('Match error: Unexpected type', $newTrace) }
       )
@@ -188,13 +188,13 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject3(
         $i.values
           ->map(v |
             // Type Result<Project>
-            $v->tryCast(@FunctionDefinition<Any>)
+            $v->tryCast(@FunctionDefinition<Any>, $newTrace)
               ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->functionDefToScoped($parent, $newTrace))
           )
           ->collect()
           ->andThem(fexprs: PExprScoped[*] |
             // Type Result<Project>
-            $param2->tryCast(@InstanceValue)->then(param: InstanceValue[1] |
+            $param2->tryCast(@InstanceValue, $newTrace)->then(param: InstanceValue[1] |
               // Type guareteed by function signature.
               let columnNames = $param.values->cast(@String);
               $parent->project($columnNames->zip($fexprs));
