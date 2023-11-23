@@ -769,16 +769,22 @@ function meta::rel::compile::ir::valueSpecToScoped(
         $spec.values
           ->first()
           ->okOr(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
-          ->tryCast(@FunctionDefinition<Any>, $newTrace)
-          ->andThen(func: FunctionDefinition<Any>[1] |
-            $func->functionDefToScoped($parent, $newTrace)
+          ->tryCast(@FunctionRoutedValueSpecification, $newTrace)
+          ->andThen(func: FunctionRoutedValueSpecification[1] |
+            $func->valueSpecToScoped($parent, $newTrace)
           )
     },
     {spec: FunctionRoutedValueSpecification[1] |
       $spec.value
         ->tryCast(@InstanceValue, $newTrace)
         ->andThen(value: InstanceValue[1] | 
-          $value->valueSpecToScoped($parent, $newTrace)
+          $value.values
+            ->first()
+            ->okOr(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
+            ->tryCast(@FunctionDefinition<Any>, $newTrace)
+            ->andThen(func: FunctionDefinition<Any>[1] |
+              $func->functionDefToScoped($parent, $newTrace)
+            )
         )
     },
     {spec: RoutedValueSpecification[1] |
