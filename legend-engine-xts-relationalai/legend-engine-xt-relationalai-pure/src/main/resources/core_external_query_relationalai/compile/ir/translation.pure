@@ -765,14 +765,18 @@ function meta::rel::compile::ir::valueSpecToScoped(
 ): Result<PExprScoped|0..1>[1] {
   let newTrace = $trace->stage('valueSpecToScoped(ValueSpecification[1],PExpr[0..1],Trace[1])');
   $spec->match([
+    {spec: InstanceValue[1] |
+        $spec.values
+          ->first()
+          ->okOr(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
+          ->tryCast(@FunctionDefinition<Any>, $newTrace)
+          ->andThen(func: FunctionDefinition<Any>[1] | $func->functionDefToScoped($parent, $newTrace))
+    },
     {spec: FunctionRoutedValueSpecification[1] |
       $spec.value
         ->tryCast(@InstanceValue, $newTrace)
         ->andThen(value: InstanceValue[1] | 
-          $value.values
-            ->first()
-            ->okOr(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
-            ->tryCast(@FunctionDefinition<Any>, $newTrace)
+          $value->valueSpecToScoped($parent, $newTrace)
         )
     },
     {spec: RoutedValueSpecification[1] |
