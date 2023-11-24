@@ -170,7 +170,7 @@ function meta::rel::compile::ir::functionExprToPExpr(
             if ($exprs->size() == 1, {| 
               compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
                 $parent
-                  ->meta::rel::compile::compile($callback, $state)
+                  ->meta::rel::compile::compile($callback, $state, $newTrace)
                   ->andThen({prev: meta::rel::compile::CompilationState[1] | 
                     let parent = $prev.current->toOne();
 
@@ -180,7 +180,7 @@ function meta::rel::compile::ir::functionExprToPExpr(
                       ->andThen({pexpr: PExpr[1] | 
                         $pexpr->meta::rel::compile::compile({a: Any[1] | 
                           if ($a == 'this', | $parent->ok(), | $callback->eval($a));
-                        }, $prev);
+                        }, $prev, $newTrace);
                       });
                   });
               })
@@ -631,11 +631,11 @@ function <<access.private>> meta::rel::compile::ir::handleCaseInstanceOf(func: F
             ->then({class: PExpr[1] |
               compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
                 $obj
-                  ->meta::rel::compile::compile($callback, $state)
+                  ->meta::rel::compile::compile($callback, $state, $newTrace)
                   ->andThen({state: meta::rel::compile::CompilationState[1] |
                     let objExpr = $state.current->toOne();
                     $class
-                      ->meta::rel::compile::compile($callback, $state)
+                      ->meta::rel::compile::compile($callback, $state, $newTrace)
                       ->then({next: meta::rel::compile::CompilationState[1] |
                         let typeExpr = $next.current->toOne();
                         let current = $typeExpr->atom($objExpr);
@@ -686,7 +686,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseSerialize(func: Fu
     ->then(parent: PExpr[1] | 
       compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
         $parent
-          ->meta::rel::compile::compile($callback, $state)
+          ->meta::rel::compile::compile($callback, $state, $newTrace)
           ->then(state: meta::rel::compile::CompilationState[1] | $state)
       })
     );
@@ -705,7 +705,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGraphFetch(func: F
       compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
         // TODO: Implement!
         $parent
-          ->meta::rel::compile::compile($callback, $state)
+          ->meta::rel::compile::compile($callback, $state, $newTrace)
           ->then(state: meta::rel::compile::CompilationState[1] | $state)
       })
     );
@@ -903,7 +903,7 @@ function meta::rel::compile::ir::intoAggregates(
         ->tryCastm(@ValueSpecification, $newTrace)
         ->map(casted: Result<ValueSpecification|0..1>[1] | 
           $casted->andMany(v: ValueSpecification[1] |
-            $v->intoAggregates($parent, $trace)
+            $v->intoAggregates($parent, $newTrace)
           )
         )
     }

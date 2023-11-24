@@ -217,6 +217,14 @@ Class meta::rel::compile::ir::PExprIfThenElse extends PExpr {
 }
 
 /**
+  * Match expression.
+  */
+Class meta::rel::compile::ir::PExprMatch extends PExpr {
+  parent: PExpr[1];
+  cases: PExpr[*];
+}
+
+/**
   * Helper class for implementing a custom compilation step without the need
   * to represent IR objects explicitly.
   */
@@ -398,6 +406,10 @@ function meta::rel::compile::ir::compilationStep(
 
 function meta::rel::compile::ir::ifThenElse(condition: PExpr[1], then: PExprScoped[1], else: PExprScoped[1]): meta::rel::compile::ir::PExprIfThenElse[1] {
   ^meta::rel::compile::ir::PExprIfThenElse(condition=$condition, then=$then, else=$else)
+}
+
+function meta::rel::compile::ir::matchExpr(parent: PExpr[1], cases: PExpr[*]): PExprMatch[1] {
+  ^PExprMatch(parent=$parent, cases=$cases);
 }
 
 ///////////////////
