@@ -46,11 +46,11 @@ function <<access.private>> meta::rel::mapping::execution(
   let result = $query
     ->functionExprToPExpr($newTrace)
     //->waypoint('Compiled into PExpr execution(FunctionExpression,Mapping,DebugContext).')
-    ->andThen({node: PExpr[1] |
+    ->andThen(node: PExpr[1] |
       //$debug->debug(| 'PURE Expression plan:');
       //$debug->debug(| $node->meta::rel::compile::ir::utils::display());
-      $node->compile({_a: Any[1] | error('Unexpected error during compilation.', $newTrace); }, $state, $newTrace);
-    })
+      $node->compile({_a: Any[1] | error('Unexpected error during compilation.', $newTrace) }, $state, $newTrace)
+    )
     ->andThen({state: CompilationState[1] |
       $debug->debug(| 'Column names:');
       $debug->debug(| $state.cols.names);
@@ -72,10 +72,10 @@ function <<access.private>> meta::rel::mapping::execution(
                   // Return the new state.
                   let outputBody =
                     $state.cols.names
-                      ->map({col: String[1] |
+                      ->map(col: String[1] |
                         $expr
                           ->appl([label($col), var('i')])
-                      });
+                      );
 
                   let output =
                     def(
@@ -99,11 +99,11 @@ function <<access.private>> meta::rel::mapping::execution(
                   ->meta::pure::mapping::_classMappingByClass($class)
                   ->okOr(| errorTrace(format('No class mapping found for `%s`', $class.name), $newTrace))
                   ->tryCastm(@RelSetImplementation, $newTrace)
-                  ->them({sets: RelSetImplementation[*] | $sets->first()->toOne(); })
-                  ->andThen({set: RelSetImplementation[1] |
+                  ->them(sets: RelSetImplementation[*] | $sets->first()->toOne() )
+                  ->andThen(set: RelSetImplementation[1] |
                     $set
                       ->propertyOutputs($newTrace)
-                      ->them({rules: Pair<Label,Rule>[*] |
+                      ->them(rules: Pair<Label,Rule>[*] |
                         ^$state(
                           program=$state
                             .program
@@ -115,8 +115,8 @@ function <<access.private>> meta::rel::mapping::execution(
                             ])
                             ->with($rules.second)
                         )
-                      });
-                  });
+                      )
+                  );
               });
             },
             // Handles case 3.
@@ -126,7 +126,7 @@ function <<access.private>> meta::rel::mapping::execution(
                   .program
                   ->with(rel('output')->def($expr))
               )
-              ->ok();
+              ->ok()
             }
           ]);
         });
