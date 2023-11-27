@@ -59,14 +59,23 @@ function <<access.private>> meta::rel::mapping::execution(
         ->andThen({expr: Expr[1] |
           let type = $query.genericType.rawType;
 
-          // We distinguish three cases.
-          // 1. The type of the query may be a class belonging to our mapping.
-          // 2. The type of the query may be `TabularDataSet`, in which case we
-          //    interpret the query results as a table.
-          // 3. The type may be a primitive type.
+          /*
+           * We distinguish three cases.
+           * 1. The type of the query is a primitive type.
+           * 2. The type of the query is of type Any because it is the union of
+           *    multiple class types that belong to the mapping. This can happen
+           *    because, e.g., different result types in the branches of an `if`.
+           * 3. The type of the query is a `TabularDataSet`, in which case we
+           *    interpret the query results as a table.
+           * 4. The type of the query is a class belonging to our mapping (i.e.,
+           *    a type more specific than Any). In this case we also output the
+           *    primitive-valued properties.
+           */
           $type->match([
             p: PrimitiveType[1] |
-              // Handles case 3.
+              /*
+               * Handles case 1.
+               */
               ^$state(program=
                 $state
                   .program
@@ -75,9 +84,21 @@ function <<access.private>> meta::rel::mapping::execution(
               ->ok(),
             class: Class<Any>[1] |
               switch([
-                // Handles case 2.
+                case($class == Any, {|
+                  /*
+                   * Handles case 2.
+                   */
+                  ^$state(program=
+                    $state
+                      .program
+                      ->with(rel('output')->def($expr))
+                  )
+                  ->ok()
+                }),
                 case($class == TabularDataSet, {|
-                  // Return the new state.
+                  /*
+                   * Handles case 3.
+                   */
                   let outputBody =
                     $state.cols.names
                       ->map(col: String[1] |
@@ -102,7 +123,9 @@ function <<access.private>> meta::rel::mapping::execution(
                   ->ok();
                 })
               ], {|
-                // Handles case 1.
+                /*
+                 * Handles case 4.
+                 */
                 $mapping
                   ->meta::pure::mapping::_classMappingByClass($class)
                   ->okOr(| errorTrace(format('No class mapping found for `%s`', $class.name), $newTrace))
