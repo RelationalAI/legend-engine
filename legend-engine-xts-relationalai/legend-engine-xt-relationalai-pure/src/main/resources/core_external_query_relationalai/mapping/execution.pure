@@ -65,7 +65,15 @@ function <<access.private>> meta::rel::mapping::execution(
           //    interpret the query results as a table.
           // 3. The type may be a primitive type.
           $type->match([
-            {class: Class<Any>[1] |
+            p: PrimitiveType[1] |
+              // Handles case 3.
+              ^$state(program=
+                $state
+                  .program
+                  ->with(rel('output')->def($expr))
+              )
+              ->ok(),
+            class: Class<Any>[1] |
               switch([
                 // Handles case 2.
                 case($class == TabularDataSet, {|
@@ -116,18 +124,8 @@ function <<access.private>> meta::rel::mapping::execution(
                             ->with($rules.second)
                         )
                       )
-                  );
-              });
-            },
-            // Handles case 3.
-            {p: PrimitiveType[1] |
-              ^$state(program=
-                $state
-                  .program
-                  ->with(rel('output')->def($expr))
-              )
-              ->ok()
-            }
+                  )
+              })
           ]);
         });
     });
