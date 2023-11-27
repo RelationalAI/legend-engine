@@ -372,12 +372,19 @@ function <<access.private>> meta::rel::compile::ir::handleCaseMatch(func: Functi
 
   let newTrace = $trace->stage('handleCaseMatch(FunctionExpression[1],Trace[1])');
 
-  println('These are the function parameters:');
-
   let param0 = $func.parametersValues->at(0);
   let param1 = $func.parametersValues->at(1);
 
-  error('Not yet implemented support for match.', $newTrace);
+  $param0
+    ->valueSpecToPExpr($newTrace)
+    ->andThen(parent: PExpr[1] |
+      $param1
+        ->valueSpecToScopes($parent, $newTrace)
+        ->collect()
+        ->them(predicates: PExpr[*] |
+          $parent->matchExpr($predicates)
+        )
+    );
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseExists(func: FunctionExpression[1], trace: Trace[1]): Result<PExpr|0..1>[1] {
