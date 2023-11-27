@@ -113,6 +113,14 @@ function meta::rel::compile::compile(
 ): Result<CompilationState|0..1>[1] {
   let newTrace = $trace->stage('compile(PExprCast[1],FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1],Trace[1])');
   let bound = var($state.variableFactory->next());
+  /*
+   * TODO:
+   * Here we compile to Rel that looks like the following:
+   * def output[:query](x) = ((x2 in Karenbury: Wrapper:Guerrerofurt[x1][x2]) from x1 in Wrapper)(x)
+   *
+   * However, it would be cleaner to compile to Rel of the form:
+   * def output = (Karenbury(Wrapper:Guerrerofurt[x1]) from x1 in Wrapper)
+   */
   $cast.set.classExpr
     ->okOr(|
       errorTrace('Mappings with empty class expressions not yet supported. No class expression found ' +
