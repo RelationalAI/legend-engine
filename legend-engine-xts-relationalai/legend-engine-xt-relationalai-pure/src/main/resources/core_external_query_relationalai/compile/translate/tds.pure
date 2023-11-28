@@ -8,11 +8,11 @@ import meta::rel::trace::*;
 
 function meta::rel::compile::tds::compile(
   join: Join[1], 
-  callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
+  callback: FunctionDefinition<{String[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(Join[1],FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
+  let newTrace = $trace->stage('compile(Join[1],FunctionDefinition<{String[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
   $join.left
     ->compile($callback, $state, $newTrace)
     ->andThen({leftState: CompilationState[1] |
@@ -100,11 +100,11 @@ function meta::rel::compile::tds::compile(
 
 function meta::rel::compile::tds::compile(
   filter: TDSFilter[1],
-  callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
+  callback: FunctionDefinition<{String[1]->Result<Expr|0..1>[1]}>[1],
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(TDSFilter[1],FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
+  let newTrace = $trace->stage('compile(TDSFilter[1],FunctionDefinition<{String[1]->Result<Expr|0..1>[1]}>[1],CompilationState[1])');
   $filter.parent
     ->compile($callback, $state, $newTrace)
     ->andThen({parentState: CompilationState[1] |
