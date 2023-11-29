@@ -385,7 +385,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseMatch(func: Functi
       $param1
         ->valueSpecToScopes($parent, $newTrace)
         ->collect()
-        ->them(predicates: PExpr[*] |
+        ->them(predicates: PExprScoped[*] |
           $parent->matchExpr($predicates)
         )
     );
