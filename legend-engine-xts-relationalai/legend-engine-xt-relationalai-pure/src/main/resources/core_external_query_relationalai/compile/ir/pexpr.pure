@@ -11,8 +11,8 @@
 
 import meta::rel::compile::ir::*;
 import meta::rel::mapping::*;
-import meta::rel::utils::*;
 import meta::rel::metamodel::*;
+import meta::rel::utils::*;
 
 /**
   * Abstract type representing PURE query expressions. Expressions evaluate to values.
@@ -230,7 +230,8 @@ Class meta::rel::compile::ir::PExprMatch extends PExpr {
   */
 Class meta::rel::compile::ir::PExprCompilationStep extends PExpr {
   logic: FunctionDefinition<{
-    FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
+    meta::rel::compile::substitution::VariableSubstitution[1],
+    meta::rel::compile::substitution::ColumnAccessRewrite[1],
     meta::rel::compile::CompilationState[1]
       ->Result<meta::rel::compile::CompilationState|0..1>[1]
   }>[1];
@@ -385,7 +386,8 @@ function meta::rel::compile::ir::groupBy(parent: PExpr[1], group: String[*], agg
 
 function meta::rel::compile::ir::compilationStep(
   logic: FunctionDefinition<{
-    FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
+    meta::rel::compile::substitution::VariableSubstitution[1],
+    meta::rel::compile::substitution::ColumnAccessRewrite[1],
     meta::rel::compile::CompilationState[1]
       ->Result<meta::rel::compile::CompilationState|0..1>[1]
   }>[1]
@@ -395,7 +397,8 @@ function meta::rel::compile::ir::compilationStep(
 
 function meta::rel::compile::ir::compilationStep(
   logic: FunctionDefinition<{
-    FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1],
+    meta::rel::compile::substitution::VariableSubstitution[1],
+    meta::rel::compile::substitution::ColumnAccessRewrite[1],
     meta::rel::compile::CompilationState[1]
       ->Result<meta::rel::compile::CompilationState|0..1>[1]
   }>[1],

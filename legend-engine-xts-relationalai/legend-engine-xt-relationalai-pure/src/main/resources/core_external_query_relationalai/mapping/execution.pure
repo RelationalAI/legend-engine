@@ -1,19 +1,20 @@
-import meta::rel::runtime::*;
 import meta::pure::executionPlan::*;
-import meta::rel::utils::*;
-import meta::rel::utils::lang::*;
-import meta::rel::utils::collection::*;
-import meta::rel::metamodel::store::*;
-import meta::rel::mapping::*;
-import meta::rel::compile::ir::*;
 import meta::rel::compile::*;
+import meta::rel::compile::ir::*;
+import meta::rel::compile::substitution::*;
 import meta::rel::compile::utils::*;
-import meta::rel::metamodel::render::*;
-import meta::rel::metamodel::*;
+import meta::rel::contract::*;
 import meta::rel::execute::*;
 import meta::rel::mapping::*;
-import meta::rel::contract::*;
+import meta::rel::mapping::*;
+import meta::rel::metamodel::*;
+import meta::rel::metamodel::render::*;
+import meta::rel::metamodel::store::*;
+import meta::rel::runtime::*;
 import meta::rel::trace::*;
+import meta::rel::utils::*;
+import meta::rel::utils::collection::*;
+import meta::rel::utils::lang::*;
 
 Class meta::rel::mapping::QueryActivity extends meta::pure::mapping::Activity {
   relSource: String[1];
@@ -41,7 +42,7 @@ function <<access.private>> meta::rel::mapping::execution(
 ): meta::pure::mapping::Result<Any|*>[1] {
   let state = CompilationState($debug);
 
-  let newTrace = $trace->stage('execution(FunctionExpression[1],Mapping[1],DebugContext[1],Trace[1])');
+  let newTrace = $trace->stage('execution(FunctionExpression[1],Mapping[1],DebugContext[1])');
 
   let result = $query
     ->functionExprToPExpr($newTrace)
@@ -49,7 +50,7 @@ function <<access.private>> meta::rel::mapping::execution(
     ->andThen(node: PExpr[1] |
       //$debug->debug(| 'PURE Expression plan:');
       $debug->debug(| $node->meta::rel::compile::ir::utils::display());
-      $node->compile({_a: String[1] | error('Unexpected error during compilation.', $newTrace) }, $state, $newTrace);
+      $node->compile(emptySubstitution(), emptyColumnAccessRewrite(), $state, $newTrace);
     )
     ->andThen({state: CompilationState[1] |
       $debug->debug(| 'Column names:');
@@ -185,7 +186,7 @@ function <<access.private>> meta::rel::mapping::propertyOutputs(
   set: RelSetImplementation[1],
   trace: Trace[1]
 ): Result<Pair<Label, Rule>|*>[1] {
-  let newTrace = $trace->stage('propertyOutputs(RelSetImplementation[1],Trace[1])');
+  let newTrace = $trace->stage('propertyOutputs(RelSetImplementation[1])');
   $set.propertyMappings
     ->tryCastm(@RelPropertyMapping, $newTrace)
     ->them({properties: RelPropertyMapping[*] |

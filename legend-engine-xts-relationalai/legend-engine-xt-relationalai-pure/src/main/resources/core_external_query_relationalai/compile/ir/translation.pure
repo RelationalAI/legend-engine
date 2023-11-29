@@ -9,15 +9,16 @@
   * having to manually parse `ValueSpecification`s first.
   */
 
-import meta::rel::compile::ir::*;
-import meta::rel::mapping::*;
-import meta::rel::utils::*;
-import meta::rel::utils::lang::*;
-import meta::rel::lib::*;
-import meta::rel::metamodel::*;
-import meta::rel::trace::*;
 import meta::pure::router::metamodel::*;
 import meta::pure::router::store::metamodel::*;
+import meta::rel::compile::ir::*;
+import meta::rel::compile::substitution::*;
+import meta::rel::lib::*;
+import meta::rel::mapping::*;
+import meta::rel::metamodel::*;
+import meta::rel::trace::*;
+import meta::rel::utils::*;
+import meta::rel::utils::lang::*;
 
 ///////////////////////////
 // Translation functions //
@@ -94,7 +95,7 @@ function meta::rel::compile::ir::valueToPExpr(
     {class: Class<Any>[1] |
       $set
         ->map(set: RelSetImplementation[1] |
-          compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
+          compilationStep({callback: VariableSubstitution[1], mapping: ColumnAccessRewrite[1], state: meta::rel::compile::CompilationState[1] |
             ^$state(current=$set.classExpr)
               ->ok()
           })
@@ -168,19 +169,22 @@ function meta::rel::compile::ir::functionExprToPExpr(
           ], {|
             let exprs = $func.func->cast(@FunctionDefinition<Any>).expressionSequence->evaluateAndDeactivate();
             if ($exprs->size() == 1, {| 
-              compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
+              compilationStep({substitution: VariableSubstitution[1], mapping: ColumnAccessRewrite[1], state: meta::rel::compile::CompilationState[1] |
                 $parent
-                  ->meta::rel::compile::compile($callback, $state, $newTrace)
+                  ->meta::rel::compile::compile($substitution, $mapping, $state, $newTrace)
                   ->andThen({prev: meta::rel::compile::CompilationState[1] | 
                     let parent = $prev.current->toOne();
 
                     $exprs
                       ->at(0)
                       ->valueSpecToPExpr($newTrace)
-                      ->andThen({pexpr: PExpr[1] | 
-                        $pexpr->meta::rel::compile::compile({a: Any[1] | 
-                          if ($a == 'this', | $parent->ok(), | $callback->eval($a));
-                        }, $prev, $newTrace);
+                      ->andThen({pexpr: PExpr[1] |
+                        $pexpr->meta::rel::compile::compile(
+                          $substitution->addBinding('this', {| $parent->ok() }),
+                          $mapping,
+                          $prev,
+                          $newTrace
+                        );
                       });
                   });
               })
@@ -636,13 +640,13 @@ function <<access.private>> meta::rel::compile::ir::handleCaseInstanceOf(func: F
           $spec
             ->valueSpecToPExpr($newTrace)
             ->then({class: PExpr[1] |
-              compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
+              compilationStep({substitution: VariableSubstitution[1], mapping: ColumnAccessRewrite[1], state: meta::rel::compile::CompilationState[1] |
                 $obj
-                  ->meta::rel::compile::compile($callback, $state, $newTrace)
+                  ->meta::rel::compile::compile($substitution, $mapping, $state, $newTrace)
                   ->andThen({state: meta::rel::compile::CompilationState[1] |
                     let objExpr = $state.current->toOne();
                     $class
-                      ->meta::rel::compile::compile($callback, $state, $newTrace)
+                      ->meta::rel::compile::compile($substitution, $mapping, $state, $newTrace)
                       ->then({next: meta::rel::compile::CompilationState[1] |
                         let typeExpr = $next.current->toOne();
                         let current = $typeExpr->atom($objExpr);
@@ -691,9 +695,9 @@ function <<access.private>> meta::rel::compile::ir::handleCaseSerialize(func: Fu
   $param0
     ->valueSpecToPExpr($newTrace)
     ->then(parent: PExpr[1] | 
-      compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
+      compilationStep({substitution: VariableSubstitution[1], mapping: ColumnAccessRewrite[1], state: meta::rel::compile::CompilationState[1] |
         $parent
-          ->meta::rel::compile::compile($callback, $state, $newTrace)
+          ->meta::rel::compile::compile($substitution, $mapping, $state, $newTrace)
           ->then(state: meta::rel::compile::CompilationState[1] | $state)
       })
     );
@@ -709,10 +713,10 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGraphFetch(func: F
   $param0
     ->valueSpecToPExpr($newTrace)
     ->then(parent: PExpr[1] | 
-      compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
+      compilationStep({substitution: VariableSubstitution[1], mapping: ColumnAccessRewrite[1], state: meta::rel::compile::CompilationState[1] |
         // TODO: Implement!
         $parent
-          ->meta::rel::compile::compile($callback, $state, $newTrace)
+          ->meta::rel::compile::compile($substitution, $mapping, $state, $newTrace)
           ->then(state: meta::rel::compile::CompilationState[1] | $state)
       })
     );
@@ -740,7 +744,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseExtractEnumValue(f
             ->at(0)
             ->cast(@String);
 
-          compilationStep({callback: FunctionDefinition<{Any[1]->Result<Expr|0..1>[1]}>[1], state: meta::rel::compile::CompilationState[1] |
+          compilationStep({callback: VariableSubstitution[1], mapping: ColumnAccessRewrite[1], state: meta::rel::compile::CompilationState[1] |
             ^$state(current=
               $enum
                 ->enumName()
