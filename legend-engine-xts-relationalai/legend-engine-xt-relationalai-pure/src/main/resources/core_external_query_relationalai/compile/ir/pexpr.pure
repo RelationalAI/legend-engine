@@ -134,6 +134,7 @@ Class meta::rel::compile::ir::PExprColumnAccess extends PExpr {
   */ 
 Class meta::rel::compile::ir::PExprScoped extends PExpr {
   variables: String[*];
+  set: RelSetImplementation[0..1];
   inner: PExpr[1];
   parent: PExpr[0..1];
 }
@@ -336,11 +337,11 @@ function meta::rel::compile::ir::filter(parent: PExpr[1], predicate: PExprScoped
 }
 
 function meta::rel::compile::ir::scoped(inner: PExpr[1], variable: String[*]): PExprScoped[1] {
-  scoped($inner, $variable, [])
+  scoped($inner, $variable, [], [])
 }
 
-function meta::rel::compile::ir::scoped(inner: PExpr[1], variables: String[*], parent: PExpr[0..1]): PExprScoped[1] {
-  ^PExprScoped(inner=$inner, variables=$variables, parent=$parent)
+function meta::rel::compile::ir::scoped(inner: PExpr[1], variables: String[*], set: RelSetImplementation[0..1], parent: PExpr[0..1]): PExprScoped[1] {
+  ^PExprScoped(inner=$inner, variables=$variables, set=$set, parent=$parent)
 }
 
 function meta::rel::compile::ir::withParent(scoped: PExprScoped[1], parent: PExpr[0..1]): PExprScoped[1] {

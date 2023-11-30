@@ -101,6 +101,10 @@ function meta::rel::utils::else<S|m>(result: Result<S|m>[1], else: FunctionDefin
   if($result.errors->isEmpty(), | $result, | $else->eval($result.errors));
 }
 
+function meta::rel::utils::orDefaultValue<T|m>(result: Result<T|m>[1], defaultValue: T[m]): Result<T|m>[1] {
+  if($result.errors->isEmpty(), | $result, | ^Result<T|m>(values=$defaultValue));
+}
+
 function meta::rel::utils::unwrap<T>(result: Result<T|0..1>[1]): T[1] {
   if($result.errors->isEmpty(), 
     | $result.values->toOne(), 

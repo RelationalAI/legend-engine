@@ -24,6 +24,17 @@ import meta::rel::utils::lang::*;
 // Translation functions //
 ///////////////////////////
 
+function meta::rel::compile::ir::storeMappingRoutedValueSpecToRelSet(
+  spec: StoreMappingRoutedValueSpecification[1],
+  trace: Trace[1]
+): Result<RelSetImplementation|0..1>[1] {
+  let newTrace = $trace->stage('storeMappingRoutedValueSpecToRelSet(StoreMappingRoutedValueSpecification[1],Trace[1])');
+  $spec.sets
+    ->first()
+    ->okOr(| errorTrace('Cannot obtain set implementation from supplied StoreMappingRoutedValueSpecification.', $newTrace))
+    ->tryCast(@RelSetImplementation, $newTrace);
+}
+
 function meta::rel::compile::ir::valueSpecToPExpr(
   spec: ValueSpecification[1],
   trace: Trace[1]
@@ -40,11 +51,9 @@ function meta::rel::compile::ir::valueSpecToPExpr(
 ): Result<PExpr|0..1>[1] {
   let newTrace = $trace->stage('valueSpecToPExpr(ValueSpecification[1],RelSetImplementation[0..1],Trace[1])');
   $spec->match([
-    routed: meta::pure::router::store::metamodel::StoreMappingRoutedValueSpecification[1] |
-      $routed.sets
-        ->first()
-        ->okOr(| errorTrace('No set implementation supplied for value specification ' + $routed.id->quote(), $newTrace))
-        ->tryCast(@RelSetImplementation, $newTrace)
+    routed: StoreMappingRoutedValueSpecification[1] |
+      $routed
+        ->storeMappingRoutedValueSpecToRelSet($newTrace)
         ->andThen(this: RelSetImplementation[1] |
           $routed.value->match([
             func: FunctionExpression[1]  | $func->functionExprToPExpr($this, $newTrace),
@@ -345,13 +354,10 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGetAll(func: Funct
   let param0 = $func.parametersValues->at(0);
 
   $param0
-    ->map(vs: meta::pure::router::store::metamodel::StoreMappingRoutedValueSpecification[1] |
-      $vs.sets
-        ->first()
-        ->okOr(| errorTrace('No set implementation supplied.', $newTrace))
-        ->tryCast(@RelSetImplementation, $newTrace)
+    ->map(spec: StoreMappingRoutedValueSpecification[1] |
+      $spec->storeMappingRoutedValueSpecToRelSet($newTrace)
     )
-    ->then(set | all($set));
+    ->then(set: RelSetImplementation[1] | all($set));
 }
 
 function <<access.private>> meta::rel::compile::ir::handleCaseMap(func: FunctionExpression[1], trace: Trace[1]): Result<PExpr|0..1>[1] {
@@ -674,10 +680,8 @@ function <<access.private>> meta::rel::compile::ir::handleCaseCast(func: Functio
         $param1
           ->tryCast(@StoreMappingRoutedValueSpecification, $newTrace)
           ->andThen(spec: StoreMappingRoutedValueSpecification[1] |
-            $spec.sets
-              ->first()
-              ->okOr(| errorTrace('No set implementation specified for argument of `cast`.', $newTrace))
-              ->tryCast(@RelSetImplementation, $newTrace)
+            $spec
+              ->storeMappingRoutedValueSpecToRelSet($newTrace)
               ->then(set: RelSetImplementation[1] |
                 castExpr($parent, $set)
               )
@@ -788,7 +792,7 @@ function meta::rel::compile::ir::valueSpecToScoped(
     {spec: FunctionRoutedValueSpecification[1] |
       $spec.value
         ->tryCast(@InstanceValue, $newTrace)
-        ->andThen(value: InstanceValue[1] | 
+        ->andThen(value: InstanceValue[1] |
           $value.values
             ->first()
             ->okOr(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
@@ -814,6 +818,8 @@ function meta::rel::compile::ir::functionDefToScoped(
   trace: Trace[1]
 ): Result<PExprScoped|0..1>[1] {
   let newTrace = $trace->stage('functionDefToScoped(FunctionDefinition<Any>[1],PExpr[0..1],Trace[1])');
+  let functionParams = $func->functionType().parameters;
+
   $func.expressionSequence
     ->evaluateAndDeactivate()
     ->okOr(| errorTrace('Encountered empty function body while evaluating expression.', $newTrace))
@@ -823,17 +829,36 @@ function meta::rel::compile::ir::functionDefToScoped(
         | $exprs->toOne()->ok()
       )
     )
-    ->andThen(spec: ValueSpecification[1] | 
+    ->andThen(spec: ValueSpecification[1] |
+      /*
+       * If `spec` is a StoreMappingRoutedValueSpecification, then annotate the
+       * variable scope introduced with the type given by the RelSetImplementation
+       * of the value specification. Otherwise, introduce the variable scope
+       * without type annotation.
+       *
+       * FIXME: In the typed case we only have one variable, whereas in the typed
+       * case we can have more than one variable (e.g., in the case of joins).
+       */
       $spec
-        ->valueSpecToPExpr($newTrace)
-        ->andThen(inner: PExpr[1] |
-          $func
-            ->functionType()
-            .parameters
-            ->evaluateAndDeactivate()
-            ->tryCastm(@VariableExpression, $newTrace)
-            ->them(vars: VariableExpression[*] | $inner->scoped($vars.name, $parent));
+        ->tryCast(@StoreMappingRoutedValueSpecification, $newTrace)
+        ->andThen(spec: StoreMappingRoutedValueSpecification[1] |
+          $spec->storeMappingRoutedValueSpecToRelSet($newTrace)
         )
+        ->orDefaultValue([])
+        ->andThen(set: RelSetImplementation[0..1] |
+          $spec
+            ->valueSpecToPExpr($newTrace)
+            ->andThen(inner: PExpr[1] |
+              $functionParams
+                ->evaluateAndDeactivate()
+                ->tryCastm(@VariableExpression, $newTrace)
+                ->them(vars: VariableExpression[*] |
+                  $inner->scoped($vars.name, $set, $parent)
+                );
+            )
+
+        );
+
     );
 }
 
