@@ -88,7 +88,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject1(
                       }, | $path.name)
                       ->orElse('');
 
-                    pair($name, $expr->scoped('x')->withParent($parent));
+                    pair($name, $expr->scopeUntyped('x')->withParent($parent));
                   );
               })
               ->collect()

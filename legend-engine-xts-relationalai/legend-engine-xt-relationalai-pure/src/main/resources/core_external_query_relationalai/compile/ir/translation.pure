@@ -852,8 +852,15 @@ function meta::rel::compile::ir::functionDefToScoped(
               $functionParams
                 ->evaluateAndDeactivate()
                 ->tryCastm(@VariableExpression, $newTrace)
-                ->them(vars: VariableExpression[*] |
-                  $inner->scoped($vars.name, $set, $parent)
+                ->andThem(vars: VariableExpression[*] |
+                  if (!$set->isEmpty(), {|
+                    if ($vars->size() != 1,
+                      | error('Cannot type multiple variable with single set implementation.', $newTrace),
+                      | $inner->scopeTyped($vars->toOne().name, $set->toOne(), $parent)->ok()
+                      )
+                  }, {|
+                    $inner->scopeUntyped($vars.name, $parent)->ok()
+                  })
                 );
             )
 

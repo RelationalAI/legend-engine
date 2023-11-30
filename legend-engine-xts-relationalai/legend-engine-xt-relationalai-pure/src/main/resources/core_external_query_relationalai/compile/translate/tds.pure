@@ -25,8 +25,8 @@ function meta::rel::compile::tds::compile(
         ->andThen({rightState: CompilationState[1] |
           let right = $rightState.current->toOne();
           
-          let leftVar = $join.condition.variables->at(0);
-          let rightVar = $join.condition.variables->at(1);
+          let leftVar = $join.condition->variables()->at(0);
+          let rightVar = $join.condition->variables()->at(1);
 
           let target = $leftState.relFactory->next('tbl');
           let vi = var('i');
@@ -124,7 +124,7 @@ function meta::rel::compile::tds::compile(
                 ->cast(@VariablePlaceholder)
                 .identifier;
 
-              if ($var == $filter.predicate.variables, {|
+              if ($var == $filter.predicate->variables(), {|
                 $parent
                   ->appl([label($access.column), $vx])
                   ->ok();

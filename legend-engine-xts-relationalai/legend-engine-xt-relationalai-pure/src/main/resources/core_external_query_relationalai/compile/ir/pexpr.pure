@@ -132,11 +132,18 @@ Class meta::rel::compile::ir::PExprColumnAccess extends PExpr {
 /**
   * Helper type for representing variable scopes.
   */ 
-Class meta::rel::compile::ir::PExprScope extends PExpr {
-  variables: String[*];
-  set: RelSetImplementation[0..1];
+Class <<typemodifiers.abstract>> meta::rel::compile::ir::PExprScope extends PExpr {
   inner: PExpr[1];
   parent: PExpr[0..1];
+}
+
+Class meta::rel::compile::ir::PExprScopeTyped extends PExprScope {
+  set: RelSetImplementation[1];
+  variable: String[1];
+}
+
+Class meta::rel::compile::ir::PExprScopeUntyped extends PExprScope {
+  variables: String[*];
 }
 
 /**
@@ -336,12 +343,20 @@ function meta::rel::compile::ir::filter(parent: PExpr[1], predicate: PExprScope[
   ^PExprFilter(parent=$parent, predicate=$predicate)
 }
 
-function meta::rel::compile::ir::scoped(inner: PExpr[1], variable: String[*]): PExprScope[1] {
-  scoped($inner, $variable, [], [])
+function meta::rel::compile::ir::scopeTyped(inner: PExpr[1], variable: String[1], set: RelSetImplementation[1]): PExprScopeTyped[1] {
+  scopeTyped($inner, $variable, $set, [])
 }
 
-function meta::rel::compile::ir::scoped(inner: PExpr[1], variables: String[*], set: RelSetImplementation[0..1], parent: PExpr[0..1]): PExprScope[1] {
-  ^PExprScope(inner=$inner, variables=$variables, set=$set, parent=$parent)
+function meta::rel::compile::ir::scopeTyped(inner: PExpr[1], variable: String[1], set: RelSetImplementation[1], parent: PExpr[0..1]): PExprScopeTyped[1] {
+  ^PExprScopeTyped(inner=$inner, variable=$variable, set=$set, parent=$parent)
+}
+
+function meta::rel::compile::ir::scopeUntyped(inner: PExpr[1], variables: String[*]): PExprScopeUntyped[1] {
+  scopeUntyped($inner, $variables, [])
+}
+
+function meta::rel::compile::ir::scopeUntyped(inner: PExpr[1], variables: String[*], parent: PExpr[0..1]): PExprScopeUntyped[1] {
+  ^PExprScopeUntyped(inner=$inner, variables=$variables, parent=$parent)
 }
 
 function meta::rel::compile::ir::withParent(scoped: PExprScope[1], parent: PExpr[0..1]): PExprScope[1] {
@@ -445,5 +460,24 @@ function meta::rel::compile::ir::root(expr: PExpr[1]): PExpr[1] {
     variable: VariablePlaceholder[1] | $variable,
     access: PExprPropertyAccess[1]   | $access.parent->root(),
     access: PExprColumnAccess[1]     | $access.parent->root()
+  ])
+}
+
+function meta::rel::compile::ir::variables(scope: PExprScope[1]): String[*] {
+  $scope->match([
+    typed: PExprScopeTyped[1]     | $typed.variable,
+    untyped: PExprScopeUntyped[1] | $untyped.variables
+  ])
+}
+
+function meta::rel::compile::ir::variable(scope: PExprScope[1]): String[1] {
+  $scope->match([
+    typed: PExprScopeTyped[1] |
+      $typed.variable,
+    untyped: PExprScopeUntyped[1] |
+      if ($untyped.variables->size() != 1,
+        {| fail('Expected exactly one variable.'); 'unreachable';},
+        {| $untyped.variables->toOne() }
+      )
   ])
 }
