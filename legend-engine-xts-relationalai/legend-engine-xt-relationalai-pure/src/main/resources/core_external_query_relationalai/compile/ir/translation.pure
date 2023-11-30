@@ -389,9 +389,9 @@ function <<access.private>> meta::rel::compile::ir::handleCaseMatch(func: Functi
     ->valueSpecToPExpr($newTrace)
     ->andThen(parent: PExpr[1] |
       $param1
-        ->valueSpecToScopes($parent, $newTrace)
+        ->valueSpecToTypedScopes($parent, $newTrace)
         ->collect()
-        ->them(predicates: PExprScope[*] |
+        ->them(predicates: PExprScopeTyped[*] |
           $parent->matchExpr($predicates)
         )
     );
@@ -866,6 +866,34 @@ function meta::rel::compile::ir::functionDefToScoped(
 
         );
 
+    );
+}
+
+
+function meta::rel::compile::ir::valueSpecToTypedScopes(
+  spec: ValueSpecification[1],
+  trace: Trace[1]
+): Result<PExprScopeTyped|0..1>[*] {
+  let newTrace = $trace->stage('valueSpecToTypedScopes(ValueSpecification[1],Trace[1])');
+  $spec->valueSpecToTypedScopes([], $newTrace);
+}
+
+function meta::rel::compile::ir::valueSpecToTypedScopes(
+  spec: ValueSpecification[1],
+  parent: PExpr[0..1],
+  trace: Trace[1]
+): Result<PExprScopeTyped|0..1>[*] {
+  /*
+   * To try to avoid repetition, instead of unpacking the value specification in a
+   * similar way in order to obtain a typed variable, we instead attempt to cast at
+   * the end. We prefer to construct typed variables where possible, and this cast
+   * will succeed if a typed variable has been constructed.
+   */
+  let newTrace = $trace->stage('valueSpecToTypedScopes(ValueSpecification[1],PExpr[1],Trace[1])');
+  $spec
+    ->valueSpecToScopes($parent, $newTrace)
+    ->map(result: Result<PExprScope|0..1>[1] |
+      $result->tryCast(@PExprScopeTyped, $newTrace);
     );
 }
 

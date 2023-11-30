@@ -229,7 +229,7 @@ Class meta::rel::compile::ir::PExprIfThenElse extends PExpr {
   */
 Class meta::rel::compile::ir::PExprMatch extends PExpr {
   parent: PExpr[1];
-  cases: PExprScope[*];
+  cases: PExprScopeTyped[*];
 }
 
 /**
@@ -427,7 +427,7 @@ function meta::rel::compile::ir::ifThenElse(condition: PExpr[1], then: PExprScop
   ^meta::rel::compile::ir::PExprIfThenElse(condition=$condition, then=$then, else=$else)
 }
 
-function meta::rel::compile::ir::matchExpr(parent: PExpr[1], cases: PExprScope[*]): PExprMatch[1] {
+function meta::rel::compile::ir::matchExpr(parent: PExpr[1], cases: PExprScopeTyped[*]): PExprMatch[1] {
   ^PExprMatch(parent=$parent, cases=$cases);
 }
 
