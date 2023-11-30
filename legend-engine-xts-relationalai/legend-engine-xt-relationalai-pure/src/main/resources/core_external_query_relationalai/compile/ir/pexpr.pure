@@ -66,7 +66,7 @@ Class meta::rel::compile::ir::PExprAll extends PExpr {
   */
 Class meta::rel::compile::ir::PExprFilter extends PExpr {
   parent: PExpr[1];
-  predicate: PExprScoped[1];
+  predicate: PExprScope[1];
 }
 
 /**
@@ -90,7 +90,7 @@ Class meta::rel::compile::ir::PExprCast extends PExpr {
   */
 Class meta::rel::compile::ir::PExprExists extends PExpr {
   parent: PExpr[1];
-  predicate: PExprScoped[1];
+  predicate: PExprScope[1];
 }
 
 /**
@@ -98,7 +98,7 @@ Class meta::rel::compile::ir::PExprExists extends PExpr {
   */
 Class meta::rel::compile::ir::PExprForAll extends PExpr {
   parent: PExpr[1];
-  predicate: PExprScoped[1];
+  predicate: PExprScope[1];
 }
 
 /**
@@ -132,7 +132,7 @@ Class meta::rel::compile::ir::PExprColumnAccess extends PExpr {
 /**
   * Helper type for representing variable scopes.
   */ 
-Class meta::rel::compile::ir::PExprScoped extends PExpr {
+Class meta::rel::compile::ir::PExprScope extends PExpr {
   variables: String[*];
   set: RelSetImplementation[0..1];
   inner: PExpr[1];
@@ -152,7 +152,7 @@ Class meta::rel::compile::ir::PExprAt extends PExpr {
   */
 Class meta::rel::compile::ir::PExprMap extends PExpr {
   parent: PExpr[1];
-  body: PExprScoped[1];
+  body: PExprScope[1];
 }
 
 /**
@@ -160,15 +160,15 @@ Class meta::rel::compile::ir::PExprMap extends PExpr {
   */
 Class meta::rel::compile::ir::PExprProject extends PExpr {
   parent: PExpr[1];
-  projections: Pair<String,PExprScoped>[*];
+  projections: Pair<String,PExprScope>[*];
 }
 
 /**
   * Denotes an aggregation function.
   */
 Class meta::rel::compile::ir::PExprAggregate {
-  map: PExprScoped[1];
-  aggregateFunction: PExprScoped[1];
+  map: PExprScope[1];
+  aggregateFunction: PExprScope[1];
   name: String[0..1];
 }
 
@@ -181,7 +181,7 @@ Class <<typemodifiers.abstract>> meta::rel::compile::ir::PExprGroupBy extends PE
   * Expression type denting `group by` expressions.
   */
 Class meta::rel::compile::ir::PExprGroupByScopes extends PExprGroupBy {
-  group: PExprScoped[*];
+  group: PExprScope[*];
   names: String[*];
 
   group() {
@@ -213,8 +213,8 @@ Class meta::rel::compile::ir::PExprGroupByColumns extends PExprGroupBy {
   */
 Class meta::rel::compile::ir::PExprIfThenElse extends PExpr {
   condition: PExpr[1];
-  then: PExprScoped[1];
-  else: PExprScoped[1];
+  then: PExprScope[1];
+  else: PExprScope[1];
 }
 
 /**
@@ -222,7 +222,7 @@ Class meta::rel::compile::ir::PExprIfThenElse extends PExpr {
   */
 Class meta::rel::compile::ir::PExprMatch extends PExpr {
   parent: PExpr[1];
-  cases: PExprScoped[*];
+  cases: PExprScope[*];
 }
 
 /**
@@ -332,19 +332,19 @@ function meta::rel::compile::ir::all(set: RelSetImplementation[1]): PExprAll[1] 
   ^PExprAll(set=$set)
 }
 
-function meta::rel::compile::ir::filter(parent: PExpr[1], predicate: PExprScoped[1]): PExprFilter[1] {
+function meta::rel::compile::ir::filter(parent: PExpr[1], predicate: PExprScope[1]): PExprFilter[1] {
   ^PExprFilter(parent=$parent, predicate=$predicate)
 }
 
-function meta::rel::compile::ir::scoped(inner: PExpr[1], variable: String[*]): PExprScoped[1] {
+function meta::rel::compile::ir::scoped(inner: PExpr[1], variable: String[*]): PExprScope[1] {
   scoped($inner, $variable, [], [])
 }
 
-function meta::rel::compile::ir::scoped(inner: PExpr[1], variables: String[*], set: RelSetImplementation[0..1], parent: PExpr[0..1]): PExprScoped[1] {
-  ^PExprScoped(inner=$inner, variables=$variables, set=$set, parent=$parent)
+function meta::rel::compile::ir::scoped(inner: PExpr[1], variables: String[*], set: RelSetImplementation[0..1], parent: PExpr[0..1]): PExprScope[1] {
+  ^PExprScope(inner=$inner, variables=$variables, set=$set, parent=$parent)
 }
 
-function meta::rel::compile::ir::withParent(scoped: PExprScoped[1], parent: PExpr[0..1]): PExprScoped[1] {
+function meta::rel::compile::ir::withParent(scoped: PExprScope[1], parent: PExpr[0..1]): PExprScope[1] {
   ^$scoped(parent=$parent)
 }
 
@@ -352,32 +352,32 @@ function meta::rel::compile::ir::atExpr(parent: PExpr[1], index: Integer[1]): PE
   ^PExprAt(parent=$parent, index=$index)
 }
 
-function meta::rel::compile::ir::mapExpr(parent: PExpr[1], body: PExprScoped[1]): PExprMap[1] {
+function meta::rel::compile::ir::mapExpr(parent: PExpr[1], body: PExprScope[1]): PExprMap[1] {
   ^PExprMap(parent=$parent, body=$body)
 }
 
-function meta::rel::compile::ir::exists(parent: PExpr[1], predicate: PExprScoped[1]): meta::rel::compile::ir::PExprExists[1] {
+function meta::rel::compile::ir::exists(parent: PExpr[1], predicate: PExprScope[1]): meta::rel::compile::ir::PExprExists[1] {
   ^PExprExists(parent=$parent, predicate=$predicate)
 }
 
-function meta::rel::compile::ir::forAll(parent: PExpr[1], predicate: PExprScoped[1]): meta::rel::compile::ir::PExprForAll[1] {
+function meta::rel::compile::ir::forAll(parent: PExpr[1], predicate: PExprScope[1]): meta::rel::compile::ir::PExprForAll[1] {
   ^PExprForAll(parent=$parent, predicate=$predicate)
 }
 
-function meta::rel::compile::ir::project(parent: PExpr[1], projections: Pair<String,PExprScoped>[*]): PExprProject[1] {
+function meta::rel::compile::ir::project(parent: PExpr[1], projections: Pair<String,PExprScope>[*]): PExprProject[1] {
   ^PExprProject(parent=$parent, projections=$projections)
 }
 
-function meta::rel::compile::ir::aggregate(map: PExprScoped[1], aggregateFunction: PExprScoped[1]): PExprAggregate[1] {
+function meta::rel::compile::ir::aggregate(map: PExprScope[1], aggregateFunction: PExprScope[1]): PExprAggregate[1] {
   ^PExprAggregate(map=$map, aggregateFunction=$aggregateFunction)
 }
 
-function meta::rel::compile::ir::aggregate(map: PExprScoped[1], aggregateFunction: PExprScoped[1], name: String[1]): PExprAggregate[1] {
+function meta::rel::compile::ir::aggregate(map: PExprScope[1], aggregateFunction: PExprScope[1], name: String[1]): PExprAggregate[1] {
   let agg = aggregate($map, $aggregateFunction);
   ^$agg(name=$name);
 }
 
-function meta::rel::compile::ir::groupBy(parent: PExpr[1], group: PExprScoped[*], aggregates: PExprAggregate[*], names: String[*]): PExprGroupByScopes[1] {
+function meta::rel::compile::ir::groupBy(parent: PExpr[1], group: PExprScope[*], aggregates: PExprAggregate[*], names: String[*]): PExprGroupByScopes[1] {
   ^PExprGroupByScopes(parent=$parent, group=$group, aggregates=$aggregates, names=$names)
 }
 
@@ -408,11 +408,11 @@ function meta::rel::compile::ir::compilationStep(
   ^PExprCompilationStep(logic=$logic, property=$property)
 }
 
-function meta::rel::compile::ir::ifThenElse(condition: PExpr[1], then: PExprScoped[1], else: PExprScoped[1]): meta::rel::compile::ir::PExprIfThenElse[1] {
+function meta::rel::compile::ir::ifThenElse(condition: PExpr[1], then: PExprScope[1], else: PExprScope[1]): meta::rel::compile::ir::PExprIfThenElse[1] {
   ^meta::rel::compile::ir::PExprIfThenElse(condition=$condition, then=$then, else=$else)
 }
 
-function meta::rel::compile::ir::matchExpr(parent: PExpr[1], cases: PExprScoped[*]): PExprMatch[1] {
+function meta::rel::compile::ir::matchExpr(parent: PExpr[1], cases: PExprScope[*]): PExprMatch[1] {
   ^PExprMatch(parent=$parent, cases=$cases);
 }
 
@@ -424,7 +424,7 @@ function meta::rel::compile::ir::set(expr: PExpr[1]): RelSetImplementation[0..1]
   $expr->match([
     e: PExprAt[1]             | $e.parent->set(),
     e: PExprSetAccess[1]      | $e.set,
-    e: PExprScoped[1]         | $e.parent->map(p | $p->set()),
+    e: PExprScope[1]         | $e.parent->map(p | $p->set()),
     e: PExprAll[1]            | $e.set,
     e: PExprPropertyAccess[1] | $e.set,
     e: PExprCast[1]           | $e.set,
@@ -441,7 +441,7 @@ function meta::rel::compile::ir::set(expr: PExpr[1]): RelSetImplementation[0..1]
 function meta::rel::compile::ir::root(expr: PExpr[1]): PExpr[1] {
   $expr->match([
     access: PExprSetAccess[1]        | $access,
-    scoped: PExprScoped[1]           | $scoped.parent->map(p | $p->root())->orElse($scoped),
+    scoped: PExprScope[1]           | $scoped.parent->map(p | $p->root())->orElse($scoped),
     variable: VariablePlaceholder[1] | $variable,
     access: PExprPropertyAccess[1]   | $access.parent->root(),
     access: PExprColumnAccess[1]     | $access.parent->root()

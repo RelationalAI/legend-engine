@@ -58,7 +58,7 @@ function meta::rel::compile::compile(
     e: PExprMap[1]             | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprMatch[1]           | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprProject[1]         | $e->compile($substitution, $rewrite, $state, $newTrace),
-    e: PExprScoped[1]          | $e->compile($substitution, $rewrite, $state, $newTrace),
+    e: PExprScope[1]           | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprGroupBy[1]         | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: VariablePlaceholder[1]  | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprFunction<|*>[1]    | $e->compile($substitution, $rewrite, $state, $newTrace),
@@ -389,7 +389,7 @@ function meta::rel::compile::compile(
 }
 
 function meta::rel::compile::compile(
-  expr: PExprScoped[1],
+  expr: PExprScope[1],
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
   state: CompilationState[1],
@@ -416,7 +416,7 @@ function meta::rel::compile::compile(
 
       if ($parent.annotation == TabularDataSet, {|
         $expr.projections
-          ->map({pair: Pair<String, PExprScoped>[1] |
+          ->map({pair: Pair<String, PExprScope>[1] |
             let name = $pair.first;
             let vi = var('i');
             
@@ -450,7 +450,7 @@ function meta::rel::compile::compile(
           );
 
         $expr.projections
-          ->map({pair: Pair<String, PExprScoped>[1] |
+          ->map({pair: Pair<String, PExprScope>[1] |
             let name = $pair.first;
             let vx = var('x');
 
@@ -532,7 +532,7 @@ function meta::rel::compile::compile(
       let indexVariable = var($parentState.variableFactory->next());
       let baseTable = $parentState.relFactory->next('tbl');
       
-      $expr.group->map({g: PExprScoped[1] |
+      $expr.group->map({g: PExprScope[1] |
         $g->compile(
           $substitution->addBinding($g.variables->toOne(), $parentVariable),
           $rewrite,
@@ -577,7 +577,7 @@ function meta::rel::compile::compile(
                     ->appl(
                       $expr.group
                         ->toIndexed()
-                        ->map({pair: Pair<Integer, PExprScoped>[1] |
+                        ->map({pair: Pair<Integer, PExprScope>[1] |
                           rel($baseTable)
                             ->appl([label('group'), label($pair.first->toString()), var('j')])
                         })
@@ -593,7 +593,7 @@ function meta::rel::compile::compile(
               //def tbl1[:Underlying] = tbl1[:groups][i, x, _] for i, x
               $expr.group
                 ->toIndexed()
-                ->map({pair: Pair<Integer, PExprScoped>[1] |
+                ->map({pair: Pair<Integer, PExprScope>[1] |
                   let index = $pair.first;
                   let name = $expr.names->at($index);
 
@@ -791,7 +791,7 @@ function meta::rel::compile::compile(
                   ->appl(
                     $expr.group
                       ->toIndexed()
-                      ->map({pair: Pair<Integer, PExprScoped>[1] |
+                      ->map({pair: Pair<Integer, PExprScope>[1] |
                           rel($targetTable)
                             ->appl([label('group'), label($pair.first->toString()), var('j')])
                         })

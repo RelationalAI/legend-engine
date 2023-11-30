@@ -18,7 +18,7 @@ function meta::rel::compile::ir::utils::display(expr: PExpr[1], indent: Integer[
     {access: PExprPropertyAccess[1] |
       format('%sProperty access on `%s`\n%s', [indent($indent), $access.property.name->toOne(), $access.parent->display($indent + 2)]);
     },
-    {scoped: PExprScoped[1] |
+    {scoped: PExprScope[1] |
       format('%sScope via `%s`:\n%s', [indent($indent), $scoped.variables->joinStrings(', '), $scoped.inner->display($indent + 2)]);
     },
     {exists: PExprExists[1] |
