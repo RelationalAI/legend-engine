@@ -134,7 +134,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject2(
               $columns.func
                 ->map(f | 
                   $f->tryCast(@FunctionDefinition<Any>, $newTrace)
-                    ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->functionDefToScoped($parent, $trace))
+                    ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->functionDefToUntypedScoped($parent, $trace))
                 )
                 ->collect()
                 ->them(fexprs: PExprScope[*] | $parent->project($columns.name->zip($fexprs)));
@@ -189,7 +189,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseProject3(
           ->map(v |
             // Type Result<Project>
             $v->tryCast(@FunctionDefinition<Any>, $newTrace)
-              ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->functionDefToScoped($parent, $newTrace))
+              ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->functionDefToUntypedScoped($parent, $newTrace))
           )
           ->collect()
           ->andThem(fexprs: PExprScope[*] |

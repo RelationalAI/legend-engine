@@ -49,7 +49,7 @@ function meta::rel::compile::ir::tds::intoPExpr(func: FunctionExpression[1], tra
                 ->andThen(joinType: meta::relational::metamodel::join::JoinType[1] |
                   $func.parametersValues
                     ->at(3)
-                    ->valueSpecToScoped($newTrace)
+                    ->valueSpecToUntypedScoped($newTrace)
                     ->then(condition: PExprScope[1] | join($left, $right, $joinType, $condition))
                 )
             )
@@ -62,7 +62,7 @@ function meta::rel::compile::ir::tds::intoPExpr(func: FunctionExpression[1], tra
         ->andThen(parent: PExpr[1] |
           $func.parametersValues
             ->at(1)
-            ->valueSpecToScoped($newTrace)
+            ->valueSpecToUntypedScoped($newTrace)
             ->then(predicate: PExprScope[1] |
               meta::rel::compile::ir::tds::filter($parent, $predicate)
             )

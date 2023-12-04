@@ -341,7 +341,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseFilter(func: Funct
     ->valueSpecToPExpr($newTrace)
     ->andThen(parent: PExpr[1] |
       $param1
-        ->valueSpecToScoped($parent, $newTrace)
+        ->valueSpecToUntypedScoped($parent, $newTrace)
         ->then(scoped: PExprScope[1] | $parent->filter($scoped))
     );
 }
@@ -372,7 +372,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseMap(func: Function
     ->valueSpecToPExpr($newTrace)
     ->andThen(parent: PExpr[1] |
       $param1
-        ->valueSpecToScoped($parent, $newTrace)
+        ->valueSpecToUntypedScoped($parent, $newTrace)
         ->then(scoped: PExprScope[1] | $parent->mapExpr($scoped))
     );
 }
@@ -409,7 +409,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseExists(func: Funct
     ->valueSpecToPExpr($newTrace)
     ->andThen(parent: PExpr[1] |
       $param1
-        ->valueSpecToScoped($parent, $newTrace)
+        ->valueSpecToUntypedScoped($parent, $newTrace)
         ->then(predicate: PExprScope[1] | $parent->exists($predicate))
     );
 }
@@ -426,7 +426,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseForAll(func: Funct
     ->valueSpecToPExpr($newTrace)
     ->andThen(parent: PExpr[1] |
       $param1
-        ->valueSpecToScoped($parent, $newTrace)
+        ->valueSpecToUntypedScoped($parent, $newTrace)
         ->then(predicate: PExprScope[1] | $parent->forAll($predicate))
     );
 }
@@ -445,7 +445,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseGroupBy1(func: Fun
     ->valueSpecToPExpr($newTrace)
     ->andThen({parent: PExpr[1] |
       $param1
-        ->valueSpecToScopes($parent, $newTrace)
+        ->valueSpecToUntypedScopes($parent, $newTrace)
         ->collect()
         ->andThem({group: PExprScope[*] |
           $param2
@@ -620,10 +620,10 @@ function <<access.private>> meta::rel::compile::ir::handleCaseIf(func: FunctionE
     ->valueSpecToPExpr($newTrace)
     ->andThen(condition: PExpr[1] |
       $param1
-        ->valueSpecToScoped($newTrace)
+        ->valueSpecToUntypedScoped($newTrace)
         ->andThen(then: PExprScope[1] |
           $param2
-            ->valueSpecToScoped($newTrace)
+            ->valueSpecToUntypedScoped($newTrace)
             ->then(else: PExprScope[1] | $condition->ifThenElse($then, $else))
         )
     );
@@ -773,11 +773,11 @@ function meta::rel::compile::ir::intoAggregates(
         case($fexpr.func == agg_FunctionDefinition_1__FunctionDefinition_1__AggregateValue_1_, {|
           $fexpr.parametersValues
             ->at(0)
-            ->valueSpecToScoped($parent, $newTrace)
+            ->valueSpecToUntypedScoped($parent, $newTrace)
             ->andThen({map: PExprScope[1] | 
               $fexpr.parametersValues
                 ->at(1)
-                ->valueSpecToScoped($parent, $newTrace)
+                ->valueSpecToUntypedScoped($parent, $newTrace)
                 ->then(aggFn: PExprScope[1] | aggregate($map, $aggFn));
             })
         }),
@@ -793,11 +793,11 @@ function meta::rel::compile::ir::intoAggregates(
             ->andThen({name: String[1] |
               $fexpr.parametersValues
                 ->at(1)
-                ->valueSpecToScoped($parent, $newTrace)
+                ->valueSpecToUntypedScoped($parent, $newTrace)
                 ->andThen({map: PExprScope[1] |
                   $fexpr.parametersValues
                     ->at(2)
-                    ->valueSpecToScoped($parent, $newTrace)
+                    ->valueSpecToUntypedScoped($parent, $newTrace)
                     ->then(aggFn: PExprScope[1] | aggregate($map, $aggFn, $name))
                 });
             });
