@@ -439,7 +439,7 @@ function meta::rel::compile::ir::set(expr: PExpr[1]): RelSetImplementation[0..1]
   $expr->match([
     e: PExprAt[1]             | $e.parent->set(),
     e: PExprSetAccess[1]      | $e.set,
-    e: PExprScope[1]         | $e.parent->map(p | $p->set()),
+    e: PExprScope[1]          | $e.parent->map(p | $p->set()),
     e: PExprAll[1]            | $e.set,
     e: PExprPropertyAccess[1] | $e.set,
     e: PExprCast[1]           | $e.set,
@@ -456,7 +456,7 @@ function meta::rel::compile::ir::set(expr: PExpr[1]): RelSetImplementation[0..1]
 function meta::rel::compile::ir::root(expr: PExpr[1]): PExpr[1] {
   $expr->match([
     access: PExprSetAccess[1]        | $access,
-    scoped: PExprScope[1]           | $scoped.parent->map(p | $p->root())->orElse($scoped),
+    scoped: PExprScope[1]            | $scoped.parent->map(p | $p->root())->orElse($scoped),
     variable: VariablePlaceholder[1] | $variable,
     access: PExprPropertyAccess[1]   | $access.parent->root(),
     access: PExprColumnAccess[1]     | $access.parent->root()
