@@ -46,7 +46,6 @@ function <<access.private>> meta::rel::mapping::execution(
 
   let result = $query
     ->functionExprToPExpr($newTrace)
-    //->waypoint('Compiled into PExpr execution(FunctionExpression,Mapping,DebugContext).')
     ->andThen(node: PExpr[1] |
       //$debug->debug(| 'PURE Expression plan:');
       $debug->debug(| $node->meta::rel::compile::ir::utils::display());
