@@ -108,7 +108,7 @@ function meta::rel::mapping::frontend::includeClass(schema: RAISchema[1], class:
 
     let instanceSetComplete =
       $properties
-        ->fold({property, accum |
+        ->fold({property: Pair<Property<Nil, Any|*>, RelationDeclaration>[1], accum: RelSetImplementation[1] |
           $accum->withPropertyMapping($property.first, $property.second->name()->rel(), $augmentedStore);
         }, $instanceSetInitial);
 
