@@ -116,6 +116,7 @@ function meta::rel::mapping::addSetImplementation(
   mapping: Mapping[1],
   setImpl: RelSetImplementation[1]
 ): Mapping[1] {
+  assert($setImpl.parent == $mapping, 'Cannot add a set implementation that is owned by another mapping.');
   $mapping->mutateAdd('classMappings', $setImpl);
   $mapping;
 }
