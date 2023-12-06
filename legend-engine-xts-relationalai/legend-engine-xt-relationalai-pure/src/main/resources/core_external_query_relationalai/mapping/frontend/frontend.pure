@@ -66,6 +66,9 @@ function meta::rel::mapping::frontend::schema(property: Property<Nil,Any|*>[1], 
 }
 
 function meta::rel::mapping::frontend::includeClass(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+  /*
+   * If the schema already includes a mapping for the given class then this function does nothing.
+   */
   if (!$schema.mapping->_classMappingByClass($class)->isEmpty(), | $schema, {|
     let classRelation = $class->schema();
 
@@ -96,14 +99,22 @@ function meta::rel::mapping::frontend::includeClass(schema: RAISchema[1], class:
         }, $schema.store)
       ->with($classRelation);
 
-    let augmentedMapping = 
+    /*
+     * The Rel expression that corresponds to the Pure class.
+     */
+    let classExpr = $classRelation->name()->rel();
+
+    let instanceSetInitial = $schema.mapping->relInstanceSet($class, $classExpr);
+
+    let instanceSetComplete =
+      $properties
+        ->fold({property, accum |
+          $accum->withPropertyMapping($property.first, $property.second->name()->rel(), $augmentedStore);
+        }, $instanceSetInitial);
+
+    let augmentedMapping =
       $schema.mapping
-        ->withClassMapping($class, $classRelation->name()->rel(), {set: RelSetImplementation[1] |
-          $properties
-            ->fold({property, accum |
-              $accum->withPropertyMapping($property.first, $property.second->name()->rel(), $augmentedStore);
-            }, $set);
-        });
+        ->addSetImplementation($instanceSetComplete);
 
     let augmentedSchema = 
       ^$schema(
@@ -123,7 +134,16 @@ function meta::rel::mapping::frontend::includeClass(schema: RAISchema[1], class:
           ->cast(@Class<Any>);
         $accum->includeClass($associated);
       }, $augmentedSchema);
-  })
+  });
+}
+
+function meta::rel::mapping::frontend::includeClassRecursive(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+  // TODO: Do we need all specializations / generalizations?
+  let subclasses = meta::pure::functions::meta::findAllSpecializations($class);
+  let superclasses = meta::pure::functions::meta::hierarchicalAllGeneralizations($class);
+  $subclasses->concatenate($superclasses)->fold({c: Class<Any>[1], s: RAISchema[1] |
+    $s->includeClass($c)
+  }, $schema->includeClass($class));
 }
 
 function meta::rel::mapping::frontend::insertFunction(
