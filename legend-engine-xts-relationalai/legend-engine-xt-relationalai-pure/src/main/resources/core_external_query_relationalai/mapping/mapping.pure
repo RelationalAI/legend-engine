@@ -89,7 +89,7 @@ function meta::rel::mapping::classMapping<T>(
   );
 }
 
-function meta::rel::mapping::withPropertyMapping(
+function <<access.private>> meta::rel::mapping::withPropertyMapping(
   setImpl: RelSetImplementation[1],
   propertyMapping: RelPropertyMapping[1]
 ): RelSetImplementation[1] {
@@ -113,45 +113,25 @@ function meta::rel::mapping::withPropertyMapping(
 function meta::rel::mapping::withPropertyMapping(
   setImpl: RelSetImplementation[0..1],
   property: String[1], 
-  target: Expr[1],
-  store: Store[0..1]
-): RelSetImplementation[0..1] {
-  $setImpl->map(set | 
-    propertyMapping($set.class, $property, $target, $set, $store)
-      ->map(m | $set->withPropertyMapping($m))
-  );
-}
-
-function meta::rel::mapping::withPropertyMapping(
-  setImpl: RelSetImplementation[0..1],
-  property: String[1], 
   target: Expr[1]
 ): RelSetImplementation[0..1] {
-  $setImpl->withPropertyMapping($property, $target, []);
+  $setImpl->map(set: RelSetImplementation[1] | 
+    propertyMapping($set.class, $property, $target, $set, [])
+      ->map(m | $set->withPropertyMapping($m))
+  )
 }
-
 
 function meta::rel::mapping::withClassMapping<T>(
   mapping: Mapping[1],
   sourceClass: Class<T>[1],
   classExpr: Expr[1],
-  stores: Store[*],
   logic: FunctionDefinition<{RelSetImplementation[1]->RelSetImplementation[1]}>[1]
 ): Mapping[1] {
   $mapping->mutateAdd(
     'classMappings', 
     $logic->eval(
-      $sourceClass->classMapping($classExpr, $mapping, $stores)
+      $sourceClass->classMapping($classExpr, $mapping, [])
     )
   );
   $mapping;
-}
-
-function meta::rel::mapping::withClassMapping<T>(
-  mapping: Mapping[1],
-  sourceClass: Class<T>[1],
-  classExpr: Expr[1],
-  logic: FunctionDefinition<{RelSetImplementation[1]->RelSetImplementation[1]}>[1]
-): Mapping[1] {
-  $mapping->withClassMapping($sourceClass, $classExpr, [], $logic);
 }
