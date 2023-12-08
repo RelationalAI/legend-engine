@@ -393,7 +393,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseMatch(func: Functi
         ->collect()
         ->them(predicates: PExprScopeTyped[*] |
           $parent->matchExpr($predicates)
-        )
+        );
     );
 }
 

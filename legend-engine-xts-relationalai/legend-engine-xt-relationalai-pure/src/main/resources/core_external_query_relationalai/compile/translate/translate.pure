@@ -938,5 +938,39 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  error('Not yet implemented support for match in translate.', $trace)
+  let newTrace = $trace->stage('compile(PExprMatch[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+
+  $match.parent
+    ->compile($substitution, $rewrite, $state, $newTrace)
+    ->step(parent: Expr[1] |
+      assert(!$match.cases->isEmpty(), 'Cases should not be empty.');
+
+      let parentVar = var($state.variableFactory->next());
+
+      /*
+       * Build the expression from the last case to the first because
+       * the conditions are nested in the else branches.
+       */
+      let nestedConditionals =
+        $match.cases->reverse()->fold({ caseExpr: PExprScopeTyped[1], accum: Expr[1] |
+
+          let classExpr = $caseExpr.set.classExpr;
+          let condition = $classExpr->atom($parentVar);
+
+          $caseExpr
+            ->compile(
+              $substitution->addBinding($caseExpr->variable(), $parentVar),
+              $rewrite,
+              $state,
+              $newTrace
+            )
+            ->step(caseExprBody: Expr[1] |
+              $condition->meta::rel::metamodel::ifThenElse($caseExprBody, $accum)->ok();
+            )
+            ->current()
+            ->unwrap();
+        }, relfalse());
+
+      $parentVar->equals($parent)->and($nestedConditionals->parenthesise())->ok();
+    );
 }
