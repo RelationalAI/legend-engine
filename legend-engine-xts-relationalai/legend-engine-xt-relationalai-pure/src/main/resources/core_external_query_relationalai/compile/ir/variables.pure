@@ -36,13 +36,13 @@ function <<access.private>> meta::rel::compile::ir::handleCaseValueSpecToScoped(
   let newTrace = $trace->stage('handleCaseValueSpecToScoped(ValueSpecification[1],Boolean[1],PExpr[0..1],Trace[1])');
   $spec->match([
     {spec: InstanceValue[1] |
-        $spec.values
-          ->first()
-          ->okOr(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
-          ->tryCast(@FunctionRoutedValueSpecification, $newTrace)
-          ->andThen(func: FunctionRoutedValueSpecification[1] |
-            $func->handleCaseValueSpecToScoped($requireType, $parent, $newTrace)
-          )
+      $spec.values
+        ->first()
+        ->okOr(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
+        ->tryCast(@FunctionRoutedValueSpecification, $newTrace)
+        ->andThen(func: FunctionRoutedValueSpecification[1] |
+          $func->handleCaseValueSpecToScoped($requireType, $parent, $newTrace)
+        )
     },
     {spec: FunctionRoutedValueSpecification[1] |
       $spec.value
