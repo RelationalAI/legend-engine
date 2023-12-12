@@ -954,8 +954,11 @@ function meta::rel::compile::compile(
       let nestedConditionals =
         $match.cases->reverse()->fold({ caseExpr: PExprScopeTyped[1], accum: Expr[1] |
 
-          let classExpr = $caseExpr.set.classExpr;
-          let condition = $classExpr->atom($parentVar);
+          let condition =
+            $caseExpr.exprType->match([
+              classType: PExprTypeClass[1]        | $classType.set.classExpr->atom($parentVar),
+              primtiveType: PExprTypePrimitive[1] | $primtiveType.kind->name()->atom($parentVar)
+            ]);
 
           $caseExpr
             ->compile(

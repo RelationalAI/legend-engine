@@ -109,17 +109,26 @@ function <<access.private>> meta::rel::compile::ir::handleCaseFunctionDefToScope
               if (!$requireType,
                 {| $inner->scopeUntyped($vars.name, $parent)->ok()},
                 {|
-                  $spec
-                    ->tryCast(@StoreMappingRoutedValueSpecification, $newTrace)
-                    ->andThen(spec: StoreMappingRoutedValueSpecification[1] |
-                      $spec->storeMappingRoutedValueSpecToRelSet($newTrace)
-                    )
-                    ->andThen(set: RelSetImplementation[0..1] |
-                      if ($set->isEmpty() || $vars->size() != 1,
-                        | error('Cannot type multiple variable with single set.', $newTrace),
-                        | $inner->scopeTyped($vars->toOne().name, $set->toOne(), $parent)->ok()
-                      )
-                    )
+                  $spec->match([
+                    { spec: StoreMappingRoutedValueSpecification[1] |
+                        $spec
+                          ->storeMappingRoutedValueSpecToRelSet($newTrace)
+                          ->andThen(set: RelSetImplementation[0..1] |
+                            if ($set->isEmpty() || $vars->size() != 1,
+                              | error('Expected exactly one set.', $newTrace),
+                              | $inner->scopeTyped($vars->toOne().name, exprType($set->toOne()), $parent)->ok()
+                            );
+                          )
+                    },
+                    {
+                      spec: VariableExpression[1] |
+                        let primitiveType = $spec.genericType.rawType;
+                        if ($primitiveType->isEmpty(),
+                          | error('No type given.', $newTrace),
+                          | $inner->scopeTyped($vars->toOne().name, exprType($primitiveType->toOne()), $parent)->ok()
+                        );
+                    }
+                  ])
                 }
               )
             )

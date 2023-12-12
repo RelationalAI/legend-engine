@@ -9,10 +9,89 @@
   * having to manually parse `ValueSpecification`s first.
   */
 
+import meta::rel::utils::lang::*;
 import meta::rel::compile::ir::*;
 import meta::rel::mapping::*;
 import meta::rel::metamodel::*;
 import meta::rel::utils::*;
+
+/**
+  * Abstract type representing PURE types.
+  */
+Class <<typemodifiers.abstract>> meta::rel::compile::ir::PExprType { }
+
+/**
+  * Type of a class as specificed by the given set.
+  */
+Class meta::rel::compile::ir::PExprTypeClass extends PExprType {
+  set: RelSetImplementation[1];
+}
+
+/**
+  * Type of a primitive as specificed by the given set.
+  */
+Class meta::rel::compile::ir::PExprTypePrimitive extends PExprType {
+  kind: SupportedPrimitiveType[1];
+}
+
+Enum meta::rel::compile::ir::SupportedPrimitiveType {
+  TypeBoolean,
+  TypeDateTime,
+  TypeFloat,
+  TypeInteger,
+  TypeStrictDate,
+  TypeString
+}
+
+function meta::rel::compile::ir::name(t: SupportedPrimitiveType[1]): String[1] {
+  switch([
+    case($t == SupportedPrimitiveType.TypeBoolean,    | 'Boolean'),
+    case($t == SupportedPrimitiveType.TypeDateTime,   | 'DateTime'),
+    case($t == SupportedPrimitiveType.TypeFloat,      | 'Float'),
+    case($t == SupportedPrimitiveType.TypeInteger,    | 'Integer'),
+    case($t == SupportedPrimitiveType.TypeStrictDate, | 'DateTime'), // TODO: Check this is the correct Rel type.
+    case($t == SupportedPrimitiveType.TypeString,     | 'String')
+  ], {|
+    fail(format('Unsupported primitive type `%s`', $t));
+    'unreachable';
+  })
+}
+
+function meta::rel::compile::ir::exprType(set: RelSetImplementation[1]): PExprTypeClass[1] {
+  ^PExprTypeClass(set=$set);
+}
+
+function meta::rel::compile::ir::exprTypeBoolean(): PExprTypePrimitive[1] {
+  ^PExprTypePrimitive(kind=SupportedPrimitiveType.TypeBoolean);
+}
+function meta::rel::compile::ir::exprTypeDateTime(): PExprTypePrimitive[1] {
+  ^PExprTypePrimitive(kind=SupportedPrimitiveType.TypeDateTime);
+}
+function meta::rel::compile::ir::exprTypeFloat(): PExprTypePrimitive[1] {
+  ^PExprTypePrimitive(kind=SupportedPrimitiveType.TypeFloat);
+}
+function meta::rel::compile::ir::exprTypeInteger(): PExprTypePrimitive[1] {
+  ^PExprTypePrimitive(kind=SupportedPrimitiveType.TypeInteger);
+}
+function meta::rel::compile::ir::exprTypeStrictDate(): PExprTypePrimitive[1] {
+  ^PExprTypePrimitive(kind=SupportedPrimitiveType.TypeStrictDate);
+}
+function meta::rel::compile::ir::exprTypeString(): PExprTypePrimitive[1] {
+  ^PExprTypePrimitive(kind=SupportedPrimitiveType.TypeString);
+}
+
+function meta::rel::compile::ir::exprType(rawType: Type[1]): PExprTypePrimitive[1] {
+  switch([
+    case($rawType == Boolean,    | exprTypeBoolean()),
+    case($rawType == DateTime,   | exprTypeDateTime()),
+    case($rawType == Float,      | exprTypeFloat()),
+    case($rawType == Integer,    | exprTypeInteger()),
+    case($rawType == StrictDate, | exprTypeStrictDate())
+  ], {|
+    assert($rawType == String, format('Unsupported primitive type `%s`', $rawType.name));
+    exprTypeString();
+  })
+}
 
 /**
   * Abstract type representing PURE query expressions. Expressions evaluate to values.
@@ -138,7 +217,7 @@ Class <<typemodifiers.abstract>> meta::rel::compile::ir::PExprScope extends PExp
 }
 
 Class meta::rel::compile::ir::PExprScopeTyped extends PExprScope {
-  set: RelSetImplementation[1];
+  exprType: PExprType[1];
   variable: String[1];
 }
 
@@ -343,12 +422,12 @@ function meta::rel::compile::ir::filter(parent: PExpr[1], predicate: PExprScope[
   ^PExprFilter(parent=$parent, predicate=$predicate)
 }
 
-function meta::rel::compile::ir::scopeTyped(inner: PExpr[1], variable: String[1], set: RelSetImplementation[1]): PExprScopeTyped[1] {
-  scopeTyped($inner, $variable, $set, [])
+function meta::rel::compile::ir::scopeTyped(inner: PExpr[1], variable: String[1], exprType: PExprType[1]): PExprScopeTyped[1] {
+  scopeTyped($inner, $variable, $exprType, [])
 }
 
-function meta::rel::compile::ir::scopeTyped(inner: PExpr[1], variable: String[1], set: RelSetImplementation[1], parent: PExpr[0..1]): PExprScopeTyped[1] {
-  ^PExprScopeTyped(inner=$inner, variable=$variable, set=$set, parent=$parent)
+function meta::rel::compile::ir::scopeTyped(inner: PExpr[1], variable: String[1], exprType: PExprType[1], parent: PExpr[0..1]): PExprScopeTyped[1] {
+  ^PExprScopeTyped(inner=$inner, variable=$variable, exprType=$exprType, parent=$parent)
 }
 
 function meta::rel::compile::ir::scopeUntyped(inner: PExpr[1], variables: String[*]): PExprScopeUntyped[1] {
