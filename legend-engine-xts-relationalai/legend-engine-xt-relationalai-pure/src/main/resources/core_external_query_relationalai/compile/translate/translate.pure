@@ -370,7 +370,6 @@ function meta::rel::compile::compile(
         ->step({body: Expr[1] |
           $body
             ->from($bound->in($parent))
-            ->parenthesise()
             ->annotate($body.annotation)
             ->ok()
 
