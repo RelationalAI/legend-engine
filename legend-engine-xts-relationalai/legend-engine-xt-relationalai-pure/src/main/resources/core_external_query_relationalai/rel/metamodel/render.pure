@@ -211,7 +211,7 @@ function meta::rel::metamodel::render::render(for: For[1]): String[1] {
 }
 
 function meta::rel::metamodel::render::render(exprs: Expr[*], separator: String[1]): String[1] {
-  $exprs->stringify(e | $e->render(), $separator)
+  $exprs->stringify(e: Expr[1] | $e->render(), $separator)
 }
 
 function meta::rel::metamodel::render::render(exprs: Expr[*]): String[1] {
@@ -227,7 +227,7 @@ function meta::rel::metamodel::render::render(group: ExprGroup[1]): String[1] {
 }
 
 function meta::rel::metamodel::render::render(union: Union[1]): String[1] {
-  format('%s', $union.exprs->stringify(e | $e->render(), '; '))
+  format('%s', $union.exprs->stringify(e: Expr[1] | $e->render(), '; '))
 }
 
 function meta::rel::metamodel::render::render(ifThenElse: IfThenElse[1]): String[1] {
@@ -308,7 +308,7 @@ function meta::rel::metamodel::render::render(element: ProgramElement[1]): Strin
 }
 
 function meta::rel::metamodel::render::render(elements: ProgramElement[*]): String[1] {
-  $elements->fold({e: ProgramElement[1], accum: String[1] | $accum + $e->render() + '\n'}, '')
+  $elements->map(e: ProgramElement[1] | $e->render())->makeString('', '\n', '\n')
 }
 
 function meta::rel::metamodel::render::render(program: Program[1]): String[1] {
