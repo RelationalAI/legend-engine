@@ -1,0 +1,43 @@
+import meta::pure::functions::collection::*;
+import meta::rel::metamodel::*;
+import meta::rel::metamodel::render::expr::*;
+import meta::rel::metamodel::render::binding::*;
+import meta::rel::utils::*;
+
+
+////////////////////////
+// Rendering bindings //
+////////////////////////
+
+function meta::rel::metamodel::render::binding::renderBinding(var: Variable[1]): String[1] {
+  $var.identifier
+}
+
+function <<access.private>> meta::rel::metamodel::render::binding::renderBinding(vars: Variable[*]): String[1] {
+  $vars->stringify(v | $v->renderBinding(), ', ')
+}
+
+function <<access.private>> meta::rel::metamodel::render::binding::renderBinding(vars: Variables[1]): String[1] {
+  $vars.inner->renderBinding()
+}
+
+function <<access.private>> meta::rel::metamodel::render::binding::renderBinding(binding: InBinding[1], state: RenderState[1]): String[1] {
+  format('%s in %s', [$binding.variable->renderBinding(), $binding.in->render($state)])
+}
+
+function <<access.private>> meta::rel::metamodel::render::binding::renderBinding(binding: WhereBinding[1], state: RenderState[1]): String[1] {
+  format('%s where %s', [$binding.parents->renderBinding($state), $binding.where->render($state)])
+}
+
+function meta::rel::metamodel::render::binding::renderBinding(binding: Binding[1], state: RenderState[1]): String[1] {
+  $binding->match([
+    b: InBinding[1]    | $b->renderBinding($state),
+    v: Variable[1]     | $v->renderBinding(),
+    vs: Variables[1]   | $vs->renderBinding(),
+    b: WhereBinding[1] | $b->renderBinding($state)
+  ])
+}
+
+function meta::rel::metamodel::render::binding::renderBinding(bindings: Binding[*], state: RenderState[1]): String[1] {
+  $bindings->stringify(b | $b->renderBinding($state), ', ')
+}

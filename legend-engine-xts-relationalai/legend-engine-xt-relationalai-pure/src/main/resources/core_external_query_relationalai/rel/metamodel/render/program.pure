@@ -26,17 +26,17 @@ function meta::rel::metamodel::render::program::render(rule: Rule[1]): String[1]
     r: IC[1]        | $r->render(),
     r: Rule[1]      |
       let annotation = if ($r.inline, | '@inline\n', | '');
-      $annotation + format('def %s = %s', [$r.head->render(), $r.body->render()]);
+      $annotation + format('def %s = %s', [$r.head->renderExpr(), $r.body->renderExprs()]);
   ])
 }
 
 function meta::rel::metamodel::render::program::render(entityDef: EntityDef[1]): String[1] {
   let annotation = if ($entityDef.inline, | '@inline\n', | '');
-  $annotation + format('entity %s %s = %s', [$entityDef.name->render(), $entityDef.head->render(), $entityDef.body->render()]);
+  $annotation + format('entity %s %s = %s', [$entityDef.name->renderExpr(), $entityDef.head->renderExpr(), $entityDef.body->renderExprs()]);
 }
 
 function meta::rel::metamodel::render::program::render(ic: IC[1]): String[1] {
-  format('ic %s {\n%s\n}', [$ic.head->render(), $ic.body->render()])
+  format('ic %s {\n%s\n}', [$ic.head->renderExpr(), $ic.body->renderExprs()])
 }
 
 function meta::rel::metamodel::render::program::render(comment: Comment[1]): String[1] {

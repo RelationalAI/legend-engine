@@ -1,4 +1,5 @@
 import meta::rel::metamodel::*;
+import meta::rel::metamodel::render::constant::*;
 import meta::rel::metamodel::render::expr::*;
 import meta::rel::metamodel::render::program::*;
 import meta::rel::utils::*;
@@ -15,10 +16,6 @@ Class <<typemodifiers.abstract>> meta::rel::metamodel::Expr extends Annotated {
   variables() {
     []
   }: Variable[*];
-
-  code() {
-    $this->render();
-  }: String[1];
 }
 
 /**
@@ -44,11 +41,7 @@ Class meta::rel::metamodel::DontCare extends Expr { }
 /**
   * Abstract type representing bindings.
   */
-Class <<typemodifiers.abstract>> meta::rel::metamodel::Binding extends Annotated { 
-  code() {
-    $this->render();
-  }: String[1];
-}
+Class <<typemodifiers.abstract>> meta::rel::metamodel::Binding extends Annotated { }
 
 /**
   * Abstract type denoting constant values.
@@ -746,7 +739,7 @@ function meta::rel::metamodel::toString(type: ConstType[1]): String[1] {
     t: FloatType[1] | $t->toString(),
     t: LabelsType[1] | $t->toString(),
     t: HashValueType[1] | $t->toString(),
-    t: Label[1] | $t->render()
+    t: Label[1] | $t->renderConstant()
   ]);
 }
 
