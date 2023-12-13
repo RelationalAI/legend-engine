@@ -1,5 +1,5 @@
 import meta::rel::metamodel::*;
-import meta::rel::metamodel::render::*;
+import meta::rel::metamodel::renderexpr::*;
 
 
 function <<test.Test>> meta::rel::test::metamodel::render::testSimpleRendering(): Any[*] {

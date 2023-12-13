@@ -2,7 +2,6 @@ import meta::rel::mapping::frontend::*;
 import meta::rel::mapping::*;
 import meta::pure::mapping::*;
 import meta::rel::metamodel::*;
-import meta::rel::metamodel::render::*;
 import meta::rel::utils::*;
 import meta::rel::utils::meta::*;
 import meta::pure::store::*;

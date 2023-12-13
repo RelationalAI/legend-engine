@@ -1,6 +1,6 @@
 import meta::rel::metamodel::*;
 import meta::rel::lib::*;
-import meta::rel::metamodel::render::*;
+import meta::rel::metamodel::renderexpr::*;
 import meta::rel::utils::*;
 
 function meta::rel::lib::booleanTrue(): Expr[1] {

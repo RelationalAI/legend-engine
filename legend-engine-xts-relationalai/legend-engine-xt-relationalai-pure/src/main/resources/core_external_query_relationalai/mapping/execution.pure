@@ -8,7 +8,7 @@ import meta::rel::execute::*;
 import meta::rel::mapping::*;
 import meta::rel::mapping::*;
 import meta::rel::metamodel::*;
-import meta::rel::metamodel::render::*;
+import meta::rel::metamodel::render::program::*;
 import meta::rel::metamodel::store::*;
 import meta::rel::runtime::*;
 import meta::rel::trace::*;
