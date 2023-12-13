@@ -1,7 +1,8 @@
 import meta::rel::metamodel::*;
+import meta::rel::metamodel::utils::*;
 import meta::pure::functions::collection::*;
 
-function meta::rel::metamodel::with(program: Program[1], elements: ProgramElement[*]): Program[1] {
+function meta::rel::metamodel::utils::with(program: Program[1], elements: ProgramElement[*]): Program[1] {
   //TODO: In general, room for improvement by adding some indexed structure to programs.
   let concat = 
     $elements->fold({e, acc |
@@ -11,7 +12,7 @@ function meta::rel::metamodel::with(program: Program[1], elements: ProgramElemen
   ^Program(identifier=$program.identifier, elements=$concat);
 }
 
-function meta::rel::metamodel::combine(programs: Program[*]): Program[1] {
+function meta::rel::metamodel::utils::combine(programs: Program[*]): Program[1] {
   $programs->fold({p, acc | 
     $acc->with($p.elements);
   }, program());

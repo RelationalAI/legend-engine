@@ -21,6 +21,7 @@ import meta::rel::lib::*;
 import meta::rel::mapping::*;
 import meta::rel::metamodel::*;
 import meta::rel::metamodel::syntactic::*;
+import meta::rel::metamodel::utils::*;
 import meta::rel::trace::*;
 import meta::rel::utils::*;
 import meta::rel::utils::collection::*;
