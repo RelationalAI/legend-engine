@@ -302,7 +302,6 @@ function meta::rel::metamodel::render::render(comment: LineComment[1]): String[1
 function meta::rel::metamodel::render::render(element: ProgramElement[1]): String[1] {
   $element->match([
     r: Rule[1] | $r->render(),
-    r: RawRule[1] | $r.code,
     c: Comment[1] | $c->render()
   ])
 }

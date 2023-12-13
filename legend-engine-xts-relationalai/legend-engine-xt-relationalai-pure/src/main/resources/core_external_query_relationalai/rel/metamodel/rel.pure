@@ -300,10 +300,6 @@ Class meta::rel::metamodel::Rule extends ProgramElement {
   inline: Boolean[1];
 }
 
-Class meta::rel::metamodel::RawRule extends ProgramElement {
-  code: String[1];
-}
-
 /**
   * Rule type representing entity definitions.
   */
@@ -633,10 +629,6 @@ function meta::rel::metamodel::def(head: String[1], body: Expr[1..*], inline: Bo
 
 function meta::rel::metamodel::def(head: String[1], body: Expr[1..*]): Rule[1] {
   def($head, $body, false);
-}
-
-function meta::rel::metamodel::rule(code: String[1]): RawRule[1] {
-  ^RawRule(code=$code);
 }
 
 function meta::rel::metamodel::ic(head: HeadExpr[1], body: Expr[1..*], inline: Boolean[1]): IC[1] {
