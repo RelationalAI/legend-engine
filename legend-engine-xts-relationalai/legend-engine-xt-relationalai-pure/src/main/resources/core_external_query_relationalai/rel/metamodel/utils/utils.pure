@@ -168,3 +168,21 @@ function meta::rel::metamodel::utils::complexity(expr: Expr[1]): Integer[1] {
     e: Variables[1]        | $e->complexity()
   ]);
 }
+
+function meta::rel::metamodel::utils::complexity(exprs: Expr[*]): Integer[1] {
+  $exprs->map(e: Expr[1] | $e->complexity())->sum()
+}
+
+/**
+  * Returns true if the formula is considered to be complex and should use a vertical layout when rendering.
+  */
+function meta::rel::metamodel::utils::isComplex(expr: Expr[1]): Boolean[1] {
+  $expr->complexity() > 5
+}
+
+/**
+  * Returns true if the formula is considered to be complex and should use a vertical layout when rendering.
+  */
+function meta::rel::metamodel::utils::isComplex(exprs: Expr[*]): Boolean[1] {
+  $exprs->complexity() > 5
+}
