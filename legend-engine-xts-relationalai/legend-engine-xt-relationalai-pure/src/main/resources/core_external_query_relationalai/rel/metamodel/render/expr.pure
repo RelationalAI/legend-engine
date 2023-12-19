@@ -2,6 +2,7 @@ import meta::pure::functions::collection::*;
 import meta::rel::metamodel::*;
 import meta::rel::metamodel::render::binding::*;
 import meta::rel::metamodel::render::buffer::*;
+import meta::rel::metamodel::render::constant::*;
 import meta::rel::metamodel::render::expr::*;
 import meta::rel::utils::*;
 
@@ -159,7 +160,7 @@ function meta::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], e
     e: Application[1]      | $buffer->render($e),
     e: Atom[1]             | $buffer->render($e),
     e: Composition[1]      | $buffer->render($e),
-    e: Constant[1]         | $buffer->render($e),
+    e: Constant[1]         | $buffer->append($e->toRelLiteral()),
     e: DontCare[1]         | $buffer->render($e),
     e: Equals[1]           | $buffer->render($e),
     e: Exists[1]           | $buffer->render($e),

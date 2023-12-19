@@ -738,7 +738,7 @@ function meta::rel::metamodel::toString(type: ConstType[1]): String[1] {
     t: FloatType[1] | $t->toString(),
     t: LabelsType[1] | $t->toString(),
     t: HashValueType[1] | $t->toString(),
-    t: Label[1] | $t->renderConstant()
+    t: Label[1] | $t->toRelLiteral()
   ])
 }
 
