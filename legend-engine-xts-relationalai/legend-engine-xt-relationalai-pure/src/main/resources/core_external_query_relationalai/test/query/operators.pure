@@ -1,0 +1,168 @@
+import meta::rel::mapping::*;
+import meta::core::runtime::*;
+import json_showcase::*;
+import model::external::cdm::*;
+import gs_demo::*;
+import meta::rel::mapping::frontend::*;
+import meta::rel::runtime::*;
+import meta::rel::utils::*;
+import meta::pure::functions::meta::*;
+
+import meta::rel::test::query::models::testmodel::*;
+
+//
+// Sample model for testing
+//
+
+Class meta::rel::test::query::models::testmodel::TestRootClass
+{
+   property1: String[0..1];
+   property2: TestClassA[0..1];
+   property3: String[0..1];
+   property4: TestClassB[0..1];
+   property5: String[*];
+}
+
+Class meta::rel::test::query::models::testmodel::TestClassA
+{
+  propertyA: String[0..1];
+}
+
+Class meta::rel::test::query::models::testmodel::TestClassB
+{
+  propertyB: TestClassC[0..1];
+}
+
+Class meta::rel::test::query::models::testmodel::TestClassC
+{
+  propertyC: String[0..1];
+}
+
+// Basic test query.
+function <<test.Test>> meta::rel::test::query::operators::testQueryBasic3(): Any[*] {
+  let schema = RAISchema('json')
+    ->includeClass(TestRootClass);
+
+  let rai = $schema->TestConnection();
+
+  $rai
+    ->meta::rel::runtime::query({| TestRootClass.all() })
+    ->rel()
+    ->inspect();
+}
+
+
+// Basic map query.
+function <<test.Test>> meta::rel::test::query::operators::testQueryMap(): Any[*] {
+  let schema = RAISchema('json')
+    ->includeClass(TestRootClass)
+    ->includeClass(TestClassB)
+    ->includeClass(TestClassC);
+
+  let rai = $schema->TestConnection();
+
+  $rai
+    ->meta::rel::runtime::query({|
+      TestRootClass.all()->map(r | $r.property4)->map(b | $b.propertyB)->filter(c | $c.propertyC != '')
+    })
+    ->rel()
+    ->inspect();
+}
+
+
+// Another basic test query.
+function <<test.Test>> meta::rel::test::query::operators::testQueryTestAtNew(): Any[*] {
+  let schema = RAISchema('json')
+    ->includeClass(Hudsonport);
+
+  let rai = $schema->TestConnection();
+
+  $rai
+    ->meta::rel::runtime::query({| Hudsonport.all()->map(h | $h.NorthGlenn)->at(5) })
+    ->rel()
+    ->inspect();
+}
+
+// Basic query without 'at'
+function <<test.Test>> meta::rel::test::query::operators::testQueryBasicWithoutAt(): Any[*] {
+  let schema = RAISchema('json')
+    ->includeClass(EastTonyaview::Wrapper)
+    ->includeClass(Karenbury)
+    ->includeClass(PortRobertmouth);
+
+  let rai = $schema->TestConnection();
+
+  $rai
+    ->meta::rel::runtime::query({|
+      EastTonyaview::Wrapper.all()->map(w | $w.Guerrerofurt.Royborough )
+    })
+    ->rel()
+    ->inspect();
+}
+
+// Basic query testing 'at'.
+function <<test.Test>> meta::rel::test::query::operators::testQueryBasicWithAt(): Any[*] {
+  let schema = RAISchema('json')
+    ->includeClass(EastTonyaview::Wrapper)
+    ->includeClass(Karenbury)
+    ->includeClass(PortRobertmouth);
+
+  let rai = $schema->TestConnection();
+
+  $rai
+    ->meta::rel::runtime::query({|
+      EastTonyaview::Wrapper.all()->map(w | $w.Guerrerofurt.Royborough )->at(0)
+    })
+    ->rel()
+    ->inspect();
+}
+
+// Derived from tbe 'at' query.
+function <<test.Test>> meta::rel::test::query::operators::testQuery2(): Any[*] {
+  let schema = RAISchema('json')
+    ->includeClass(EastTonyaview::Wrapper);
+
+  let rai = $schema->TestConnection();
+
+  $rai
+    ->meta::rel::runtime::query({|
+      EastTonyaview::Wrapper.all()->project([
+        x|$x.Sullivanchester,
+        x|$x.NewVictoria,
+        x|$x.Alextown ],
+        [ 'Sullivanchester', 'NewVictoria', 'Alextown' ]
+      )
+    })
+    ->rel()
+    ->inspect();
+}
+
+// Derived from the 'at' query.
+function <<test.Test>> meta::rel::test::query::operators::testQuery3withoutAt(): Any[*] {
+  let schema = RAISchema('json')
+    ->includeClass(EastTonyaview::Wrapper)
+    ->includeClass(Karenbury)
+    ->includeClass(WestBobberg)
+    ->includeClass(EastAnthony)
+    ->includeClass(Oneillstad)
+    ->includeClass(Johnstad)
+    ->includeClass(WestAntoniostad)
+    ->includeClass(EastTaraton);
+
+  let rai = $schema->TestConnection();
+
+  $rai
+    ->meta::rel::runtime::query({|
+      EastTonyaview::Wrapper.all()->project([
+        x|$x.Sullivanchester,
+        x|$x.NewVictoria,
+        x|$x.Alextown,
+        x|$x.Guerrerofurt.LakeMichaelburgh.NewRonald.Monicamouth.EastBryanberg,
+        x|$x.Guerrerofurt.LakeMichaelburgh.NewRonald.Adamview,
+        x|$x.Guerrerofurt.LakeMichaelburgh.Juliahaven.type ],
+        [ 'Sullivanchester', 'NewVictoria', 'Alextown', 'EastBryanberg', 'SouthBryceside', 'SouthMarcuston' ]
+      )
+    })
+    ->rel()
+    ->inspect();
+}
