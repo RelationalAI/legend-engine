@@ -121,18 +121,23 @@ function meta::rel::mapping::frontend::includeClass(schema: RAISchema[1], class:
         store=$augmentedStore, 
         insertFns=$schema.insertFns->put($class, $class->insertFunction())
       );
-      
-    $class
-      .propertiesFromAssociations
-      ->filter(property | $property->type()->instanceOf(Class))
-      ->fold({property: Property<Nil, Any|*>[1], accum |
-        let associated = $property
-          .genericType
-          .rawType
-          ->toOne()
-          ->cast(@Class<Any>);
-        $accum->includeClass($associated);
-      }, $augmentedSchema);
+
+    /*
+     * Collect each property which refers to a class type (i.e., not a primitive type).
+     */
+    let referencedClasses =
+      $class.properties
+        ->filter(property: Property<Nil, Any|*>[1] | !$property->isPrimitiveValueProperty() )
+        ->map(property: Property<Nil, Any|*>[1] |
+          $property.genericType.rawType
+        );
+
+    /*
+     * Include all refereneced classes in the RAI schema.
+     */
+    $referencedClasses->fold({referencedClass: Class<Any>[1], accum: RAISchema[1] |
+      $accum->includeClass($referencedClass);
+    }, $augmentedSchema);
   });
 }
 
