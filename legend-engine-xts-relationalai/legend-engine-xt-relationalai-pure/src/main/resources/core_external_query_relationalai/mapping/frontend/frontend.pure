@@ -136,18 +136,21 @@ function meta::rel::mapping::frontend::includeClass(schema: RAISchema[1], class:
      * Include all refereneced classes in the RAI schema.
      */
     $referencedClasses->fold({referencedClass: Class<Any>[1], accum: RAISchema[1] |
-      $accum->includeClass($referencedClass);
+      $accum->includeAllTypeRelatedClasses($referencedClass);
     }, $augmentedSchema);
   });
 }
 
-function meta::rel::mapping::frontend::includeClassRecursive(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
-  // TODO: Do we need all specializations / generalizations?
+function <<access.private>> meta::rel::mapping::frontend::typeRelatedClasses(class: Class<Any>[1]): Class<Any>[*] {
   let subclasses = meta::pure::functions::meta::findAllSpecializations($class);
   let superclasses = meta::pure::functions::meta::hierarchicalAllGeneralizations($class);
-  $subclasses->concatenate($superclasses)->fold({c: Class<Any>[1], s: RAISchema[1] |
-    $s->includeClass($c)
-  }, $schema->includeClass($class));
+  $subclasses->concatenate($superclasses)->concatenate($class);
+}
+
+function <<access.private>> meta::rel::mapping::frontend::includeAllTypeRelatedClasses(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+  let allClasses = typeRelatedClasses($class);  
+  let baseSchema = $schema->includeClass($class);
+  $allClasses->fold({c: Class<Any>[1], s: RAISchema[1] | $s->includeClass($c)}, $baseSchema);
 }
 
 function meta::rel::mapping::frontend::insertFunction(
