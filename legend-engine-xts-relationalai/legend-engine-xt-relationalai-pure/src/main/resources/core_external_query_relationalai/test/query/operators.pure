@@ -1,168 +1,207 @@
 import meta::rel::mapping::*;
-import meta::core::runtime::*;
-import json_showcase::*;
-import model::external::cdm::*;
-import gs_demo::*;
 import meta::rel::mapping::frontend::*;
 import meta::rel::runtime::*;
-import meta::rel::utils::*;
-import meta::pure::functions::meta::*;
-
 import meta::rel::test::query::models::testmodel::*;
-
-//
-// Sample model for testing
-//
-
-Class meta::rel::test::query::models::testmodel::TestRootClass
-{
-   property1: String[0..1];
-   property2: TestClassA[0..1];
-   property3: String[0..1];
-   property4: TestClassB[0..1];
-   property5: String[*];
-}
-
-Class meta::rel::test::query::models::testmodel::TestClassA
-{
-  propertyA: String[0..1];
-}
-
-Class meta::rel::test::query::models::testmodel::TestClassB
-{
-  propertyB: TestClassC[0..1];
-}
-
-Class meta::rel::test::query::models::testmodel::TestClassC
-{
-  propertyC: String[0..1];
-}
+import meta::rel::utils::assert::*;
 
 // Basic test query.
-function <<test.Test>> meta::rel::test::query::operators::testQueryBasic3(): Any[*] {
-  let schema = RAISchema('json')
-    ->includeClass(TestRootClass);
+function <<test.Test>> meta::rel::test::query::operators::testQueryAll(): Any[*] {
+  let schema = RAISchema('json')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
-  $rai
-    ->meta::rel::runtime::query({| TestRootClass.all() })
-    ->rel()
-    ->inspect();
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query({| TestRootClass.all() })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def output[:query](x) = TestRootClass(x)',
+      'def output[:property1] = TestRootClass:property1[x] for x where output[:query](x)',
+      'def output[:property3] = TestRootClass:property3[x] for x where output[:query](x)',
+      'def output[:property5] = TestRootClass:property5[x] for x where output[:query](x)'
+    ],
+    $transpiledQuery
+  );
 }
 
 
 // Basic map query.
 function <<test.Test>> meta::rel::test::query::operators::testQueryMap(): Any[*] {
-  let schema = RAISchema('json')
-    ->includeClass(TestRootClass)
-    ->includeClass(TestClassB)
-    ->includeClass(TestClassC);
+  let schema = RAISchema('json')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
-  $rai
-    ->meta::rel::runtime::query({|
-      TestRootClass.all()->map(r | $r.property4)->map(b | $b.propertyB)->filter(c | $c.propertyC != '')
-    })
-    ->rel()
-    ->inspect();
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query({|
+        TestRootClass.all()->map(r | $r.property4)->map(b | $b.propertyB)->filter(c | $c.propertyC1 != '')
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def output[:query](x) = (x3 in TestClassB:propertyB[x2] from x2 in TestRootClass:property4[x1] from x1 in TestRootClass: not TestClassC:propertyC1[x3] = "")(x)',
+      'def output[:propertyC1] = TestClassC:propertyC1[x] for x where output[:query](x)',
+      'def output[:propertyC2] = TestClassC:propertyC2[x] for x where output[:query](x)'
+    ],
+    $transpiledQuery
+  );
 }
 
-
-// Another basic test query.
-function <<test.Test>> meta::rel::test::query::operators::testQueryTestAtNew(): Any[*] {
-  let schema = RAISchema('json')
-    ->includeClass(Hudsonport);
+// Basic test of multi-level map.
+function <<test.Test>> meta::rel::test::query::operators::testQueryMapMultiLevel(): Any[*] {
+  let schema = RAISchema('json')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
-  $rai
-    ->meta::rel::runtime::query({| Hudsonport.all()->map(h | $h.NorthGlenn)->at(5) })
-    ->rel()
-    ->inspect();
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query({|
+        TestRootClass.all()->map(w | $w.property4.propertyB )
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def output[:query](x) = TestClassB:propertyB[x2] from x2 in TestRootClass:property4[x1] from x1 in TestRootClass(x)',
+      'def output[:propertyC1] = TestClassC:propertyC1[x] for x where output[:query](x)',
+      'def output[:propertyC2] = TestClassC:propertyC2[x] for x where output[:query](x)'
+    ],
+    $transpiledQuery
+  );
 }
 
-// Basic query without 'at'
-function <<test.Test>> meta::rel::test::query::operators::testQueryBasicWithoutAt(): Any[*] {
-  let schema = RAISchema('json')
-    ->includeClass(EastTonyaview::Wrapper)
-    ->includeClass(Karenbury)
-    ->includeClass(PortRobertmouth);
+// Basic test of 'at'.
+function <<test.Test>> meta::rel::test::query::operators::testQueryAt(): Any[*] {
+  let schema = RAISchema('json')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
-  $rai
-    ->meta::rel::runtime::query({|
-      EastTonyaview::Wrapper.all()->map(w | $w.Guerrerofurt.Royborough )
-    })
-    ->rel()
-    ->inspect();
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query({|
+        TestRootClass.all()->map(h | $h.property5)->at(5)
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def output = (TestRootClass:property5[x1] from x1 in TestRootClass)[5]'
+    ],
+    $transpiledQuery
+  );
 }
 
-// Basic query testing 'at'.
-function <<test.Test>> meta::rel::test::query::operators::testQueryBasicWithAt(): Any[*] {
-  let schema = RAISchema('json')
-    ->includeClass(EastTonyaview::Wrapper)
-    ->includeClass(Karenbury)
-    ->includeClass(PortRobertmouth);
+// Test of 'at' after a multi-level map.
+function <<test.Test>> meta::rel::test::query::operators::testQueryMapMultiLevelAt(): Any[*] {
+  let schema = RAISchema('json')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
-  $rai
-    ->meta::rel::runtime::query({|
-      EastTonyaview::Wrapper.all()->map(w | $w.Guerrerofurt.Royborough )->at(0)
-    })
-    ->rel()
-    ->inspect();
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query({|
+        TestRootClass.all()->map(w | $w.property4.propertyB.propertyC2 )->at(0)
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def output = (TestClassC:propertyC2[x3] from x3 in TestClassB:propertyB[x2] from x2 in TestRootClass:property4[x1] from x1 in TestRootClass)[0]'
+    ],
+    $transpiledQuery
+  );
 }
 
-// Derived from tbe 'at' query.
-function <<test.Test>> meta::rel::test::query::operators::testQuery2(): Any[*] {
-  let schema = RAISchema('json')
-    ->includeClass(EastTonyaview::Wrapper);
+// Basic project test.
+function <<test.Test>> meta::rel::test::query::operators::testQueryProject(): Any[*] {
+  let schema = RAISchema('json')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
-  $rai
-    ->meta::rel::runtime::query({|
-      EastTonyaview::Wrapper.all()->project([
-        x|$x.Sullivanchester,
-        x|$x.NewVictoria,
-        x|$x.Alextown ],
-        [ 'Sullivanchester', 'NewVictoria', 'Alextown' ]
-      )
-    })
-    ->rel()
-    ->inspect();
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query({|
+        TestRootClass.all()->project([
+          x|$x.property1,
+          x|$x.property3,
+          x|$x.property5 ],
+          [ 'PropertyOne', 'PropertyThree', 'PropertyFive' ]
+        )
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def tbl1[:base] = x from x in TestRootClass',
+      'def tbl1[:PropertyOne, x] = TestRootClass:property1[x], tbl1(:base, x)',
+      'def tbl1[:PropertyThree, x] = TestRootClass:property3[x], tbl1(:base, x)',
+      'def tbl1[:PropertyFive, x] = TestRootClass:property5[x], tbl1(:base, x)',
+      'def output = tbl1[:PropertyOne, i], tbl1[:PropertyThree, i], tbl1[:PropertyFive, i] from i'
+    ],
+    $transpiledQuery
+  );
 }
 
-// Derived from the 'at' query.
-function <<test.Test>> meta::rel::test::query::operators::testQuery3withoutAt(): Any[*] {
-  let schema = RAISchema('json')
-    ->includeClass(EastTonyaview::Wrapper)
-    ->includeClass(Karenbury)
-    ->includeClass(WestBobberg)
-    ->includeClass(EastAnthony)
-    ->includeClass(Oneillstad)
-    ->includeClass(Johnstad)
-    ->includeClass(WestAntoniostad)
-    ->includeClass(EastTaraton);
+// Basic multi-level project test.
+function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiLevel(): Any[*] {
+  let schema = RAISchema('json')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
-  $rai
-    ->meta::rel::runtime::query({|
-      EastTonyaview::Wrapper.all()->project([
-        x|$x.Sullivanchester,
-        x|$x.NewVictoria,
-        x|$x.Alextown,
-        x|$x.Guerrerofurt.LakeMichaelburgh.NewRonald.Monicamouth.EastBryanberg,
-        x|$x.Guerrerofurt.LakeMichaelburgh.NewRonald.Adamview,
-        x|$x.Guerrerofurt.LakeMichaelburgh.Juliahaven.type ],
-        [ 'Sullivanchester', 'NewVictoria', 'Alextown', 'EastBryanberg', 'SouthBryceside', 'SouthMarcuston' ]
-      )
-    })
-    ->rel()
-    ->inspect();
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query({|
+        TestRootClass.all()->project([
+          x|$x.property1,
+          x|$x.property3,
+          x|$x.property5,
+          x|$x.property2.propertyA1.propertyAA1.propertyAAA1.propertyAAAA1,
+          x|$x.property2.propertyA1.propertyAA1.propertyAAA2,
+          x|$x.property2.propertyA2.propertyAB1.propertyABA ],
+          [ 'PropertyOne', 'PropertyThree', 'PropertyFive', 'PropertyPath1', 'PropertyPath2', 'PropertyPath3' ]
+        )
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def tbl1[:base] = x from x in TestRootClass',
+      'def tbl1[:PropertyOne, x] = TestRootClass:property1[x], tbl1(:base, x)',
+      'def tbl1[:PropertyThree, x] = TestRootClass:property3[x], tbl1(:base, x)',
+      'def tbl1[:PropertyFive, x] = TestRootClass:property5[x], tbl1(:base, x)',
+      'def tbl1[:PropertyPath1, x] = TestClassAAAA:propertyAAAA1[x4] from x4 in TestClassAAA:propertyAAA1[x3] from x3 in TestClassAA:propertyAA1[x2] from x2 in TestClassA:propertyA1[x1] from x1 in TestRootClass:property2[x], tbl1(:base, x)',
+      'def tbl1[:PropertyPath2, x] = TestClassAAA:propertyAAA2[x7] from x7 in TestClassAA:propertyAA1[x6] from x6 in TestClassA:propertyA1[x5] from x5 in TestRootClass:property2[x], tbl1(:base, x)',
+      'def tbl1[:PropertyPath3, x] = TestClassABA:propertyABA[x10] from x10 in TestClassAB:propertyAB1[x9] from x9 in TestClassA:propertyA2[x8] from x8 in TestRootClass:property2[x], tbl1(:base, x)',
+      'def output = tbl1[:PropertyOne, i], tbl1[:PropertyThree, i], tbl1[:PropertyFive, i], tbl1[:PropertyPath1, i], tbl1[:PropertyPath2, i], tbl1[:PropertyPath3, i] from i'
+    ],
+    $transpiledQuery
+  );
+}
+
+// Basic test of cast operator.
+function <<test.Test>> meta::rel::test::query::operators::testQueryCast(): Any[*] {
+  let schema = RAISchema('json')->includeClass(TestRootClass);
+
+  let rai = $schema->TestConnection();
+
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query({|
+          TestRootClass.all()->map(x |
+            $x.property6->cast(@TestSubClass)
+          )
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def output[:query](x) = (x2 in TestSubClass: TestRootClass:property6[x1][x2]) from x1 in TestRootClass(x)',
+      'def output[:propertySub] = TestSubClass:propertySub[x] for x where output[:query](x)',
+      'def output[:propertySuper] = TestSuperClass:propertySuper[x] for x where output[:query](x)'
+    ],
+    $transpiledQuery
+  );
 }
