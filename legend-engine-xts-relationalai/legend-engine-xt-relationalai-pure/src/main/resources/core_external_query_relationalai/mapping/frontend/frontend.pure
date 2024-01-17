@@ -64,7 +64,7 @@ function meta::rel::mapping::frontend::schema(property: Property<Nil,Any|*>[1], 
     ->orElse($name->relation([hashValueType(), $type]));
 }
 
-function meta::rel::mapping::frontend::includeClass(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+function <<access.private>> meta::rel::mapping::frontend::includeClass(schema: RAISchema[1], class: Class<Any>[1], navigateTypeHierarchy: Boolean[1]): RAISchema[1] {
   /*
    * If the schema already includes a mapping for the given class then this function does nothing.
    */
@@ -135,22 +135,33 @@ function meta::rel::mapping::frontend::includeClass(schema: RAISchema[1], class:
     /*
      * Include all refereneced classes in the RAI schema.
      */
-    $referencedClasses->fold({referencedClass: Class<Any>[1], accum: RAISchema[1] |
-      $accum->includeAllTypeRelatedClasses($referencedClass);
-    }, $augmentedSchema);
+    $referencedClasses
+      ->map(c: Class<Any>[1] | $c->typeRelatedClasses($navigateTypeHierarchy))
+      ->fold({referencedClass: Class<Any>[1], accum: RAISchema[1] |
+        $accum->includeClass($referencedClass, $navigateTypeHierarchy)
+      }, $augmentedSchema);
   });
 }
 
-function <<access.private>> meta::rel::mapping::frontend::typeRelatedClasses(class: Class<Any>[1]): Class<Any>[*] {
-  let subclasses = meta::pure::functions::meta::findAllSpecializations($class);
-  let superclasses = meta::pure::functions::meta::hierarchicalAllGeneralizations($class);
-  $subclasses->concatenate($superclasses)->concatenate($class);
+function <<access.private>> meta::rel::mapping::frontend::typeRelatedClasses(class: Class<Any>[1], navigateTypeHierarchy: Boolean[1]): Class<Any>[*] {
+  if ($navigateTypeHierarchy,
+    {|
+      let subclasses = meta::pure::functions::meta::findAllSpecializations($class);
+      let superclasses = meta::pure::functions::meta::hierarchicalAllGeneralizations($class);
+      $subclasses->concatenate($superclasses)->concatenate($class);
+    },
+    {|
+      $class;
+    }
+    )
 }
 
-function <<access.private>> meta::rel::mapping::frontend::includeAllTypeRelatedClasses(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
-  let allClasses = typeRelatedClasses($class);  
-  let baseSchema = $schema->includeClass($class);
-  $allClasses->fold({c: Class<Any>[1], s: RAISchema[1] | $s->includeClass($c)}, $baseSchema);
+function meta::rel::mapping::frontend::includeClass(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+  includeClass($schema, $class, false)
+}
+
+function meta::rel::mapping::frontend::includeAllRelatedClasses(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+  includeClass($schema, $class, true)
 }
 
 function meta::rel::mapping::frontend::insertFunction(

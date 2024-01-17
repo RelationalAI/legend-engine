@@ -183,7 +183,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiL
 
 // Basic test of cast operator.
 function <<test.Test>> meta::rel::test::query::operators::testQueryCast(): Any[*] {
-  let schema = RAISchema('json')->includeClass(TestRootClass);
+  let schema = RAISchema('json')->includeAllRelatedClasses(TestRootClass);
 
   let rai = $schema->TestConnection();
 
