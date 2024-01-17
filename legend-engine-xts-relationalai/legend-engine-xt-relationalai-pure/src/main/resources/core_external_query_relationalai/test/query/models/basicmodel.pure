@@ -1,5 +1,5 @@
 import meta::rel::test::query::models::basicmodel::*;
-import meta::rel::mapping::frontend::*;
+import meta::rel::mapping::schema::*;
 
 Class meta::rel::test::query::models::basicmodel::Person {
   firstName: String[1];

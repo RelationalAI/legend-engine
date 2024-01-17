@@ -18,7 +18,7 @@ function meta::rel::runtime::TestConnection(element: Any[1]): ConnectionStore[1]
 }
 
 function meta::rel::runtime::query(connection: ConnectionStore[1], query: FunctionDefinition<{->Any[*]}>[1]): Activity[*] {
-  let schema = $connection.element->cast(@meta::rel::mapping::frontend::RAISchema);
+  let schema = $connection.element->cast(@meta::rel::mapping::schema::RAISchema);
 
   let runtime = ^meta::core::runtime::Runtime(connectionStores=$connection);
 

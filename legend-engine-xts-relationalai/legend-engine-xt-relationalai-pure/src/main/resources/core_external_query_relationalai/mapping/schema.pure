@@ -1,4 +1,4 @@
-import meta::rel::mapping::frontend::*;
+import meta::rel::mapping::schema::*;
 import meta::rel::mapping::*;
 import meta::pure::mapping::*;
 import meta::rel::metamodel::*;
@@ -13,25 +13,25 @@ import meta::rel::runtime::*;
 import meta::rel::execute::*;
 import meta::rel::utils::visitor::*;
 
-Class meta::rel::mapping::frontend::RAISchema {
+Class meta::rel::mapping::schema::RAISchema {
   mapping: Mapping[1];
   store: RAIDatabase[1];
 }
 
-function meta::rel::mapping::frontend::RAISchema(name: String[1]): RAISchema[1] {
+function meta::rel::mapping::schema::RAISchema(name: String[1]): RAISchema[1] {
   ^RAISchema(
     mapping=^Mapping(), 
     store=RAIDatabase([], $name)
   )
 }
 
-function meta::rel::mapping::frontend::schema(class: Class<Any>[1]): RelationDeclaration[1] {
+function meta::rel::mapping::schema::schema(class: Class<Any>[1]): RelationDeclaration[1] {
   $class.name
     ->toOne()
     ->relation([entityType($class)])
 }
 
-function meta::rel::mapping::frontend::schema(property: Property<Nil,Any|*>[1]): RelationDeclaration[1] {
+function meta::rel::mapping::schema::schema(property: Property<Nil,Any|*>[1]): RelationDeclaration[1] {
   $property->schema(
     $property
       .owner
@@ -39,7 +39,7 @@ function meta::rel::mapping::frontend::schema(property: Property<Nil,Any|*>[1]):
   )
 }
 
-function meta::rel::mapping::frontend::schema(property: Property<Nil,Any|*>[1], parent: Class<Any>[0..1]): RelationDeclaration[1] {
+function meta::rel::mapping::schema::schema(property: Property<Nil,Any|*>[1], parent: Class<Any>[0..1]): RelationDeclaration[1] {
   let name = $property.name->toOne();
   let rawType = $property->type();
 
@@ -61,7 +61,7 @@ function meta::rel::mapping::frontend::schema(property: Property<Nil,Any|*>[1], 
     ->orElse($name->relation([hashValueType(), $type]));
 }
 
-function <<access.private>> meta::rel::mapping::frontend::includeClass(schema: RAISchema[1], class: Class<Any>[1], navigateTypeHierarchy: Boolean[1]): RAISchema[1] {
+function <<access.private>> meta::rel::mapping::schema::includeClass(schema: RAISchema[1], class: Class<Any>[1], navigateTypeHierarchy: Boolean[1]): RAISchema[1] {
   /*
    * If the schema already includes a mapping for the given class then this function does nothing.
    */
@@ -139,7 +139,7 @@ function <<access.private>> meta::rel::mapping::frontend::includeClass(schema: R
   });
 }
 
-function <<access.private>> meta::rel::mapping::frontend::typeRelatedClasses(class: Class<Any>[1], navigateTypeHierarchy: Boolean[1]): Class<Any>[*] {
+function <<access.private>> meta::rel::mapping::schema::typeRelatedClasses(class: Class<Any>[1], navigateTypeHierarchy: Boolean[1]): Class<Any>[*] {
   if ($navigateTypeHierarchy,
     {|
       let subclasses = meta::pure::functions::meta::findAllSpecializations($class);
@@ -152,10 +152,10 @@ function <<access.private>> meta::rel::mapping::frontend::typeRelatedClasses(cla
     )
 }
 
-function meta::rel::mapping::frontend::includeClass(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+function meta::rel::mapping::schema::includeClass(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
   includeClass($schema, $class, false)
 }
 
-function meta::rel::mapping::frontend::includeAllRelatedClasses(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+function meta::rel::mapping::schema::includeAllRelatedClasses(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
   includeClass($schema, $class, true)
 }

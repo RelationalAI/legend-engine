@@ -1,5 +1,5 @@
 import meta::rel::mapping::*;
-import meta::rel::mapping::frontend::*;
+import meta::rel::mapping::schema::*;
 import meta::rel::runtime::*;
 import meta::rel::test::query::models::testmodel::*;
 import meta::rel::utils::assert::*;
