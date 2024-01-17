@@ -1,7 +1,7 @@
-import meta::rel::runtime::*;
-import meta::rel::test::testutils::*;
-import meta::rel::test::query::models::basicmodel::*;
 import meta::rel::mapping::*;
+import meta::rel::runtime::*;
+import meta::rel::test::query::models::basicmodel::*;
+import meta::rel::test::testutils::*;
 import meta::rel::utils::assert::*;
 
 function <<test.Test>> meta::rel::test::query::basic::testQueryAllPersons(): Any[*] {
