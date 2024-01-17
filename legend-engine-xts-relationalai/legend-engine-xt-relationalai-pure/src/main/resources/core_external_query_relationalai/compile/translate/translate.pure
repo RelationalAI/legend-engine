@@ -130,7 +130,7 @@ function meta::rel::compile::compile(
   $cast.set.classExpr
     ->okOr(|
       errorTrace('Mappings with empty class expressions not yet supported. No class expression found ' +
-        'for class ' + $cast.set.class.name->else(| '<<unknown>>')->quote())
+        'for class ' + $cast.set.class.name->else(| '<<unknown>>')->quote(), $newTrace)
     )
     ->andThen(classExpr: Expr[1] |
 
@@ -327,17 +327,17 @@ function meta::rel::compile::compile(
     ->compile($substitution, $rewrite, $state, $newTrace)
     ->step(parent: Expr[1] |
       $access.property.name
-        ->okOr(| errorTrace('No name specified for property.'))
+        ->okOr(| errorTrace('No name specified for property.', $newTrace))
         ->andThen(propertyName: String[1] |
           $access.parent
             ->set()
             ->map(set | $set->meta::pure::mapping::propertyMappingsByPropertyName($propertyName); )
-            ->okOr(| errorTrace(format('No property mapping found for property %s', $propertyName->quote())))
+            ->okOr(| errorTrace(format('No property mapping found for property %s', $propertyName->quote()), $newTrace))
             ->them(inner: meta::pure::mapping::PropertyMapping[*] | $inner->first()->toOne())
             ->tryCast(@RelPropertyMapping, $newTrace)
             ->andThen(mapping: RelPropertyMapping[1] | 
               $access.property.genericType.rawType
-                ->okOr(| errorTrace('Could not determine type of property ' + $propertyName))
+                ->okOr(| errorTrace('Could not determine type of property ' + $propertyName, $newTrace))
                 ->then(type: Type[1] |
                   $mapping
                     .target
