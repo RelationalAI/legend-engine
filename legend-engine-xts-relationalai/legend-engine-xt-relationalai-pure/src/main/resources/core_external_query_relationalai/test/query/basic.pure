@@ -76,7 +76,7 @@ function <<test.Test>> meta::rel::test::query::basic::testMap(): Any[*] {
 
   assertEqualRel(
     [
-      'def output = ("foo" from x1 in Person)'
+      'def output = "foo" from x1 in Person'
     ],
     $rai
       ->query(| 
