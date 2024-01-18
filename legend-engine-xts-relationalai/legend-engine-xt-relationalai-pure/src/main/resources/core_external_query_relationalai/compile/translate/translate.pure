@@ -329,10 +329,13 @@ function meta::rel::compile::compile(
       $access.property.name
         ->okOr(| errorTrace('No name specified for property.', $newTrace))
         ->andThen(propertyName: String[1] |
-          $access.parent
-            ->set()
-            ->map(set | $set->meta::pure::mapping::propertyMappingsByPropertyName($propertyName); )
-            ->okOr(| errorTrace(format('No property mapping found for property %s', $propertyName->quote()), $newTrace))
+          let propertyOwnerSet = $access.parent->set();
+          let className = $propertyOwnerSet.class.name->orElse('[UNKNOWN]');
+          $propertyOwnerSet
+            ->map(set: RelSetImplementation[1] |
+              $set->meta::pure::mapping::propertyMappingsByPropertyName($propertyName);
+            )
+            ->okOr(| errorTrace(format('No property mapping found for property %s in class %s.', [$propertyName->quote(), $className->quote()]), $newTrace))
             ->them(inner: meta::pure::mapping::PropertyMapping[*] | $inner->first()->toOne())
             ->tryCast(@RelPropertyMapping, $newTrace)
             ->andThen(mapping: RelPropertyMapping[1] | 
@@ -343,7 +346,7 @@ function meta::rel::compile::compile(
                     .target
                     ->appl($parent)
                 )              
-            )
+            );
         )
     );
 }
