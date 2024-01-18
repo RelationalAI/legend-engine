@@ -6,7 +6,7 @@ import meta::rel::utils::assert::*;
 
 // Basic test query.
 function <<test.Test>> meta::rel::test::query::operators::testQueryAll(): Any[*] {
-  let schema = RAISchema('json')->includeClass(TestRootClass);
+  let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
@@ -28,7 +28,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryAll(): Any[*]
 
 // Basic map query.
 function <<test.Test>> meta::rel::test::query::operators::testQueryMap(): Any[*] {
-  let schema = RAISchema('json')->includeClass(TestRootClass);
+  let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
@@ -51,7 +51,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryMap(): Any[*]
 
 // Basic test of multi-level map.
 function <<test.Test>> meta::rel::test::query::operators::testQueryMapMultiLevel(): Any[*] {
-  let schema = RAISchema('json')->includeClass(TestRootClass);
+  let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
@@ -74,7 +74,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryMapMultiLevel
 
 // Basic test of 'at'.
 function <<test.Test>> meta::rel::test::query::operators::testQueryAt(): Any[*] {
-  let schema = RAISchema('json')->includeClass(TestRootClass);
+  let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
@@ -95,7 +95,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryAt(): Any[*] 
 
 // Test of 'at' after a multi-level map.
 function <<test.Test>> meta::rel::test::query::operators::testQueryMapMultiLevelAt(): Any[*] {
-  let schema = RAISchema('json')->includeClass(TestRootClass);
+  let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
@@ -116,7 +116,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryMapMultiLevel
 
 // Basic project test.
 function <<test.Test>> meta::rel::test::query::operators::testQueryProject(): Any[*] {
-  let schema = RAISchema('json')->includeClass(TestRootClass);
+  let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
@@ -146,7 +146,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryProject(): An
 
 // Basic multi-level project test.
 function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiLevel(): Any[*] {
-  let schema = RAISchema('json')->includeClass(TestRootClass);
+  let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
@@ -182,7 +182,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiL
 
 // Basic multi-level project test with 'at' along a multihop path.
 function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiLevelWithAt(): Any[*] {
-  let schema = RAISchema('json')->includeClass(TestRootClass)->includeClass(TestClassAA)->includeClass(TestClassAAA);
+  let schema = RAISchema('test')->includeClass(TestRootClass)->includeClass(TestClassAA)->includeClass(TestClassAAA);
 
   let rai = $schema->TestConnection();
 
@@ -215,7 +215,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiL
 
 // Basic test of cast operator.
 function <<test.Test>> meta::rel::test::query::operators::testQueryCast(): Any[*] {
-  let schema = RAISchema('json')->includeAllRelatedClasses(TestRootClass);
+  let schema = RAISchema('test')->includeAllRelatedClasses(TestRootClass);
 
   let rai = $schema->TestConnection();
 
