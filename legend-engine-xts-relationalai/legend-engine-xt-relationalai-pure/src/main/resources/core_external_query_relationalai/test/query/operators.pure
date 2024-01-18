@@ -26,7 +26,6 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryAll(): Any[*]
   );
 }
 
-
 // Basic map query.
 function <<test.Test>> meta::rel::test::query::operators::testQueryMap(): Any[*] {
   let schema = RAISchema('json')->includeClass(TestRootClass);
@@ -162,6 +161,39 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiL
           x|$x.property2.propertyA1.propertyAA1.propertyAAA2,
           x|$x.property2.propertyA2.propertyAB1.propertyABA ],
           [ 'PropertyOne', 'PropertyThree', 'PropertyFive', 'PropertyPath1', 'PropertyPath2', 'PropertyPath3' ]
+        )
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def tbl1[:base] = x from x in TestRootClass',
+      'def tbl1[:PropertyOne, x] = TestRootClass:property1[x], tbl1(:base, x)',
+      'def tbl1[:PropertyThree, x] = TestRootClass:property3[x], tbl1(:base, x)',
+      'def tbl1[:PropertyFive, x] = TestRootClass:property5[x], tbl1(:base, x)',
+      'def tbl1[:PropertyPath1, x] = TestClassAAAA:propertyAAAA1[x4] from x4 in TestClassAAA:propertyAAA1[x3] from x3 in TestClassAA:propertyAA1[x2] from x2 in TestClassA:propertyA1[x1] from x1 in TestRootClass:property2[x], tbl1(:base, x)',
+      'def tbl1[:PropertyPath2, x] = TestClassAAA:propertyAAA2[x7] from x7 in TestClassAA:propertyAA1[x6] from x6 in TestClassA:propertyA1[x5] from x5 in TestRootClass:property2[x], tbl1(:base, x)',
+      'def tbl1[:PropertyPath3, x] = TestClassABA:propertyABA[x10] from x10 in TestClassAB:propertyAB1[x9] from x9 in TestClassA:propertyA2[x8] from x8 in TestRootClass:property2[x], tbl1(:base, x)',
+      'def output = tbl1[:PropertyOne, i], tbl1[:PropertyThree, i], tbl1[:PropertyFive, i], tbl1[:PropertyPath1, i], tbl1[:PropertyPath2, i], tbl1[:PropertyPath3, i] from i'
+    ],
+    $transpiledQuery
+  );
+}
+
+// Basic multi-level project test with 'at' along a multihop path.
+function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiLevelWithAt(): Any[*] {
+  let schema = RAISchema('json')->includeClass(TestRootClass)->includeClass(TestClassAA)->includeClass(TestClassAAA);
+
+  let rai = $schema->TestConnection();
+
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query({|
+        TestRootClass.all()->project([
+          x|$x.property1,
+          x|$x.property2.propertyA1.propertyAA2->at(3).propertyAAA1.propertyAAAA1,
+          x|$x.property2.propertyA1.propertyAA1.propertyAAA2 ],
+          [ 'PropertyOne', 'PropertyPath1', 'PropertyPath2' ]
         )
       })
       ->rel();
