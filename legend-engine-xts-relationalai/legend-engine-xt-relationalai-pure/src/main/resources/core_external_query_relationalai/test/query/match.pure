@@ -1,0 +1,68 @@
+import meta::rel::mapping::*;
+import meta::rel::mapping::schema::*;
+import meta::rel::runtime::*;
+import meta::rel::test::query::match::*;
+import meta::rel::utils::assert::*;
+
+Class meta::rel::test::query::match::TestClassWrapper {
+  fieldSuper: TestClassSuper[0..1];
+  fieldSub: TestClassSub[0..1];
+}
+
+Class meta::rel::test::query::match::TestClassSuper {
+  fieldOfSuper: String[0..1];
+}
+
+Class meta::rel::test::query::match::TestClassSub extends TestClassSuper {
+  fieldOfSub: String[0..1];
+}
+
+// This test passes.
+// Tests matching where a subtype is tested as a supertype. 
+function <<test.Test>> meta::rel::test::query::match::testQueryMatchSub(): Any[*] {
+  let schema = RAISchema('test')->includeClass(TestClassWrapper);
+
+  let rai = $schema->TestConnection();
+
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query({|
+        TestClassWrapper.all()->map(x | $x.fieldSub->match([
+          y: TestClassSub[1]   | $y.fieldOfSub,
+          z: TestClassSuper[1] | $z.fieldOfSuper
+        ]))
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def output = x2 = TestClassWrapper:fieldSub[x1] and (if TestClassSub(x2) then TestClassSub:fieldOfSub[x2] else if TestClassSub(x2) then TestClassSuper:fieldOfSuper[x2] else false) from x1 in TestClassWrapper'
+    ],
+    $transpiledQuery
+  );
+}
+
+// This test fails.
+// Tests matching where a supertype is tested as a subtype. 
+function <<test.Test>> meta::rel::test::query::match::testQueryMatchSuper(): Any[*] {
+  let schema = RAISchema('test')->includeClass(TestClassWrapper);
+
+  let rai = $schema->TestConnection();
+
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query(|
+        TestClassWrapper.all()->map(x | $x.fieldSuper->match([
+          y: TestClassSub[1]   | $y.fieldOfSub,
+          z: TestClassSuper[1] | $z.fieldOfSuper
+       ]))
+      )
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def output = x2 = TestClassWrapper:fieldSuper[x1] and (if TestClassSub(x2) then TestClassSub:fieldOfSub[x2] else if TestClassSub(x2) then TestClassSuper:fieldOfSuper[x2] else false) from x1 in TestClassWrapper'
+    ],
+    $transpiledQuery
+  );
+}
