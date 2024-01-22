@@ -237,3 +237,78 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryCast(): Any[*
     $transpiledQuery
   );
 }
+
+function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiLevelWithAtSimple1(): Any[*] {
+  let schema = RAISchema('test')->includeClass(TestClassAA);
+
+  let rai = $schema->TestConnection();
+
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query({|
+        TestClassAA.all()->project([
+          x|$x.propertyAA2->at(3).propertyAAA2 ],
+          [ 'PropertyPath1' ]
+        )
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def tbl1[:base] = x from x in TestClassAA',
+      'def tbl1[:PropertyPath1, x] = TestClassAAA:propertyAAA2[TestClassAA:propertyAA2[x][3]], tbl1(:base, x)',
+      'def output = tbl1[:PropertyPath1, i] from i'
+    ],
+    $transpiledQuery
+  );
+}
+
+function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiLevelWithAtSimple2(): Any[*] {
+  let schema = RAISchema('test')->includeClass(TestClassA);
+
+  let rai = $schema->TestConnection();
+
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query({|
+        TestClassA.all()->project([
+          x|$x.propertyA1.propertyAA2->at(3) ],
+          [ 'PropertyPath1' ]
+        )
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def tbl1[:base] = x from x in TestClassA',
+      'def tbl1[:PropertyPath1, x] = (TestClassAA:propertyAA2[x1] from x1 in TestClassA:propertyA1[x])[3], tbl1(:base, x)',
+      'def output = tbl1[:PropertyPath1, i] from i'
+    ],
+    $transpiledQuery
+  );
+}
+
+function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiLevelWithAtSimple3(): Any[*] {
+  let schema = RAISchema('test')->includeClass(TestClassA);
+
+  let rai = $schema->TestConnection();
+
+  let transpiledQuery =
+    $rai
+      ->meta::rel::runtime::query({|
+        TestClassA.all()->project([
+          x|$x.propertyA1.propertyAA2->at(3).propertyAAA2 ],
+          [ 'PropertyPath1' ]
+        )
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def tbl1[:base] = x from x in TestClassA',
+      'def tbl1[:PropertyPath1, x] = (TestClassAA:propertyAA2[x1] from x1 in TestClassA:propertyA1[x])[3], tbl1(:base, x)',
+      'def output = tbl1[:PropertyPath1, i] from i'
+    ],
+    $transpiledQuery
+  );
+}

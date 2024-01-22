@@ -34,6 +34,8 @@ Class meta::rel::test::query::models::testmodel::TestClassA
 Class meta::rel::test::query::models::testmodel::TestClassAA
 {
   propertyAA1: TestClassAAA[0..1];
+  // This property is used to test 'at' along a multihop path from the root.
+  propertyAA2: TestClassAAA[*];
 }
 
 Class meta::rel::test::query::models::testmodel::TestClassAAA
