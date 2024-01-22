@@ -21,6 +21,12 @@ function meta::rel::contract::contract(): StoreContract[1] {
       // meta::relational::functions::database::tableReference_Database_1__String_1__String_1__Table_1_,
       // meta::relational::functions::columnProjectionsFromRoot_Any_MANY__NamedRelation_1__String_MANY__Boolean_$0_1$__Integer_$0_1$__RelationData_1_
     ],
+    isPropertyAutoMapped = {prop: AbstractProperty<Any>[1], set: InstanceSetImplementation[1] |
+      $set->match([
+        r: RelSetImplementation[1] | $r->_propertyMappingsByPropertyName($prop.name->toOne())->isNotEmpty(),
+        a: Any[*]                  | false
+      ])
+    },
     // ------------------------------------------------------------------------------------------ Routing
 
     // ExecutionPlan Generation -------------------------------------------------------------------------
@@ -29,6 +35,7 @@ function meta::rel::contract::contract(): StoreContract[1] {
 
     // Core ---------------------------------------------------------------------------------------------
     supportsSetImplementation = s:SetImplementation[1]|$s->instanceOf(RelSetImplementation),
+
     supportsStore = s:Store[1] | $s->instanceOf(meta::rel::metamodel::store::RAIDatabase),
     resolveStoreFromSetImplementation = {s:InstanceSetImplementation[1] |
       $s.stores->toOne();
