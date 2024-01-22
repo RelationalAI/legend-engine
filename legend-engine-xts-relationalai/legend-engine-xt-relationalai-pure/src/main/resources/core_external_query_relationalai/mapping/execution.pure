@@ -49,7 +49,7 @@ function <<access.private>> meta::rel::mapping::execution(
     ->functionExprToPExpr($newTrace)
     ->andThen(node: PExpr[1] |
       //$debug->debug(| 'PURE Expression plan:');
-      $debug->debug(| $node->meta::rel::compile::ir::utils::display());
+      $debug->debug(| $node->meta::rel::compile::ir::utils::describe());
       $node->compile(emptySubstitution(), emptyColumnAccessRewrite(), $state, $newTrace);
     )
     ->andThen({state: CompilationState[1] |
