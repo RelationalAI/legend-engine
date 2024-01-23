@@ -23,8 +23,12 @@ function meta::rel::contract::contract(): StoreContract[1] {
     ],
     isPropertyAutoMapped = {prop: AbstractProperty<Any>[1], set: InstanceSetImplementation[1] |
       $set->match([
-        r: RelSetImplementation[1] | $r->_propertyMappingsByPropertyName($prop.name->toOne())->isNotEmpty(),
-        a: Any[*]                  | false
+        {r: RelSetImplementation[1] |
+          let propertyName = $prop.name->toOne();
+          let setHasPropertyMapping = $r->_propertyMappingsByPropertyName($propertyName)->isNotEmpty();
+          $setHasPropertyMapping && !$prop->isPrimitiveValueProperty();
+        },
+        {a: Any[*] | false }
       ])
     },
     // ------------------------------------------------------------------------------------------ Routing
