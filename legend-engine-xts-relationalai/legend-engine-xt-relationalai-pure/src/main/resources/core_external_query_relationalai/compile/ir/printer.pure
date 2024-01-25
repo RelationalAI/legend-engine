@@ -1,7 +1,11 @@
+import meta::rel::mapping::*;
 import meta::rel::compile::ir::*;
 import meta::rel::compile::ir::utils::*;
 import meta::rel::utils::*;
 
+function meta::rel::compile::ir::utils::describeSetImpl(set: RelSetImplementation[0..1]): String[1] {
+  $set.id->orElse('[NO ID]');
+}
 
 function meta::rel::compile::ir::utils::describeConstant(c: Constant[1]): String[1] {
   $c->match([
@@ -19,51 +23,120 @@ function meta::rel::compile::ir::utils::describeAggregate(agg: PExprAggregate[1]
   format('Aggregate(%s, %s, %s)', [$agg.map->describe(), $agg.aggregateFunction->describe(), $agg.name->orElse('[NO NAME]')])
 }
 
+function meta::rel::compile::ir::utils::describeVariablePlaceholder(v: VariablePlaceholder[1]): String[1] {
+  format('VariablePlaceholder(%s)', $v.identifier)
+}
+
+function meta::rel::compile::ir::utils::describeAll(all: PExprAll[1]): String[1] {
+  format('All(%s)', $all.set->describeSetImpl())
+}
+
+function meta::rel::compile::ir::utils::describeFilter(filter: PExprFilter[1]): String[1] {
+  format('Filter(%s, %s)', [$filter.parent->describe(), $filter.predicate->describe()])
+}
+
+function meta::rel::compile::ir::utils::describeCast(cast: PExprCast[1]): String[1] {
+  format('Cast(%s, %s)', [$cast.parent->describe(), $cast.set->describeSetImpl()])
+}
+
+function meta::rel::compile::ir::utils::describeExists(exists: PExprExists[1]): String[1] {
+  format('Exists(%s, %s)', [$exists.parent->describe(), $exists.predicate->describe()])
+}
+
+function meta::rel::compile::ir::utils::describeForAll(forall: PExprForAll[1]): String[1] {
+  format('ForAll(%s, %s)', [$forall.parent->describe(), $forall.predicate->describe()])
+}
+
+function meta::rel::compile::ir::utils::describeSetAccess(setAccess: PExprSetAccess[1]): String[1] {
+  format('SetAccess(%s, %s)', [$setAccess.set->describeSetImpl(), $setAccess.variable])
+}
+
+function meta::rel::compile::ir::utils::describePropertyAccess(propAccess: PExprPropertyAccess[1]): String[1] {
+  format('PropertyAccess(%s, %s, %s)', [$propAccess.parent->describe(), $propAccess.property.name->orElse('[NO NAME]'), $propAccess.set->describeSetImpl()])
+}
+
+function meta::rel::compile::ir::utils::describeColumnAccess(colAccess: PExprColumnAccess[1]): String[1] {
+  format('ColumnAccess(%s, %s)', [$colAccess.parent->describe(), $colAccess.column])
+}
+
+function meta::rel::compile::ir::utils::describeScopeTyped(scope: PExprScopeTyped[1]): String[1] {
+  format('ScopeTyped(%s, %s)', [$scope.exprType, $scope.variable])
+}
+
+function meta::rel::compile::ir::utils::describeScopeUntyped(scope: PExprScopeUntyped[1]): String[1] {
+  format('ScopeUntyped(%s)', $scope.variables)
+}
+
+    // {scoped: PExprScope[1] |
+    //   format('%sScope via `%s`:\n%s', [indent($indent), $scoped->variables()->joinStrings(', '), $scoped.inner->describe($indent + 2)]);
+    // },
 
 
 
+function meta::rel::compile::ir::utils::describeAt(at: PExprAt[1]): String[1] {
+  format('At(%s, %s)', [$at.parent->describe(), $at.index])
+}
 
+function meta::rel::compile::ir::utils::describeMap(map: PExprMap[1]): String[1] {
+  format('Map(%s, %s)', [$map.parent->describe(), $map.body->describe()])
+}
 
-/// OLD IMPLEMENTATION BELOW THIS LINE
+function meta::rel::compile::ir::utils::describeProject(project: PExprProject[1]): String[1] {
+  format('Project(%s, %s)', [$project.parent->describe(), 'TODO'])
+}
+
+function meta::rel::compile::ir::utils::describeIfThenElse(condition: PExprIfThenElse[1]): String[1] {
+  format('IfThenElse(%s, %s, %s)', [$condition.condition->describe(), $condition.then->describe(), $condition.else->describe()])
+}
+
+function meta::rel::compile::ir::utils::describeMatch(match: PExprMatch[1]): String[1] {
+  format('Match(%s, %s)', [$match.parent->describe(), '$match.cases->describe()'])
+}
+
+function meta::rel::compile::ir::utils::describeFunction(fexpr: PExprFunction<|n>[1]): String[1] {
+  format('Function(%s, %s)', [$fexpr.fn->id(), $fexpr.arguments->map(arg | $arg->describe())->joinStrings('\n')])
+}
+
+function meta::rel::compile::ir::utils::describeGroupBy(groupby: PExprGroupBy[1]): String[1] {
+  format('GroupBy(%s, %s)', [$groupby.parent->describe(), 'TODO'])
+}
+
+function meta::rel::compile::ir::utils::describeCompilationStep(agg: PExprCompilationStep[1]): String[1] {
+  format('CompilationStep(%s, %s)', ['logic', 'property'])
+}
+
+function meta::rel::compile::ir::utils::describeGroupByColumns(agg: PExprGroupByColumns[1]): String[1] {
+  format('GroupByColumns(%s)', ['groups'])
+}
+
+function meta::rel::compile::ir::utils::describeGroupByScopes(agg: PExprGroupByScopes[1]): String[1] {
+  format('GroupByScopes(%s, %s)', ['group', 'names'])
+}
 
 function meta::rel::compile::ir::utils::describe(expr: PExpr[1]): String[1] {
-  $expr->describe(0);
-}
-
-function meta::rel::compile::ir::utils::describe(expr: PExpr[1], indent: Integer[1]): String[1] {
   $expr->match([
-    {int: ConstInteger[1] | $int.value->toString()},
-    {float: ConstFloat[1] | $float.value->toString()},
-    {var: VariablePlaceholder[1] | $var.identifier},
-    {all: PExprAll[1] | format('%sAll %s', [indent($indent), $all.set.id])},
-    {access: PExprSetAccess[1] | 
-      format('%sSet access %s via variable `%s`', [indent($indent), $access.set.id->orElse(''), $access.variable]);
-    },
-    {access: PExprPropertyAccess[1] |
-      format('%sProperty access on `%s`\n%s', [indent($indent), $access.property.name->toOne(), $access.parent->describe($indent + 2)]);
-    },
-    {scoped: PExprScope[1] |
-      format('%sScope via `%s`:\n%s', [indent($indent), $scoped->variables()->joinStrings(', '), $scoped.inner->describe($indent + 2)]);
-    },
-    {exists: PExprExists[1] |
-      format('%sExists\n%s\n%s', [indent($indent), $exists.parent->describe($indent + 2), $exists.predicate->describe($indent + 2)])
-    },
-    {forAll: PExprForAll[1] |
-      format('%sFor all\n%s\n%s', [indent($indent), $forAll.parent->describe($indent + 2), $forAll.predicate->describe($indent + 2)])
-    },
-    {filter: PExprFilter[1] |
-      format('%sFilter\n%s\n%s', [indent($indent), $filter.parent->describe($indent + 2), $filter.predicate->describe($indent + 2)])
-    },
-    {map: PExprMap[1] |
-      format('%sMap\n%s\n%s', [indent($indent), $map.parent->describe($indent + 2), $map.body->describe($indent + 2)])
-    },
-    {fexpr: PExprFunction<|*>[1] |
-      format('%sFunction Expression %s\n%s', [
-        indent($indent),
-        $fexpr.fn->id(),
-        $fexpr.arguments->map(arg | $arg->describe($indent + 2))->joinStrings('\n')
-      ])
-    }
+    expr: Constant[1]             | $expr->describeConstant(),
+    expr: PExprAggregate[1]       | $expr->describeAggregate(),
+    expr: PExprAll[1]             | $expr->describeAll(),
+    expr: PExprAt[1]              | $expr->describeAt(),
+    expr: PExprCast[1]            | $expr->describeCast(),
+    expr: PExprColumnAccess[1]    | $expr->describeColumnAccess(),
+    expr: PExprCompilationStep[1] | $expr->describeCompilationStep(),
+    expr: PExprExists[1]          | $expr->describeExists(),
+    expr: PExprFilter[1]          | $expr->describeFilter(),
+    expr: PExprForAll[1]          | $expr->describeForAll(),
+    expr: PExprFunction<|n>[1]    | $expr->describeFunction(),
+    expr: PExprGroupBy[1]         | $expr->describeGroupBy(),
+    expr: PExprGroupByColumns[1]  | $expr->describeGroupByColumns(),
+    expr: PExprGroupByScopes[1]   | $expr->describeGroupByScopes(),
+    expr: PExprIfThenElse[1]      | $expr->describeIfThenElse(),
+    expr: PExprMap[1]             | $expr->describeMap(),
+    expr: PExprMatch[1]           | $expr->describeMatch(),
+    expr: PExprProject[1]         | $expr->describeProject(),
+    expr: PExprPropertyAccess[1]  | $expr->describePropertyAccess(),
+    expr: PExprScopeTyped[1]      | $expr->describeScopeTyped(),
+    expr: PExprScopeUntyped[1]    | $expr->describeScopeUntyped(),
+    expr: PExprSetAccess[1]       | $expr->describeSetAccess(),
+    expr: VariablePlaceholder[1]  | $expr->describeVariablePlaceholder()
   ]);
 }
-
