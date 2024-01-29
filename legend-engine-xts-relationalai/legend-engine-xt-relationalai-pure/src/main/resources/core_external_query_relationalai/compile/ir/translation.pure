@@ -25,7 +25,7 @@ import meta::rel::utils::lang::*;
 // Translation functions //
 ///////////////////////////
 
-function meta::rel::compile::ir::storeMappingRoutedValueSpecToRelSet(
+function <<access.private>> meta::rel::compile::ir::storeMappingRoutedValueSpecToRelSet(
   spec: StoreMappingRoutedValueSpecification[1],
   trace: Trace[1]
 ): Result<RelSetImplementation|0..1>[1] {
@@ -45,7 +45,7 @@ function meta::rel::compile::ir::valueSpecToPExpr(
     ->valueSpecToPExpr([], $newTrace);
 }
 
-function meta::rel::compile::ir::valueSpecToPExpr(
+function <<access.private>> meta::rel::compile::ir::valueSpecToPExpr(
   spec: ValueSpecification[1],
   set: RelSetImplementation[0..1],
   trace: Trace[1]
@@ -69,7 +69,7 @@ function meta::rel::compile::ir::valueSpecToPExpr(
   ]);
 }
 
-function meta::rel::compile::ir::instanceValueToPExpr(
+function <<access.private>> meta::rel::compile::ir::instanceValueToPExpr(
   spec: InstanceValue[1],
   set: RelSetImplementation[0..1],
   trace: Trace[1]
@@ -89,7 +89,7 @@ function meta::rel::compile::ir::instanceValueToPExpr(
   );
 }
 
-function meta::rel::compile::ir::valueToPExpr(
+function <<access.private>> meta::rel::compile::ir::valueToPExpr(
   value: Any[1],
   set: RelSetImplementation[0..1],
   trace: Trace[1]
@@ -125,7 +125,7 @@ function meta::rel::compile::ir::valueToPExpr(
   ]);
 }
 
-function meta::rel::compile::ir::propertyToPExpr(
+function <<access.private>> meta::rel::compile::ir::propertyToPExpr(
   func: FunctionExpression[1],
   set: RelSetImplementation[0..1],
   trace: Trace[1]
@@ -164,7 +164,7 @@ function meta::rel::compile::ir::functionExprToPExpr(
   functionExprToPExpr($func, [], $newTrace);
 }
 
-function meta::rel::compile::ir::functionExprToPExpr(
+function <<access.private>> meta::rel::compile::ir::functionExprToPExpr(
   func: FunctionExpression[1],
   set: RelSetImplementation[0..1],
   trace: Trace[1]
@@ -778,7 +778,7 @@ function <<access.private>> meta::rel::compile::ir::handleCaseExtractEnumValue(f
     });
 }
 
-function meta::rel::compile::ir::intoAggregates(
+function <<access.private>> meta::rel::compile::ir::intoAggregates(
   spec: ValueSpecification[1],
   parent: PExpr[1],
   trace: Trace[1]
@@ -840,7 +840,7 @@ function meta::rel::compile::ir::intoAggregates(
   ]);
 }
 
-function meta::rel::compile::ir::getFunctionExpr(
+function <<access.private>> meta::rel::compile::ir::getFunctionExpr(
   fn: FunctionExpression[1],
   trace: Trace[1]
 ): Result<FunctionDefinition<{Expr[*]->Expr[1]}>|0..1>[1] {
