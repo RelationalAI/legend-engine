@@ -120,7 +120,8 @@ function <<access.private>> meta::rel::compile::ir::handleCaseFunctionDefToScope
                 {| $inner->scopeUntyped($vars.name, $parent)->ok()},
                 {|
                   $spec->match([
-                    { spec: StoreMappingRoutedValueSpecification[1] |
+                    {
+                      spec: StoreMappingRoutedValueSpecification[1] |
                         $spec
                           ->storeMappingRoutedValueSpecToRelSet($newTrace)
                           ->andThen(set: RelSetImplementation[0..1] |
@@ -137,6 +138,10 @@ function <<access.private>> meta::rel::compile::ir::handleCaseFunctionDefToScope
                           | error('No type given.', $newTrace),
                           | $inner->scopeTyped($vars->toOne().name, exprType($primitiveType->toOne()), $parent)->ok()
                         );
+                    },
+                    {
+                      spec: SimpleFunctionExpression[1] |
+                        error('Missing required type information.', $newTrace);
                     }
                   ])
                 }
