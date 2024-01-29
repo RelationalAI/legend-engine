@@ -140,3 +140,7 @@ function meta::rel::compile::ir::utils::describe(expr: PExpr[1]): String[1] {
     expr: VariablePlaceholder[1]  | $expr->describeVariablePlaceholder()
   ]);
 }
+
+function meta::rel::compile::ir::utils::describe(expr: PExpr[0..1]): String[0..1] {
+  $expr->map(e: PExpr[1] | $e->describe())
+}

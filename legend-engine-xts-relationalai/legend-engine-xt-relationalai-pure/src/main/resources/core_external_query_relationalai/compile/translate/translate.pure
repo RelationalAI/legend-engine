@@ -13,6 +13,7 @@
   * tracks outputs of previous compilation steps. 
   */
 
+import meta::rel::compile::ir::utils::*;
 import meta::rel::compile::*;
 import meta::rel::compile::ir::*;
 import meta::rel::compile::substitution::*;
@@ -35,7 +36,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExpr[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExpr[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('expr', $expr->describe());
   $expr->match([
     s: ConstString[1]          | ^$state(current=meta::rel::metamodel::const($s.value)->annotate(String))->ok(),
     i: ConstInteger[1]         | ^$state(current=meta::rel::metamodel::const($i.value)->annotate(Integer))->ok(),
@@ -79,7 +83,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprAt[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprAt[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('at', $at->describe());
   /*
    * Recursively compile the parent and apply partial relational application
    * using the index of the `at` operator.
@@ -117,7 +124,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprCast[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprCast[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('cast', $cast->describe());
   let bound = var($state.variableFactory->next());
   /*
    * TODO:
@@ -153,7 +163,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   traceOld: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = emptyTrace()->stage('compile(PExprFilter[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    emptyTrace()
+      ->stage('compile(PExprFilter[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('filter', $filter->describe());
   $filter.parent
     ->compile($substitution, $rewrite, $state, $newTrace)
     ->step({parent: Expr[1] |
@@ -189,7 +202,10 @@ function meta::rel::compile::compile<|n>(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprFilter[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprFilter[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('fexpr', $fexpr->describe());
   $fexpr.arguments
     ->map(a | $a->compile($substitution, $rewrite, $state, $newTrace)->current())
     ->collect()
@@ -204,7 +220,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprFilter[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprFilter[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('exists', $exists->describe());
   $exists.parent
     ->compile($substitution, $rewrite, $state, $newTrace)
     ->step({parent: Expr[1] |
@@ -247,7 +266,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = emptyTrace()->stage('compile(PExprForAll[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    emptyTrace()
+      ->stage('compile(PExprForAll[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('forAll', $forAll->describe());
   $forAll.parent
     ->compile($substitution, $rewrite, $state, $newTrace)
     ->step({parent: Expr[1] |
@@ -292,7 +314,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprSetAccess[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprSetAccess[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('access', $access->describe());
   $substitution
     ->apply($access.variable,$newTrace)
     ->then(var: Expr[1] |
@@ -307,7 +332,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprColumnAccess[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprColumnAccess[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('access', $access->describe());
   $rewrite
     ->apply($access, $newTrace)
     ->then(expr: Expr[1] |
@@ -322,7 +350,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprPropertyAccess[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprPropertyAccess[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('access', $access->describe());
   $access.parent
     ->compile($substitution, $rewrite, $state, $newTrace)
     ->step(parent: Expr[1] |
@@ -358,7 +389,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprPropertyAccess[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprPropertyAccess[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('expr', $expr->describe());
   $expr.parent
     ->compile($substitution, $rewrite, $state, $newTrace)
     ->step(parent: Expr[1] |
@@ -398,7 +432,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprScoped[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprScoped[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('expr', $expr->describe());
   $expr.inner->compile($substitution, $rewrite, $state, $newTrace);
 }
 
@@ -409,7 +446,9 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprProject[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace = $trace
+    ->stage('compile(PExprProject[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+    ->detail('expr', $expr->describe());
 
   $expr.parent
     ->compile($substitution, $rewrite, $state, $newTrace)
@@ -498,7 +537,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(VariablePlaceholder[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace = 
+    $trace
+      ->stage('compile(VariablePlaceholder[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('expr', $expr->describe());
   $substitution
     ->apply($expr.identifier, $newTrace)
     ->then(subst: Expr[1] | ^$state(current=$subst));
@@ -511,7 +553,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprGroupByScopes[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprGroupByScopes[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('expr', $expr->describe());
   $expr->match([
     gs: PExprGroupByScopes[1] | $gs->compile($substitution, $rewrite, $state, $newTrace),
     gc: PExprGroupByColumns[1] | $gc->compile($substitution, $rewrite, $state, $newTrace)
@@ -525,7 +570,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprGroupByScopes[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprGroupByScopes[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('expr', $expr->describe());
 
   $expr.parent
     ->compile($substitution, $rewrite, $state, $newTrace)
@@ -740,7 +788,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprGroupByColumns[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprGroupByColumns[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('expr', $expr->describe());
 
   $expr.parent
     ->compile($substitution, $rewrite, $state, $newTrace)
@@ -913,7 +964,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprIfThenElse[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprIfThenElse[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('ifThenElse', $ifThenElse->describe());
   $ifThenElse.condition
     ->compile($substitution, $rewrite, $state, $newTrace)
     ->andThen({state: CompilationState[1] |
@@ -941,7 +995,10 @@ function meta::rel::compile::compile(
   state: CompilationState[1],
   trace: Trace[1]
 ): Result<CompilationState|0..1>[1] {
-  let newTrace = $trace->stage('compile(PExprMatch[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])');
+  let newTrace =
+    $trace
+      ->stage('compile(PExprMatch[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('match', $match->describe());
 
   $match.parent
     ->compile($substitution, $rewrite, $state, $newTrace)
