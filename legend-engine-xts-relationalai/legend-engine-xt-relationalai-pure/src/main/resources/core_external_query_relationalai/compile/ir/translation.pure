@@ -156,11 +156,14 @@ function <<access.private>> meta::rel::compile::ir::propertyToPExpr(
   ]);
 }
 
-function meta::rel::compile::ir::functionExprToPExpr(
+/*
+ * Main entry point to transpiling into P-Expressions.
+ */
+function meta::rel::compile::ir::entryPointPExpr(
   func: FunctionExpression[1],
   trace: Trace[1]
 ): Result<PExpr|0..1>[1] {
-  let newTrace = $trace->stage('functionExprToPExpr(FunctionExpression[1],Trace[1])');
+  let newTrace = $trace->stage('entryPointPExpr(FunctionExpression[1],Trace[1])');
   functionExprToPExpr($func, [], $newTrace);
 }
 
