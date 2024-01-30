@@ -4,7 +4,7 @@ import meta::rel::compile::ir::utils::*;
 import meta::rel::utils::*;
 
 function meta::rel::compile::ir::utils::describeSetImpl(set: RelSetImplementation[0..1]): String[1] {
-  $set.id->orElse('[NO ID]');
+  $set.id->orElse('[NO SET]');
 }
 
 function meta::rel::compile::ir::utils::describeConstant(c: Constant[1]): String[1] {
