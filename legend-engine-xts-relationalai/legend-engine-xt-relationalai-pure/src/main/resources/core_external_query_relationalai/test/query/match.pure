@@ -14,7 +14,7 @@ Class meta::rel::test::query::match::TestClassSuper {
 }
 
 Class meta::rel::test::query::match::TestClassSub extends TestClassSuper {
-  fieldOfSub: String[0..1];
+  fieldOfSub: Decimal[0..1];
 }
 
 // This test passes.
