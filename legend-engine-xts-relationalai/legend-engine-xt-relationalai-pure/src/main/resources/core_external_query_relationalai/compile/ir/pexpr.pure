@@ -40,9 +40,13 @@ Enum meta::rel::compile::ir::SupportedPrimitiveType {
   TypeFloat,
   TypeInteger,
   TypeStrictDate,
-  TypeString
+  TypeString,
+  TypeDecimal
 }
 
+/**
+  * Return the Rel type for the given primitive Pure type.
+  */
 function meta::rel::compile::ir::name(t: SupportedPrimitiveType[1]): String[1] {
   switch([
     case($t == SupportedPrimitiveType.TypeBoolean,    | 'Boolean'),
@@ -50,7 +54,8 @@ function meta::rel::compile::ir::name(t: SupportedPrimitiveType[1]): String[1] {
     case($t == SupportedPrimitiveType.TypeFloat,      | 'Float'),
     case($t == SupportedPrimitiveType.TypeInteger,    | 'Integer'),
     case($t == SupportedPrimitiveType.TypeStrictDate, | 'DateTime'), // TODO: Check this is the correct Rel type.
-    case($t == SupportedPrimitiveType.TypeString,     | 'String')
+    case($t == SupportedPrimitiveType.TypeString,     | 'String'),
+    case($t == SupportedPrimitiveType.TypeDecimal,    | 'FixedDecimal[64, 18]')
   ], {|
     fail(format('Unsupported primitive type `%s`', $t));
     'unreachable';
@@ -79,6 +84,9 @@ function meta::rel::compile::ir::exprTypeStrictDate(): PExprTypePrimitive[1] {
 function meta::rel::compile::ir::exprTypeString(): PExprTypePrimitive[1] {
   ^PExprTypePrimitive(kind=SupportedPrimitiveType.TypeString);
 }
+function meta::rel::compile::ir::exprTypeDecimal(): PExprTypePrimitive[1] {
+  ^PExprTypePrimitive(kind=SupportedPrimitiveType.TypeDecimal);
+}
 
 function meta::rel::compile::ir::exprType(rawType: Type[1]): PExprTypePrimitive[1] {
   switch([
@@ -86,7 +94,8 @@ function meta::rel::compile::ir::exprType(rawType: Type[1]): PExprTypePrimitive[
     case($rawType == DateTime,   | exprTypeDateTime()),
     case($rawType == Float,      | exprTypeFloat()),
     case($rawType == Integer,    | exprTypeInteger()),
-    case($rawType == StrictDate, | exprTypeStrictDate())
+    case($rawType == StrictDate, | exprTypeStrictDate()),
+    case($rawType == Decimal,    | exprTypeDecimal())
   ], {|
     assert($rawType == String, format('Unsupported primitive type `%s`', $rawType.name));
     exprTypeString();
@@ -126,6 +135,10 @@ Class meta::rel::compile::ir::ConstStrictDate extends meta::rel::compile::ir::Co
 
 Class meta::rel::compile::ir::ConstDateTime extends meta::rel::compile::ir::Constant {
   value: DateTime[1];
+}
+
+Class meta::rel::compile::ir::ConstDecimal extends meta::rel::compile::ir::Constant {
+  value: Decimal[1];
 }
 
 /** Marker for the empty collection. */
