@@ -541,7 +541,8 @@ function meta::rel::compile::ir::set(expr: PExpr[1]): RelSetImplementation[0..1]
     e: PExprForAll[1]         | $e.parent->set(),
     e: PExprProject[1]        | $e.parent->set(),
     e: PExprGroupBy[1]        | $e.parent->set(),
-    step: PExprCompilationStep[1] | $step.property->map(fun | $fun->eval('set', []))->first()->cast(@RelSetImplementation)
+    step: PExprCompilationStep[1] | $step.property->map(fun | $fun->eval('set', []))->first()->cast(@RelSetImplementation),
+    e: PExpr[1]               | [] // Catch all case.
   ])
 }
 
