@@ -3,6 +3,13 @@ import meta::rel::compile::ir::*;
 import meta::rel::compile::ir::utils::*;
 import meta::rel::utils::*;
 
+function meta::rel::compile::ir::utils::describeExprType(exprType: PExprType[1]): String[1] {
+  $exprType->match([
+    t: PExprTypeClass[1]     | $t.set->describeSetImpl(),
+    t: PExprTypePrimitive[1] | $t.kind->toString()
+  ])
+}
+
 function meta::rel::compile::ir::utils::describeSetImpl(set: RelSetImplementation[0..1]): String[1] {
   $set.id->orElse('[NO SET]');
 }
@@ -60,7 +67,7 @@ function meta::rel::compile::ir::utils::describeColumnAccess(colAccess: PExprCol
 }
 
 function meta::rel::compile::ir::utils::describeScopeTyped(scope: PExprScopeTyped[1]): String[1] {
-  format('ScopeTyped(%s, %s)', [$scope.exprType, $scope.variable])
+  format('ScopeTyped(%s, %s)', [$scope.exprType->describeExprType(), $scope.variable])
 }
 
 function meta::rel::compile::ir::utils::describeScopeUntyped(scope: PExprScopeUntyped[1]): String[1] {
