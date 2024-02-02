@@ -67,18 +67,18 @@ function meta::rel::compile::ir::utils::describeColumnAccess(colAccess: PExprCol
 }
 
 function meta::rel::compile::ir::utils::describeScopeTyped(scope: PExprScopeTyped[1]): String[1] {
-  format('ScopeTyped(%s, %s)', [$scope.exprType->describeExprType(), $scope.variable])
+  /*
+   * Include all fields except `parent`.
+   */
+  format('ScopeTyped(%s, %s, %s)', [$scope.inner->describe(), $scope.exprType->describeExprType(), $scope.variable])
 }
 
 function meta::rel::compile::ir::utils::describeScopeUntyped(scope: PExprScopeUntyped[1]): String[1] {
-  format('ScopeUntyped(%s)', $scope.variables)
+  /*
+   * Include all fields except `parent`.
+   */
+  format('ScopeUntyped(%s, %s)', [$scope.inner->describe(), $scope.variables->makeString(', ')])
 }
-
-    // {scoped: PExprScope[1] |
-    //   format('%sScope via `%s`:\n%s', [indent($indent), $scoped->variables()->joinStrings(', '), $scoped.inner->describe($indent + 2)]);
-    // },
-
-
 
 function meta::rel::compile::ir::utils::describeAt(at: PExprAt[1]): String[1] {
   format('At(%s, %s)', [$at.parent->describe(), $at.index])
@@ -89,7 +89,13 @@ function meta::rel::compile::ir::utils::describeMap(map: PExprMap[1]): String[1]
 }
 
 function meta::rel::compile::ir::utils::describeProject(project: PExprProject[1]): String[1] {
-  format('Project(%s, %s)', [$project.parent->describe(), 'TODO'])
+  let projections =
+    $project.projections
+      ->map(p: Pair<String,PExprScope>[1] |
+        format('Projection(%s, %s)', [$p.first, $p.second->describe()])
+      )
+      ->makeString('\n', ',\n', '\n');
+  format('Project(%s, [%s])', [$project.parent->describe(), $projections]);
 }
 
 function meta::rel::compile::ir::utils::describeIfThenElse(condition: PExprIfThenElse[1]): String[1] {
@@ -97,7 +103,11 @@ function meta::rel::compile::ir::utils::describeIfThenElse(condition: PExprIfThe
 }
 
 function meta::rel::compile::ir::utils::describeMatch(match: PExprMatch[1]): String[1] {
-  format('Match(%s, %s)', [$match.parent->describe(), '$match.cases->describe()'])
+  let cases =
+    $match.cases
+      ->map(e: PExprScopeTyped[1] | $e->describe())
+      ->makeString('\n', ',\n', '\n');
+  format('Match(%s, Cases[%s])', [$match.parent->describe(), $cases]);
 }
 
 function meta::rel::compile::ir::utils::describeFunction(fexpr: PExprFunction<|n>[1]): String[1] {
