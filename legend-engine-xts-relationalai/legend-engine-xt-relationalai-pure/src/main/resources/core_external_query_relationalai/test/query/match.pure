@@ -42,7 +42,6 @@ function <<test.Test>> meta::rel::test::query::match::testQueryMatchSub(): Any[*
   );
 }
 
-// This test fails.
 // Tests matching where a supertype is tested as a subtype. 
 function <<test.Test>> meta::rel::test::query::match::testQueryMatchSuper(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestClassWrapper);
@@ -61,7 +60,7 @@ function <<test.Test>> meta::rel::test::query::match::testQueryMatchSuper(): Any
 
   assertEqualRel(
     [
-      'def output = x2 = TestClassWrapper:fieldSuper[x1] and (if TestClassSub(x2) then TestClassSub:fieldOfSub[x2] else if TestClassSub(x2) then TestClassSuper:fieldOfSuper[x2] else false) from x1 in TestClassWrapper'
+      'def output = x2 = TestClassWrapper:fieldSuper[x1] and (if TestClassSub(x2) then TestClassSub:fieldOfSub[x2] else if TestClassSuper(x2) then TestClassSuper:fieldOfSuper[x2] else false) from x1 in TestClassWrapper'
     ],
     $transpiledQuery
   );
