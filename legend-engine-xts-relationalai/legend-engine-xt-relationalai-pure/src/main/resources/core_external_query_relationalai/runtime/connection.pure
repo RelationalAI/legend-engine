@@ -29,6 +29,6 @@ function meta::external::store::rel::runtime::query(connection: ConnectionStore[
     meta::external::store::rel::extension::defaultRAIExtension()
   );
 
-  // Function `execute()` does not populate `values` so just return the activity. 
+  // Function `execute()` does not populate `values` so just return the activity.
   $result.activities;
 }

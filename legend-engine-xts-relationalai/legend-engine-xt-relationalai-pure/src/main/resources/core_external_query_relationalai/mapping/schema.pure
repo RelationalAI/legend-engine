@@ -20,7 +20,7 @@ Class meta::external::store::rel::mapping::schema::RAISchema {
 
 function meta::external::store::rel::mapping::schema::RAISchema(name: String[1]): RAISchema[1] {
   ^RAISchema(
-    mapping=^Mapping(), 
+    mapping=^Mapping(),
     store=RAIDatabase([], $name)
   )
 }
@@ -48,13 +48,13 @@ function meta::external::store::rel::mapping::schema::schema(property: Property<
     case($rawType == Integer,         | integerType()),
     case($rawType == Float,           | floatType()),
     case($rawType->instanceOf(Class), | entityType($rawType->cast(@Class<Any>)))
-  ], {| 
+  ], {|
     fail(format('Unknown type for property %s', $name));
     entityType(Any);
   });
 
   $parent
-    ->map({class: Class<Any>[1] | 
+    ->map({class: Class<Any>[1] |
       format('%s:%s', [$class.name->toOne(), $name])
       ->relation([entityType($class), $type])
     })
@@ -73,8 +73,8 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
       ->concatenate(
         $class->meta::pure::functions::meta::hierarchicalPropertiesFromAssociations()
       )
-      ->map({p |         
-        let owner = 
+      ->map({p |
+        let owner =
           if($p.owner->instanceOf(Association), {|
             let assoc = $p.owner->cast(@Association);
             let left = $assoc.properties->at(0);
@@ -87,8 +87,8 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
         let relation = $p->schema($owner);
         pair($p->cast(@Property<Nil, Any|*>), $relation);
       });
-    
-    let augmentedStore = 
+
+    let augmentedStore =
       $properties.second
         ->fold({decl, accum |
           $accum->with($decl);
@@ -112,9 +112,9 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
       $schema.mapping
         ->addSetImplementation($instanceSetComplete);
 
-    let augmentedSchema = 
+    let augmentedSchema =
       ^$schema(
-        mapping=$augmentedMapping, 
+        mapping=$augmentedMapping,
         store=$augmentedStore
       );
 

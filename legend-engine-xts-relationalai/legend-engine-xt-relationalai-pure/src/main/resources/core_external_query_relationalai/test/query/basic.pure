@@ -51,7 +51,7 @@ function <<test.Test>> meta::external::store::rel::test::query::basic::testFilte
       'def output[:lastName] = Person:lastName[x] for x where output[:query](x)'
     ],
     $rai
-      ->query(| 
+      ->query(|
         Person.all()
           ->filter(p | $p.firstName == 'John')
       )
@@ -94,7 +94,7 @@ function <<test.Test>> meta::external::store::rel::test::query::basic::testCombi
       'def output[:lastName] = Person:lastName[x] for x where output[:query](x)'
     ],
     $rai
-      ->query(| 
+      ->query(|
         Person.all()
           ->filter(p | $p.firstName == 'John' && $p.lastName == 'Doe')
       )
@@ -115,7 +115,7 @@ function <<test.Test>> meta::external::store::rel::test::query::basic::testExist
       'def output = exists(x1 in Person: boolean_true)'
     ],
     $rai
-      ->query(| 
+      ->query(|
         Person.all()
           ->exists(p | true)
       )
@@ -136,7 +136,7 @@ function <<test.Test>> meta::external::store::rel::test::query::basic::testMap()
       'def output = "foo" from x1 in Person'
     ],
     $rai
-      ->query(| 
+      ->query(|
         Person.all()
           ->map(p | 'foo')
       )

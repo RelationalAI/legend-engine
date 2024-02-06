@@ -3,7 +3,7 @@
   *
   * Here we define classes that model the part of PURE expressions
   * which are supported for compilation into Rel code. Most of this file
-  * consists of functions that take instances of `ValueSpecification` and 
+  * consists of functions that take instances of `ValueSpecification` and
   * translate these instances into IR objects. IR objects exist so that
   * subsequent compilation can rely on well-defined type signatures without
   * having to manually parse `ValueSpecification`s first.
@@ -229,7 +229,7 @@ Class meta::external::store::rel::compile::ir::PExprColumnAccess extends PExpr {
 
 /**
   * Helper type for representing variable scopes.
-  */ 
+  */
 Class <<typemodifiers.abstract>> meta::external::store::rel::compile::ir::PExprScope extends PExpr {
   parent: PExpr[0..1];
   inner: PExpr[1];
@@ -406,7 +406,7 @@ function meta::external::store::rel::compile::ir::variablePlaceholder(identifier
 }
 
 function meta::external::store::rel::compile::ir::fexpr<|n>(
-  arguments: PExpr[n], 
+  arguments: PExpr[n],
   fn: FunctionDefinition<{meta::external::store::rel::metamodel::Expr[n]->meta::external::store::rel::metamodel::Expr[1]}>[1]
 ): PExprFunction<|n>[1] {
   ^PExprFunction<|n>(arguments=$arguments, fn=$fn)
@@ -421,7 +421,7 @@ function meta::external::store::rel::compile::ir::setAccess(set: RelSetImplement
 }
 
 function meta::external::store::rel::compile::ir::propertyAccess(
-  parent: PExpr[1], 
+  parent: PExpr[1],
   property: Property<Nil, Any|*>[1],
   set: RelSetImplementation[1]
 ): PExprPropertyAccess[1] {

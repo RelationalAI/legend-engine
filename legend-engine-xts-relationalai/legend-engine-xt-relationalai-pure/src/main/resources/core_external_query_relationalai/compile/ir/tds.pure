@@ -18,8 +18,8 @@ Class meta::external::store::rel::compile::ir::tds::TDSFilter extends PExpr {
 }
 
 function meta::external::store::rel::compile::ir::tds::join(
-  left: PExpr[1], 
-  right: PExpr[1], 
+  left: PExpr[1],
+  right: PExpr[1],
   type: meta::relational::metamodel::join::JoinType[1],
   condition: PExprScope[1]
 ): Join[1] {
@@ -45,7 +45,7 @@ function meta::external::store::rel::compile::ir::tds::intoPExpr(
           $func.parametersValues
             ->at(1)
             ->valueSpecToPExpr($typeInfo, $newTrace)
-            ->andThen(right: PExpr[1] | 
+            ->andThen(right: PExpr[1] |
               $func.parametersValues
                 ->at(2)
                 ->reactivate(^Map<String, List<Any>>())
@@ -73,7 +73,7 @@ function meta::external::store::rel::compile::ir::tds::intoPExpr(
             )
         )
     })
-  ], | 
+  ], |
     error(
       'Encountered unknown instance when constructing PExpr for TDS function with type: ' +
         $func.func

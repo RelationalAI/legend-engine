@@ -25,7 +25,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
     ->valueSpecToPExpr($typeInfo, $trace)
     ->andThen({parent: PExpr[1] |
       switch([
-        case($param1->instanceOf(ExtendedRoutedValueSpecification), 
+        case($param1->instanceOf(ExtendedRoutedValueSpecification),
           | $param1
               ->cast(@ExtendedRoutedValueSpecification)
               .value
@@ -33,7 +33,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
               .values
               ->cast(@meta::pure::metamodel::path::Path<Nil,Any|1>)
         ),
-        case($param1->instanceOf(InstanceValue), | 
+        case($param1->instanceOf(InstanceValue), |
           $param1
             ->cast(@InstanceValue)
             .values
@@ -55,7 +55,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
                         $element
                           ->tryCast(@meta::pure::metamodel::path::PropertyPathElement, $newTrace)
                           ->andThen(p: meta::pure::metamodel::path::PropertyPathElement[1] | $p.property->tryCast(@Property<Nil,Any|*>, $newTrace))
-                          ->andThen({property: Property<Nil,Any|*>[1] | 
+                          ->andThen({property: Property<Nil,Any|*>[1] |
                             $property
                               .genericType
                               .rawType
@@ -72,12 +72,12 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
                           });
                       });
                   }, ok(setAccess($set, 'x')))
-                  ->then(expr: PExpr[1] | 
-                    let name = 
-                      if ($path.name->isEmpty() || $path.name == '', {| 
+                  ->then(expr: PExpr[1] |
+                    let name =
+                      if ($path.name->isEmpty() || $path.name == '', {|
                         $path.path
                           ->last()
-                          ->map({last | 
+                          ->map({last |
                             if ($last->instanceOf(meta::pure::metamodel::path::PropertyPathElement), {|
                               $last
                                 ->cast(@meta::pure::metamodel::path::PropertyPathElement)
@@ -123,9 +123,9 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
         ->tryCast(@InstanceValue, $newTrace)
         ->andThen({params: InstanceValue[1] |
           $params.values
-            ->map({v | 
+            ->map({v |
               $v->tryCast(@InstanceValue, $newTrace)
-                ->then(i: InstanceValue[1] | 
+                ->then(i: InstanceValue[1] |
                   // Values guaranteed by function signature
                   $i.values
                     ->toOne()
@@ -135,7 +135,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
             ->collect()
             ->andThem({columns: BasicColumnSpecification<Any>[*] |
               $columns.func
-                ->map(f | 
+                ->map(f |
                   $f->tryCast(@FunctionDefinition<Any>, $newTrace)
                     ->andThen(fexpr: FunctionDefinition<Any>[1] | $fexpr->functionDefToUntypedScoped($typeInfo, $parent, $trace))
                 )
@@ -189,7 +189,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
             $v.value->tryCast(@InstanceValue, $newTrace)
         },
         {
-          a: Any[1] | 
+          a: Any[1] |
             let message =
               'Encountered unknown type: ' +
                 $a

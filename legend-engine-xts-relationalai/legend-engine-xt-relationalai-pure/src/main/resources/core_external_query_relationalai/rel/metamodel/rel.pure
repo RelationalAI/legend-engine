@@ -28,7 +28,7 @@ Class meta::external::store::rel::metamodel::ExprGroup extends Expr {
 
 /**
   * Expression type directly represented via code.
-  */ 
+  */
 Class meta::external::store::rel::metamodel::Fragment extends Expr {
   code: String[1];
 }
@@ -49,7 +49,7 @@ Class <<typemodifiers.abstract>> meta::external::store::rel::metamodel::Binding 
 Class <<typemodifiers.abstract>> meta::external::store::rel::metamodel::Constant extends Expr { }
 
 /**
-  * Type representing variables. A variables is both an expression 
+  * Type representing variables. A variables is both an expression
   * and a binding.
   */
 Class meta::external::store::rel::metamodel::Variable extends Expr, Binding {
@@ -92,7 +92,7 @@ Class meta::external::store::rel::metamodel::Tuple extends Expr {
 }
 
 /**
-  * Type representing a relation's constructor, i.e., expressions that 
+  * Type representing a relation's constructor, i.e., expressions that
   * denote relations, for instance `{(1, 2); (3, 4)}`.
   */
 Class meta::external::store::rel::metamodel::RelationCons extends Expr {
@@ -116,7 +116,7 @@ Class meta::external::store::rel::metamodel::InBinding extends Binding {
 }
 
 /**
-  * Denotes an intersection of expressions. We declare that such 
+  * Denotes an intersection of expressions. We declare that such
   * sequences are expressions as well.
   */
 Class meta::external::store::rel::metamodel::Product extends Expr {
@@ -148,7 +148,7 @@ Class <<typemodifiers.abstract>> meta::external::store::rel::metamodel::HeadExpr
 /**
   * Conjunction of two formulas.
   */
-Class meta::external::store::rel::metamodel::And extends Expr { 
+Class meta::external::store::rel::metamodel::And extends Expr {
   conjuncts: Expr[*];
 }
 
@@ -171,7 +171,7 @@ Class meta::external::store::rel::metamodel::Not extends Expr {
   */
 Class meta::external::store::rel::metamodel::Implies extends Expr {
   antecedence: Expr[1];
-  consequence: Expr[1]; 
+  consequence: Expr[1];
 }
 
 /**
@@ -210,13 +210,13 @@ Class meta::external::store::rel::metamodel::IfThenElse extends Expr {
 /**
   * Type denoting relational applications that have relation names as heads.
   */
-Class meta::external::store::rel::metamodel::NamedApplication extends HeadExpr { 
+Class meta::external::store::rel::metamodel::NamedApplication extends HeadExpr {
   head: HeadExpr[1];
   arguments: Expr[*];
 }
 
 /**
-  * Denotes the name of a relation. 
+  * Denotes the name of a relation.
   */
 Class meta::external::store::rel::metamodel::RelationName extends HeadExpr {
   identifier: String[1];
@@ -273,7 +273,7 @@ Class meta::external::store::rel::metamodel::For extends Expr {
 /**
   * Abstract type representing elements or a program (rules and comments).
   */
-Class <<typemodifiers.abstract>> meta::external::store::rel::metamodel::ProgramElement extends Annotated { 
+Class <<typemodifiers.abstract>> meta::external::store::rel::metamodel::ProgramElement extends Annotated {
   code() {
     $this->render()
   }: String[1];
@@ -351,7 +351,7 @@ Class meta::external::store::rel::metamodel::StringType extends ConstType { }
 
 Class meta::external::store::rel::metamodel::HashValueType extends ConstType { }
 
-Class meta::external::store::rel::metamodel::EntityType extends HashValueType { 
+Class meta::external::store::rel::metamodel::EntityType extends HashValueType {
   class: Class<Any>[1];
 }
 
@@ -361,7 +361,7 @@ Class meta::external::store::rel::metamodel::FloatType extends ConstType { }
 
 Class meta::external::store::rel::metamodel::LabelsType extends ConstType { }
 
-Class meta::external::store::rel::metamodel::Label extends Constant, ConstType { 
+Class meta::external::store::rel::metamodel::Label extends Constant, ConstType {
   identifier: String[1];
 }
 
