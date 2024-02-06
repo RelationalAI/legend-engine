@@ -13,9 +13,9 @@
   * tracks outputs of previous compilation steps.
   */
 
-import meta::external::store::rel::compile::ir::utils::*;
 import meta::external::store::rel::compile::*;
 import meta::external::store::rel::compile::ir::*;
+import meta::external::store::rel::compile::ir::utils::*;
 import meta::external::store::rel::compile::substitution::*;
 import meta::external::store::rel::compile::utils::*;
 import meta::external::store::rel::lib::*;

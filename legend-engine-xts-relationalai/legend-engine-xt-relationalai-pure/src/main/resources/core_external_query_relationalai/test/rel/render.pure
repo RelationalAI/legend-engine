@@ -1,6 +1,6 @@
+import meta::external::store::rel::metamodel::*;
 import meta::external::store::rel::metamodel::render::expr::*;
 import meta::external::store::rel::metamodel::render::program::*;
-import meta::external::store::rel::metamodel::*;
 
 
 function <<test.Test>> meta::external::store::rel::test::metamodel::render::testSimpleRendering(): Any[*] {

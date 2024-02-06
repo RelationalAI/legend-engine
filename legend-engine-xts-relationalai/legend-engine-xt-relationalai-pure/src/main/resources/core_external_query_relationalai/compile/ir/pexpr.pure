@@ -9,11 +9,11 @@
   * having to manually parse `ValueSpecification`s first.
   */
 
-import meta::external::store::rel::utils::lang::*;
 import meta::external::store::rel::compile::ir::*;
 import meta::external::store::rel::mapping::*;
 import meta::external::store::rel::metamodel::*;
 import meta::external::store::rel::utils::*;
+import meta::external::store::rel::utils::lang::*;
 
 /**
   * Abstract type representing PURE types.

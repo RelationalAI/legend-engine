@@ -1,6 +1,6 @@
-import meta::pure::mapping::*;
-import meta::external::store::rel::runtime::*;
 import meta::core::runtime::*;
+import meta::external::store::rel::runtime::*;
+import meta::pure::mapping::*;
 
 Class meta::external::store::rel::runtime::TestConnection extends meta::core::runtime::Connection {
   onExecute: Function<{String[1]->Any[*]}>[0..1];

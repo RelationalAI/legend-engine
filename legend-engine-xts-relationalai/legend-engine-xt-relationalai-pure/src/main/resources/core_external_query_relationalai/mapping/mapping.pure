@@ -1,8 +1,8 @@
 import meta::external::store::rel::mapping::*;
-import meta::pure::mapping::*;
-import meta::pure::store::*;
 import meta::external::store::rel::metamodel::*;
 import meta::external::store::rel::utils::*;
+import meta::pure::mapping::*;
+import meta::pure::store::*;
 
 
 Class meta::external::store::rel::mapping::RelSetImplementation extends InstanceSetImplementation {

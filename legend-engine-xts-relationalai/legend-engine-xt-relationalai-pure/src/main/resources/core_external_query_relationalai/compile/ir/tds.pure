@@ -1,6 +1,6 @@
-import meta::external::store::rel::compile::ir::typeinfo::*;
 import meta::external::store::rel::compile::ir::*;
 import meta::external::store::rel::compile::ir::tds::*;
+import meta::external::store::rel::compile::ir::typeinfo::*;
 import meta::external::store::rel::trace::*;
 import meta::external::store::rel::utils::*;
 import meta::external::store::rel::utils::lang::*;

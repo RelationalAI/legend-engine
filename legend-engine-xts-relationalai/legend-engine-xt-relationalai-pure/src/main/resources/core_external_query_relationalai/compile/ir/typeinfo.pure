@@ -1,7 +1,7 @@
-import meta::pure::router::store::metamodel::*;
-import meta::external::store::rel::mapping::*;
-import meta::external::store::rel::compile::ir::typeinfo::*;
 import meta::external::store::rel::compile::ir::*;
+import meta::external::store::rel::compile::ir::typeinfo::*;
+import meta::external::store::rel::mapping::*;
+import meta::pure::router::store::metamodel::*;
 
 Class meta::external::store::rel::compile::ir::typeinfo::TranspileTypeInfo {
   sets: RelSetImplementation[*];

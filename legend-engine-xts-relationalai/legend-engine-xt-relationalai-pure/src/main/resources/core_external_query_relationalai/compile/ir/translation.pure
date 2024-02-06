@@ -9,11 +9,9 @@
   * having to manually parse `ValueSpecification`s first.
   */
 
+import meta::external::store::rel::compile::ir::*;
 import meta::external::store::rel::compile::ir::typeinfo::*;
 import meta::external::store::rel::compile::ir::utils::*;
-import meta::pure::router::metamodel::*;
-import meta::pure::router::store::metamodel::*;
-import meta::external::store::rel::compile::ir::*;
 import meta::external::store::rel::compile::substitution::*;
 import meta::external::store::rel::lib::*;
 import meta::external::store::rel::mapping::*;
@@ -21,6 +19,8 @@ import meta::external::store::rel::metamodel::*;
 import meta::external::store::rel::trace::*;
 import meta::external::store::rel::utils::*;
 import meta::external::store::rel::utils::lang::*;
+import meta::pure::router::metamodel::*;
+import meta::pure::router::store::metamodel::*;
 
 ///////////////////////////
 // Translation functions //

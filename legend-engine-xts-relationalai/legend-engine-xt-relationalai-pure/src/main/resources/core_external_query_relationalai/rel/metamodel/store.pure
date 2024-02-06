@@ -1,5 +1,5 @@
-import meta::external::store::rel::metamodel::store::*;
 import meta::external::store::rel::metamodel::*;
+import meta::external::store::rel::metamodel::store::*;
 import meta::external::store::rel::utils::*;
 
 Class meta::external::store::rel::metamodel::store::RAIDatabase extends meta::pure::store::Store {

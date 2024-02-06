@@ -1,12 +1,12 @@
+import meta::external::store::rel::compile::ir::*;
 import meta::external::store::rel::compile::ir::typeinfo::*;
 import meta::external::store::rel::compile::ir::utils::*;
-import meta::pure::router::store::metamodel::*;
-import meta::external::store::rel::compile::ir::*;
 import meta::external::store::rel::mapping::*;
+import meta::external::store::rel::trace::*;
 import meta::external::store::rel::utils::*;
 import meta::external::store::rel::utils::lang::*;
-import meta::external::store::rel::trace::*;
 import meta::pure::router::metamodel::*;
+import meta::pure::router::store::metamodel::*;
 
 function <<access.private>> meta::external::store::rel::compile::ir::handleCaseProject1(
   func: FunctionExpression[1],

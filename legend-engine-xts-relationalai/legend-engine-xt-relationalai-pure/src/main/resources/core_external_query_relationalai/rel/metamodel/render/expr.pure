@@ -1,10 +1,10 @@
-import meta::pure::functions::collection::*;
 import meta::external::store::rel::metamodel::*;
 import meta::external::store::rel::metamodel::render::binding::*;
 import meta::external::store::rel::metamodel::render::buffer::*;
 import meta::external::store::rel::metamodel::render::constant::*;
 import meta::external::store::rel::metamodel::render::expr::*;
 import meta::external::store::rel::utils::*;
+import meta::pure::functions::collection::*;
 
 
 ////////////////////////////////////////

@@ -1,5 +1,5 @@
-import meta::external::store::rel::utils::*;
 import meta::external::store::rel::trace::*;
+import meta::external::store::rel::utils::*;
 
 Class meta::external::store::rel::utils::Result<T|n> {
   <<equality.Key>> values: T[n];

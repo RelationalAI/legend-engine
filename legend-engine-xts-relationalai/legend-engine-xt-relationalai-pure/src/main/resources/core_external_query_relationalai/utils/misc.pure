@@ -1,6 +1,6 @@
 import meta::external::store::rel::utils::*;
-import meta::external::store::rel::utils::lang::*;
 import meta::external::store::rel::utils::collection::*;
+import meta::external::store::rel::utils::lang::*;
 
 function meta::external::store::rel::utils::stringify<T>(
   list: T[*],

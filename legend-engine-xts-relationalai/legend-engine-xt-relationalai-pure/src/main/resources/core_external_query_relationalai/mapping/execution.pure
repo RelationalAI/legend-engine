@@ -1,4 +1,3 @@
-import meta::pure::executionPlan::*;
 import meta::external::store::rel::compile::*;
 import meta::external::store::rel::compile::ir::*;
 import meta::external::store::rel::compile::substitution::*;
@@ -16,6 +15,7 @@ import meta::external::store::rel::trace::*;
 import meta::external::store::rel::utils::*;
 import meta::external::store::rel::utils::collection::*;
 import meta::external::store::rel::utils::lang::*;
+import meta::pure::executionPlan::*;
 
 Class meta::external::store::rel::mapping::QueryActivity extends meta::pure::mapping::Activity {
   relSource: String[1];

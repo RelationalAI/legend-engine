@@ -1,6 +1,6 @@
-import meta::external::store::rel::mapping::*;
 import meta::external::store::rel::compile::ir::*;
 import meta::external::store::rel::compile::ir::utils::*;
+import meta::external::store::rel::mapping::*;
 import meta::external::store::rel::utils::*;
 
 function meta::external::store::rel::compile::ir::utils::describeExprType(exprType: PExprType[1]): String[1] {
