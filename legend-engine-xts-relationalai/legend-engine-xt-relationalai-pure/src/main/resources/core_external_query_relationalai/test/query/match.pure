@@ -24,6 +24,24 @@ function <<test.Test>> meta::rel::test::query::match::testQueryMatchSub(): Any[*
 
   let rai = $schema->TestConnection();
 
+  /*
+   * Expected intermediate PExpr is:
+   *
+   * Map(
+   *   All(meta_rel_test_query_match_TestClassWrapper),
+   *   ScopeUntyped(
+   *     x,
+   *     Match(
+   *       PropertyAccess(SetAccess(meta_rel_test_query_match_TestClassWrapper, x), fieldSub, meta_rel_test_query_match_TestClassWrapper),
+   *       Cases[
+   *         ScopeTyped(y, meta_rel_test_query_match_TestClassSub, PropertyAccess(VariablePlaceholder(y), fieldOfSub, meta_rel_test_query_match_TestClassSub)),
+   *         ScopeTyped(z, meta_rel_test_query_match_TestClassSuper, PropertyAccess(VariablePlaceholder(z), fieldOfSuper, meta_rel_test_query_match_TestClassSuper))
+   *       ]
+   *     )
+   *   )
+   * )
+   */
+
   let transpiledQuery =
     $rai
       ->meta::rel::runtime::query({|
@@ -47,6 +65,24 @@ function <<test.Test>> meta::rel::test::query::match::testQueryMatchSuper(): Any
   let schema = RAISchema('test')->includeClass(TestClassWrapper);
 
   let rai = $schema->TestConnection();
+
+  /*
+   * Expected intermediate PExpr is:
+   *
+   * Map(
+   *   All(meta_rel_test_query_match_TestClassWrapper),
+   *   ScopeUntyped(
+   *     x,
+   *     Match(
+   *       PropertyAccess(SetAccess(meta_rel_test_query_match_TestClassWrapper, x), fieldSuper, meta_rel_test_query_match_TestClassWrapper),
+   *       Cases[
+   *         ScopeTyped(y, meta_rel_test_query_match_TestClassSub, PropertyAccess(VariablePlaceholder(y), fieldOfSub, meta_rel_test_query_match_TestClassSub)),
+   *         ScopeTyped(z, meta_rel_test_query_match_TestClassSuper, PropertyAccess(VariablePlaceholder(z), fieldOfSuper, meta_rel_test_query_match_TestClassSuper))
+   *       ]
+   *     )
+   *   )
+   * )
+   */
 
   let transpiledQuery =
     $rai
