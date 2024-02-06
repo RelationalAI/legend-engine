@@ -872,7 +872,7 @@ public class TestRelationalCompilationFromGrammar extends TestCompilationFromGra
                 "   {\n" +
                 "      name : [model::store::db]myTable.name\n" +
                 "   }\n" +
-                ")", "COMPILATION error at [10:32-38]: Can't find store 'model::store::db'"
+                ")", "COMPILATION error at [10:32-38]: The store 'model::store::db' can't be found."
         );
 
         test(MODEL + DB_INC +
@@ -1164,7 +1164,7 @@ public class TestRelationalCompilationFromGrammar extends TestCompilationFromGra
                 "      assert: '[ {\\n  \"values\" : [ \"Doe;\" ]\\n}, {\\n  \"values\" : [ \"Wrong\" ]\\n} ]';\n" +
                 "    )\n" +
                 "  ]\n" +
-                ")", "COMPILATION error at [99:9-242]: Can't find store 'test::DB'"
+                ")", "COMPILATION error at [99:9-242]: The store 'test::DB' can't be found."
         );
     }
 
@@ -2170,7 +2170,6 @@ public class TestRelationalCompilationFromGrammar extends TestCompilationFromGra
                 "###Connection\n" +
                 "RelationalDatabaseConnection relational::graphFetch::RelationalConnection\n" +
                 "{\n" +
-                "  store: relational::graphFetch::dbInc;\n" +
                 "  type: H2;\n" +
                 "  specification: Static\n" +
                 "  {\n" +
@@ -2225,7 +2224,7 @@ public class TestRelationalCompilationFromGrammar extends TestCompilationFromGra
                 "      connection_1: relational::graphFetch::OneMappingConnection\n" +
                 "    ]\n" +
                 "  ];\n" +
-                "}\n", "COMPILATION error at [90:1-108:1]: Found 2 connections against store [dbInc] under a single runtime.");
+                "}\n", "COMPILATION error at [89:1-107:1]: Found 2 connections against store [dbInc] under a single runtime.");
     }
 
     @Test

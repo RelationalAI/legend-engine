@@ -20,6 +20,7 @@ import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.connect
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.data.DataElement;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.mapping.mappingTest.InputData;
 import org.finos.legend.engine.protocol.pure.v1.model.packageableElement.store.Store;
+import org.finos.legend.engine.shared.core.extension.LegendConnectionExtension;
 
 import java.io.Closeable;
 import java.util.List;
@@ -30,7 +31,7 @@ import java.util.Optional;
 /**
  * Used to build connections using test data. Main goal is to leverage connection for execution
  */
-public interface ConnectionFactoryExtension
+public interface ConnectionFactoryExtension extends LegendConnectionExtension
 {
 
     /**
@@ -51,7 +52,7 @@ public interface ConnectionFactoryExtension
         return Optional.empty();
     }
 
-    default Optional<Pair<Connection, List<Closeable>>> tryBuildTestConnection(Connection sourceConnection, EmbeddedData data)
+    default Optional<Pair<Connection, List<Closeable>>> tryBuildTestConnection(Connection sourceConnection, List<EmbeddedData> data)
     {
         return Optional.empty();
     }
@@ -61,5 +62,15 @@ public interface ConnectionFactoryExtension
         return Optional.empty();
     }
 
+    default Optional<Pair<Connection, List<Closeable>>> tryBuildConnectionForStoreData(Map<String, DataElement> dataElements, Map<Store, EmbeddedData> storeTestData)
+    {
+        if (storeTestData.size() == 1)
+        {
+            Store store = storeTestData.keySet().stream().findFirst().get();
+            EmbeddedData embeddedData = storeTestData.values().stream().findFirst().get();
+            return tryBuildTestConnectionsForStore(dataElements, store, embeddedData);
+        }
+        return Optional.empty();
+    }
 
 }

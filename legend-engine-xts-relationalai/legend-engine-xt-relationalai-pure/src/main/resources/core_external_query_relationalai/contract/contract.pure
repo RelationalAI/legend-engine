@@ -40,7 +40,6 @@ function meta::external::store::rel::contract::contract(): StoreContract[1] {
 
     // Core ---------------------------------------------------------------------------------------------
     supportsSetImplementation = s:SetImplementation[1]|$s->instanceOf(RelSetImplementation),
-
     supportsStore = s:Store[1] | $s->instanceOf(meta::external::store::rel::metamodel::store::RAIDatabase),
     resolveStoreFromSetImplementation = {s:InstanceSetImplementation[1] |
       $s.stores->toOne();

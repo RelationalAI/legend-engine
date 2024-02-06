@@ -12,7 +12,7 @@ Class <<typemodifiers.abstract>> meta::external::store::rel::metamodel::Annotate
 /**
   * Abstract type representing expressions.
   */
-Class <<typemodifiers.abstract>> meta::external::store::rel::metamodel::Expr extends Annotated { 
+Class <<typemodifiers.abstract>> meta::external::store::rel::metamodel::Expr extends Annotated {
   variables() {
     []
   }: Variable[*];
@@ -64,23 +64,23 @@ Class meta::external::store::rel::metamodel::Variables extends Binding, Expr {
   inner: Variable[1..*];
 }
 
-Class meta::external::store::rel::metamodel::RelInteger extends Constant { 
+Class meta::external::store::rel::metamodel::RelInteger extends Constant {
   value: Integer[1];
 }
 
-Class meta::external::store::rel::metamodel::RelFloat extends Constant { 
+Class meta::external::store::rel::metamodel::RelFloat extends Constant {
   value: Float[1];
 }
 
-Class meta::external::store::rel::metamodel::RelString extends Constant { 
+Class meta::external::store::rel::metamodel::RelString extends Constant {
   value: String[1];
 }
 
-Class meta::external::store::rel::metamodel::RelDate extends Constant { 
+Class meta::external::store::rel::metamodel::RelDate extends Constant {
   value: StrictDate[1];
 }
 
-Class meta::external::store::rel::metamodel::RelDateTime extends Constant { 
+Class meta::external::store::rel::metamodel::RelDateTime extends Constant {
   value: DateTime[1];
 }
 

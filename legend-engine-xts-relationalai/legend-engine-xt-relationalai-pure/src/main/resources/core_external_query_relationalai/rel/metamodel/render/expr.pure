@@ -161,7 +161,7 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
     e: Atom[1]             | $buffer->render($e),
     e: Composition[1]      | $buffer->render($e),
     e: Constant[1]         | $buffer->append($e->toRelLiteral()),
-    e: DontCare[1]         | $buffer->render($e),
+    e: DontCare[1]         | $buffer->append('_'), // FIXME
     e: Equals[1]           | $buffer->render($e),
     e: Exists[1]           | $buffer->render($e),
     e: ExprGroup[1]        | $buffer->render($e),

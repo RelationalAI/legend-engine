@@ -129,14 +129,21 @@ function meta::pure::metamodel::serialization::grammar::printFunctionExpression(
                    | $functionExpression.parametersValues->head()->toOne()->printValueSpecification($space) + '->' + $functionExpression.func.functionName->toOne() + $functionExpression.parametersValues->tail()->map(vs | printValueSpecification($vs, $space))->joinStrings('(', ', ', ')');
                    );,
              |let vals = if ($name->in(['plus', 'minus', 'times']),
-                  |$functionExpression.parametersValues->cast(@InstanceValue).values,
+                  |$functionExpression.parametersValues->match([
+                    i:InstanceValue[1] | $i.values,
+                    v:ValueSpecification[1] | $v
+                  ]),
                   |$functionExpression.parametersValues
               );
               if ($name == 'minus' && $vals->size() == 1,
                   | $m->get($name)->toOne() + $functionExpression.parametersValues->at(0)->printValueSpecification($space),
                   | if ($name->in(['and', 'or']) && $vals->size() == 1,
                       | $name + '(' + $vals->at(0)->printValueSpecification($space) + ')',
-                      | '(' + $vals->at(0)->printValueSpecification($space) + ' ' + $m->get($name)->toOne() + ' ' + $vals->at(1)->printValueSpecification($space) + ')')
+                      | if ($vals->size() > 1,
+                        |'(' + $vals->at(0)->printValueSpecification($space) + ' ' + $m->get($name)->toOne() + ' ' + $vals->at(1)->printValueSpecification($space) + ')',
+                        | $m->get($name)->toOne()+'('+$vals->at(0)->printValueSpecification($space)+')'
+                        )
+                    )
               );
          );
     );

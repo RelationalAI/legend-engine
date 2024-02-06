@@ -170,18 +170,13 @@ public class PackageableElementSecondPassBuilder implements PackageableElementVi
         try
         {
             function.parameters.forEach(p -> p.accept(new ValueSpecificationBuilder(this.context, Lists.mutable.empty(), ctx)));
-            body = ListIterate.collect(function.body, expression -> expression.accept(new ValueSpecificationBuilder(this.context, Lists.mutable.empty(), ctx)));
         }
         catch (Exception e)
         {
             LOGGER.warn(new LogInfo(null, LoggingEventType.GRAPH_EXPRESSION_ERROR, "Can't build function '" + packageString + "' - stack: " + ctx.getStack()).toString());
             throw e;
         }
-        FunctionType fType = ((FunctionType) targetFunc._classifierGenericType()._typeArguments().getFirst()._rawType());
-        HelperModelBuilder.checkCompatibility(this.context, body.getLast()._genericType()._rawType(), body.getLast()._multiplicity(), fType._returnType()._rawType(), fType._returnMultiplicity(), "Error in function '" + packageString + "'", function.body.get(function.body.size() - 1).sourceInformation);
         ctx.pop();
-        targetFunc._expressionSequence(body);
-        HelperFunctionBuilder.processFunctionSuites(function, targetFunc, this.context, ctx);
         return targetFunc;
     }
 
@@ -239,7 +234,7 @@ public class PackageableElementSecondPassBuilder implements PackageableElementVi
         Root_meta_pure_runtime_PackageableRuntime metamodel = this.context.pureModel.getPackageableRuntime(fullPath, packageableRuntime.sourceInformation);
         Root_meta_core_runtime_Runtime runtime = this.context.pureModel.getRuntime(fullPath);
         HelperRuntimeBuilder.buildEngineRuntime(packageableRuntime.runtimeValue, runtime, this.context);
-        metamodel._runtimeValue(new Root_meta_core_runtime_EngineRuntime_Impl("", null, context.pureModel.getClass("meta::core::runtime::EngineRuntime"))._mappings(ListIterate.collect(packageableRuntime.runtimeValue.mappings, mappingPointer -> context.resolveMapping(mappingPointer.path, mappingPointer.sourceInformation)))._connectionStores(runtime._connectionStores()));
+        metamodel._runtimeValue(new Root_meta_core_runtime_EngineRuntime_Impl("", SourceInformationHelper.toM3SourceInformation(packageableRuntime.sourceInformation), context.pureModel.getClass("meta::core::runtime::EngineRuntime"))._mappings(ListIterate.collect(packageableRuntime.runtimeValue.mappings, mappingPointer -> context.resolveMapping(mappingPointer.path, mappingPointer.sourceInformation)))._connectionStores(runtime._connectionStores()));
         return metamodel;
     }
 

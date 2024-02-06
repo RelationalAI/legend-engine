@@ -93,7 +93,7 @@ public class SQLGrammarComposer
             @Override
             public String visit(AllColumns val)
             {
-                return "*";
+                return val.prefix != null ? val.prefix + ".*" : "*";
             }
 
             @Override
@@ -209,6 +209,18 @@ public class SQLGrammarComposer
             public String visit(NullLiteral val)
             {
                 return "NULL";
+            }
+
+            @Override
+            public String visit(PositionalParameterExpression val)
+            {
+                return "$" + val.index;
+            }
+
+            @Override
+            public String visit(ParameterPlaceholderExpression val)
+            {
+                return "?";
             }
 
             @Override

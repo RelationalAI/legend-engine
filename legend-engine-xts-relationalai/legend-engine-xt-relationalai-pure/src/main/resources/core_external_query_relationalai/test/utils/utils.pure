@@ -32,6 +32,11 @@ function <<test.Test>> meta::external::store::rel::test::utils::testResult(): An
     [ok(1), ok(2)]->collect()
   );
 
+  let x = ^Result<Any|*>(errors=[errorTrace('2')]);
+  let y = ^Result<Any|*>(errors=[errorTrace('2')]);
+  println($x);
+  println($y);
+  println($x->equal($y));
   assertEquals(
     ^Result<Any|*>(errors=[errorTrace('2')]),
     [ok(1), ^Result<Any|0..1>(errors=[errorTrace('2')]), ok(3)]->collect()
