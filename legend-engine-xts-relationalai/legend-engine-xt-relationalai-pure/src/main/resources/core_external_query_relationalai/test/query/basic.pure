@@ -7,6 +7,11 @@ import meta::rel::utils::assert::*;
 function <<test.Test>> meta::rel::test::query::basic::testQueryAllPersons(): Any[*] {
   let rai = schema()->TestConnection();
 
+  /*
+   * Expected intermediate PExpr is:
+   * All(meta_rel_test_query_models_basicmodel_Person)
+   */
+
   assertEqualRel(
     [
       'def output[:query](x) = Person(x)',
@@ -21,6 +26,23 @@ function <<test.Test>> meta::rel::test::query::basic::testQueryAllPersons(): Any
 
 function <<test.Test>> meta::rel::test::query::basic::testFilterByFirstName(): Any[*] {
   let rai = schema()->TestConnection();
+
+  /*
+   * Expected intermediate PExpr is:
+   *
+   * Filter(
+   *   All(meta_rel_test_query_models_basicmodel_Person),
+   *   ScopeUntyped(
+   *     Function(
+   *       meta$rel$compile$ir$getFunctionExpr$29$system$imports$import__core_external_query_relationalai_compile_ir_translation_pure_1$79,
+   *       PropertyAccess(SetAccess(meta_rel_test_query_models_basicmodel_Person, p), firstName, meta_rel_test_query_models_basicmodel_Person)
+   *       John
+   *     ),
+   *     p
+   *   )
+   * )
+   *
+   */
 
   assertEqualRel(
     [
@@ -40,6 +62,31 @@ function <<test.Test>> meta::rel::test::query::basic::testFilterByFirstName(): A
 function <<test.Test>> meta::rel::test::query::basic::testCombinedFilter(): Any[*] {
   let rai = schema()->TestConnection();
 
+  /*
+   * Expected intermediate PExpr is:
+   *
+   * Filter(
+   *   All(meta_rel_test_query_models_basicmodel_Person),
+   *   ScopeUntyped(
+   *     Function(
+   *       meta$rel$compile$ir$getFunctionExpr$29$system$imports$import__core_external_query_relationalai_compile_ir_translation_pure_1$79,
+   *       Function(
+   *         meta$rel$compile$ir$getFunctionExpr$29$system$imports$import__core_external_query_relationalai_compile_ir_translation_pure_1$79,
+   *         PropertyAccess(SetAccess(meta_rel_test_query_models_basicmodel_Person, p), firstName, meta_rel_test_query_models_basicmodel_Person)
+   *         John
+   *       )
+   *       Function(
+   *         meta$rel$compile$ir$getFunctionExpr$29$system$imports$import__core_external_query_relationalai_compile_ir_translation_pure_1$79,
+   *         PropertyAccess(SetAccess(meta_rel_test_query_models_basicmodel_Person, p), lastName, meta_rel_test_query_models_basicmodel_Person)
+   *         Doe
+   *       )
+   *     ),
+   *     p
+   *   )
+   * )
+   *
+   */
+
   assertEqualRel(
     [
       'def output[:query](x) = (x1 in Person: Person:firstName[x1] = "John" and Person:lastName[x1] = "Doe")(x)',
@@ -58,6 +105,11 @@ function <<test.Test>> meta::rel::test::query::basic::testCombinedFilter(): Any[
 function <<test.Test>> meta::rel::test::query::basic::testExists(): Any[*] {
   let rai = schema()->TestConnection();
 
+  /*
+   * Expected intermediate PExpr is:
+   * Exists(All(meta_rel_test_query_models_basicmodel_Person), ScopeUntyped(true, p))
+   */
+
   assertEqualRel(
     [
       'def output = exists(x1 in Person: boolean_true)'
@@ -73,6 +125,11 @@ function <<test.Test>> meta::rel::test::query::basic::testExists(): Any[*] {
 
 function <<test.Test>> meta::rel::test::query::basic::testMap(): Any[*] {
   let rai = schema()->TestConnection();
+
+  /*
+   * Expected intermediate PExpr is:
+   * Map(All(meta_rel_test_query_models_basicmodel_Person), ScopeUntyped(foo, p))
+   */
 
   assertEqualRel(
     [
