@@ -10,6 +10,11 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryAll(): Any[*]
 
   let rai = $schema->TestConnection();
 
+  /*
+   * Expected intermediate PExpr is:
+   * All(meta_rel_test_query_models_testmodel_TestRootClass)
+   */
+
   let transpiledQuery =
     $rai
       ->meta::rel::runtime::query({| TestRootClass.all() })
@@ -31,6 +36,47 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryMap(): Any[*]
   let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
+
+/*
+
+Filter(
+  Map(
+    Map(
+      All(meta_rel_test_query_models_testmodel_TestRootClass),
+      ScopeUntyped(
+        PropertyAccess(
+          SetAccess(meta_rel_test_query_models_testmodel_TestRootClass, r),
+          property4,
+          meta_rel_test_query_models_testmodel_TestRootClass),
+        r
+      )
+    ),
+    ScopeUntyped(
+      PropertyAccess(
+        SetAccess(meta_rel_test_query_models_testmodel_TestClassB, b),
+        propertyB,
+        meta_rel_test_query_models_testmodel_TestClassB
+      ),
+      b
+    )
+  ),
+  ScopeUntyped(
+    Function(
+      meta$rel$compile$ir$getFunctionExpr$29$system$imports$import__core_external_query_relationalai_compile_ir_translation_pure_1$79,
+      Function(
+        meta$rel$compile$ir$getFunctionExpr$29$system$imports$import__core_external_query_relationalai_compile_ir_translation_pure_1$79,
+        PropertyAccess(
+          SetAccess(meta_rel_test_query_models_testmodel_TestClassC, c),
+          propertyC1,
+          meta_rel_test_query_models_testmodel_TestClassC
+        )
+      )
+    ),
+    c
+  )
+)
+
+*/
 
   let transpiledQuery =
     $rai
@@ -77,6 +123,26 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryAt(): Any[*] 
   let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
+
+  /*
+   * Expected intermediate PExpr is:
+   *
+   * At(
+   *   Map(
+   *     All(meta_rel_test_query_models_testmodel_TestRootClass),
+   *     ScopeUntyped(
+   *       PropertyAccess(
+   *         SetAccess(meta_rel_test_query_models_testmodel_TestRootClass, h),
+   *         property5,
+   *         meta_rel_test_query_models_testmodel_TestRootClass
+   *       ),
+   *       h
+   *     )
+   *   ),
+   *   5
+   * )
+   *
+   */
 
   let transpiledQuery =
     $rai
@@ -218,6 +284,26 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryCast(): Any[*
   let schema = RAISchema('test')->includeAllRelatedClasses(TestRootClass);
 
   let rai = $schema->TestConnection();
+
+  /*
+   * Expected intermediate PExpr is:
+   *
+   * Map(
+   *   All(meta_rel_test_query_models_testmodel_TestRootClass),
+   *   ScopeUntyped(
+   *     Cast(
+   *       PropertyAccess(
+   *         SetAccess(meta_rel_test_query_models_testmodel_TestRootClass, x),
+   *         property6,
+   *         meta_rel_test_query_models_testmodel_TestRootClass
+   *       ),
+   *       meta_rel_test_query_models_testmodel_TestSubClass
+   *     ),
+   *     x
+   *   )
+   * )
+   *
+   */
 
   let transpiledQuery =
     $rai
