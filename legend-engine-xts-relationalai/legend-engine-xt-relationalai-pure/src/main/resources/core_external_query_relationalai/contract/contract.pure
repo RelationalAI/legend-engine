@@ -27,7 +27,7 @@ function meta::rel::contract::contract(): StoreContract[1] {
         {r: RelSetImplementation[1] |
           let propertyName = $prop.name->toOne();
           let setHasPropertyMapping = $r->_propertyMappingsByPropertyName($propertyName)->isNotEmpty();
-          $setHasPropertyMapping && !$prop->isPrimitiveValueProperty();
+          $setHasPropertyMapping && !$prop->isPrimitiveValueProperty(); // TODO: Check we need the second conjunct.
         },
         {a: Any[*] | false }
       ])
