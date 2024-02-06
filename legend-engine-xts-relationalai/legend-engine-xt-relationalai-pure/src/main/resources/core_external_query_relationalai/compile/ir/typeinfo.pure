@@ -1,17 +1,17 @@
 import meta::pure::router::store::metamodel::*;
-import meta::rel::mapping::*;
-import meta::rel::compile::ir::typeinfo::*;
-import meta::rel::compile::ir::*;
+import meta::external::store::rel::mapping::*;
+import meta::external::store::rel::compile::ir::typeinfo::*;
+import meta::external::store::rel::compile::ir::*;
 
-Class meta::rel::compile::ir::typeinfo::TranspileTypeInfo {
+Class meta::external::store::rel::compile::ir::typeinfo::TranspileTypeInfo {
   sets: RelSetImplementation[*];
 }
 
-function meta::rel::compile::ir::typeinfo::emptyTypeInfo(): TranspileTypeInfo[1] {
+function meta::external::store::rel::compile::ir::typeinfo::emptyTypeInfo(): TranspileTypeInfo[1] {
   ^TranspileTypeInfo()
 }
 
-function meta::rel::compile::ir::typeinfo::constructTypeInfo(
+function meta::external::store::rel::compile::ir::typeinfo::constructTypeInfo(
   valueSpec: StoreMappingRoutedValueSpecification[1]
 ): TranspileTypeInfo[1] {
   let sets =
@@ -22,7 +22,7 @@ function meta::rel::compile::ir::typeinfo::constructTypeInfo(
   ^TranspileTypeInfo(sets=$sets);
 }
 
-function meta::rel::compile::ir::typeinfo::union(
+function meta::external::store::rel::compile::ir::typeinfo::union(
   x: TranspileTypeInfo[1],
   y: TranspileTypeInfo[1]
 ): TranspileTypeInfo[1] {
@@ -32,7 +32,7 @@ function meta::rel::compile::ir::typeinfo::union(
 /**
   * Return the set implementation id (i.e., the class name) for each set implementation held in the type info.
   */
-function meta::rel::compile::ir::typeinfo::describe(
+function meta::external::store::rel::compile::ir::typeinfo::describe(
   typeInfo: TranspileTypeInfo[1]
 ): String[1] {
   if ( $typeInfo.sets->isEmpty(),
@@ -44,7 +44,7 @@ function meta::rel::compile::ir::typeinfo::describe(
 /**
   * Returns the sets from the type info for the given class.
   */
-function meta::rel::compile::ir::typeinfo::setForClass(
+function meta::external::store::rel::compile::ir::typeinfo::setForClass(
   typeInfo: TranspileTypeInfo[1],
   class: Class<Any>[1]
 ): RelSetImplementation[0..1] {
@@ -57,7 +57,7 @@ function meta::rel::compile::ir::typeinfo::setForClass(
 /**
   * Construct a P-Expression type from the given type.
   */
-function meta::rel::compile::ir::typeinfo::exprType(
+function meta::external::store::rel::compile::ir::typeinfo::exprType(
   typeInfo: TranspileTypeInfo[1],
   type: Type[1]
 ): PExprType[0..1] {

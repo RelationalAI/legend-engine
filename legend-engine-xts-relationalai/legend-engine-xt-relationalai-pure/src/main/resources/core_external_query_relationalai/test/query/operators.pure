@@ -1,11 +1,11 @@
-import meta::rel::mapping::*;
-import meta::rel::mapping::schema::*;
-import meta::rel::runtime::*;
-import meta::rel::test::query::models::testmodel::*;
-import meta::rel::utils::assert::*;
+import meta::external::store::rel::mapping::*;
+import meta::external::store::rel::mapping::schema::*;
+import meta::external::store::rel::runtime::*;
+import meta::external::store::rel::test::query::models::testmodel::*;
+import meta::external::store::rel::utils::assert::*;
 
 // Basic test query.
-function <<test.Test>> meta::rel::test::query::operators::testQueryAll(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryAll(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
@@ -17,7 +17,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryAll(): Any[*]
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query({| TestRootClass.all() })
+      ->meta::external::store::rel::runtime::query({| TestRootClass.all() })
       ->rel();
 
   assertEqualRel(
@@ -32,7 +32,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryAll(): Any[*]
 }
 
 // Basic map query.
-function <<test.Test>> meta::rel::test::query::operators::testQueryMap(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryMap(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
@@ -80,7 +80,7 @@ Filter(
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query({|
+      ->meta::external::store::rel::runtime::query({|
         TestRootClass.all()->map(r | $r.property4)->map(b | $b.propertyB)->filter(c | $c.propertyC1 != '')
       })
       ->rel();
@@ -96,14 +96,14 @@ Filter(
 }
 
 // Basic test of multi-level map.
-function <<test.Test>> meta::rel::test::query::operators::testQueryMapMultiLevel(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryMapMultiLevel(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query({|
+      ->meta::external::store::rel::runtime::query({|
         TestRootClass.all()->map(w | $w.property4.propertyB )
       })
       ->rel();
@@ -119,7 +119,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryMapMultiLevel
 }
 
 // Basic test of 'at'.
-function <<test.Test>> meta::rel::test::query::operators::testQueryAt(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryAt(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
@@ -146,7 +146,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryAt(): Any[*] 
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query({|
+      ->meta::external::store::rel::runtime::query({|
         TestRootClass.all()->map(h | $h.property5)->at(5)
       })
       ->rel();
@@ -160,14 +160,14 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryAt(): Any[*] 
 }
 
 // Test of 'at' after a multi-level map.
-function <<test.Test>> meta::rel::test::query::operators::testQueryMapMultiLevelAt(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryMapMultiLevelAt(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query({|
+      ->meta::external::store::rel::runtime::query({|
         TestRootClass.all()->map(w | $w.property4.propertyB.propertyC2 )->at(0)
       })
       ->rel();
@@ -181,14 +181,14 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryMapMultiLevel
 }
 
 // Basic project test.
-function <<test.Test>> meta::rel::test::query::operators::testQueryProject(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProject(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query({|
+      ->meta::external::store::rel::runtime::query({|
         TestRootClass.all()->project([
           x|$x.property1,
           x|$x.property3,
@@ -211,14 +211,14 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryProject(): An
 }
 
 // Basic multi-level project test.
-function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiLevel(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectMultiLevel(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestRootClass);
 
   let rai = $schema->TestConnection();
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query({|
+      ->meta::external::store::rel::runtime::query({|
         TestRootClass.all()->project([
           x|$x.property1,
           x|$x.property3,
@@ -247,14 +247,14 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiL
 }
 
 // Basic multi-level project test with 'at' along a multihop path.
-function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiLevelWithAt(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectMultiLevelWithAt(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestRootClass)->includeClass(TestClassAA)->includeClass(TestClassAAA);
 
   let rai = $schema->TestConnection();
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query({|
+      ->meta::external::store::rel::runtime::query({|
         TestRootClass.all()->project([
           x|$x.property1,
           x|$x.property2.propertyA1.propertyAA2->at(3).propertyAAA1.propertyAAAA1,
@@ -280,7 +280,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiL
 }
 
 // Basic test of cast operator.
-function <<test.Test>> meta::rel::test::query::operators::testQueryCast(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryCast(): Any[*] {
   let schema = RAISchema('test')->includeAllRelatedClasses(TestRootClass);
 
   let rai = $schema->TestConnection();
@@ -307,7 +307,7 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryCast(): Any[*
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query({|
+      ->meta::external::store::rel::runtime::query({|
           TestRootClass.all()->map(x |
             $x.property6->cast(@TestSubClass)
           )
@@ -324,14 +324,14 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryCast(): Any[*
   );
 }
 
-function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiLevelWithAtSimple1(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectMultiLevelWithAtSimple1(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestClassAA);
 
   let rai = $schema->TestConnection();
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query({|
+      ->meta::external::store::rel::runtime::query({|
         TestClassAA.all()->project([
           x|$x.propertyAA2->at(3).propertyAAA2 ],
           [ 'PropertyPath1' ]
@@ -349,14 +349,14 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiL
   );
 }
 
-function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiLevelWithAtSimple2(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectMultiLevelWithAtSimple2(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestClassA);
 
   let rai = $schema->TestConnection();
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query({|
+      ->meta::external::store::rel::runtime::query({|
         TestClassA.all()->project([
           x|$x.propertyA1.propertyAA2->at(3) ],
           [ 'PropertyPath1' ]
@@ -374,14 +374,14 @@ function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiL
   );
 }
 
-function <<test.Test>> meta::rel::test::query::operators::testQueryProjectMultiLevelWithAtSimple3(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectMultiLevelWithAtSimple3(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestClassA);
 
   let rai = $schema->TestConnection();
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query({|
+      ->meta::external::store::rel::runtime::query({|
         TestClassA.all()->project([
           x|$x.propertyA1.propertyAA2->at(3).propertyAAA2 ],
           [ 'PropertyPath1' ]

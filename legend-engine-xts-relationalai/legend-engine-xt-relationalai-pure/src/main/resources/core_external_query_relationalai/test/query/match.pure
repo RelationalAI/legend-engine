@@ -1,25 +1,25 @@
-import meta::rel::mapping::*;
-import meta::rel::mapping::schema::*;
-import meta::rel::runtime::*;
-import meta::rel::test::query::match::*;
-import meta::rel::utils::assert::*;
+import meta::external::store::rel::mapping::*;
+import meta::external::store::rel::mapping::schema::*;
+import meta::external::store::rel::runtime::*;
+import meta::external::store::rel::test::query::match::*;
+import meta::external::store::rel::utils::assert::*;
 
-Class meta::rel::test::query::match::TestClassWrapper {
+Class meta::external::store::rel::test::query::match::TestClassWrapper {
   fieldSuper: TestClassSuper[0..1];
   fieldSub: TestClassSub[0..1];
 }
 
-Class meta::rel::test::query::match::TestClassSuper {
+Class meta::external::store::rel::test::query::match::TestClassSuper {
   fieldOfSuper: String[0..1];
 }
 
-Class meta::rel::test::query::match::TestClassSub extends TestClassSuper {
+Class meta::external::store::rel::test::query::match::TestClassSub extends TestClassSuper {
   fieldOfSub: Decimal[0..1];
 }
 
 // This test passes.
 // Tests matching where a subtype is tested as a supertype. 
-function <<test.Test>> meta::rel::test::query::match::testQueryMatchSub(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::match::testQueryMatchSub(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestClassWrapper);
 
   let rai = $schema->TestConnection();
@@ -44,7 +44,7 @@ function <<test.Test>> meta::rel::test::query::match::testQueryMatchSub(): Any[*
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query({|
+      ->meta::external::store::rel::runtime::query({|
         TestClassWrapper.all()->map(x | $x.fieldSub->match([
           y: TestClassSub[1]   | $y.fieldOfSub,
           z: TestClassSuper[1] | $z.fieldOfSuper
@@ -61,7 +61,7 @@ function <<test.Test>> meta::rel::test::query::match::testQueryMatchSub(): Any[*
 }
 
 // Tests matching where a supertype is tested as a subtype. 
-function <<test.Test>> meta::rel::test::query::match::testQueryMatchSuper(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::match::testQueryMatchSuper(): Any[*] {
   let schema = RAISchema('test')->includeClass(TestClassWrapper);
 
   let rai = $schema->TestConnection();
@@ -86,7 +86,7 @@ function <<test.Test>> meta::rel::test::query::match::testQueryMatchSuper(): Any
 
   let transpiledQuery =
     $rai
-      ->meta::rel::runtime::query(|
+      ->meta::external::store::rel::runtime::query(|
         TestClassWrapper.all()->map(x | $x.fieldSuper->match([
           y: TestClassSub[1]   | $y.fieldOfSub,
           z: TestClassSuper[1] | $z.fieldOfSuper

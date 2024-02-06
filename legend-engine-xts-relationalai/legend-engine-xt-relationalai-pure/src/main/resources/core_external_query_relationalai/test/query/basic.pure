@@ -1,10 +1,10 @@
-import meta::rel::mapping::*;
-import meta::rel::runtime::*;
-import meta::rel::test::query::models::basicmodel::*;
-import meta::rel::test::testutils::*;
-import meta::rel::utils::assert::*;
+import meta::external::store::rel::mapping::*;
+import meta::external::store::rel::runtime::*;
+import meta::external::store::rel::test::query::models::basicmodel::*;
+import meta::external::store::rel::test::testutils::*;
+import meta::external::store::rel::utils::assert::*;
 
-function <<test.Test>> meta::rel::test::query::basic::testQueryAllPersons(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::basic::testQueryAllPersons(): Any[*] {
   let rai = schema()->TestConnection();
 
   /*
@@ -24,7 +24,7 @@ function <<test.Test>> meta::rel::test::query::basic::testQueryAllPersons(): Any
   );
 }
 
-function <<test.Test>> meta::rel::test::query::basic::testFilterByFirstName(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::basic::testFilterByFirstName(): Any[*] {
   let rai = schema()->TestConnection();
 
   /*
@@ -59,7 +59,7 @@ function <<test.Test>> meta::rel::test::query::basic::testFilterByFirstName(): A
   );
 }
 
-function <<test.Test>> meta::rel::test::query::basic::testCombinedFilter(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::basic::testCombinedFilter(): Any[*] {
   let rai = schema()->TestConnection();
 
   /*
@@ -102,7 +102,7 @@ function <<test.Test>> meta::rel::test::query::basic::testCombinedFilter(): Any[
   );
 }
 
-function <<test.Test>> meta::rel::test::query::basic::testExists(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::basic::testExists(): Any[*] {
   let rai = schema()->TestConnection();
 
   /*
@@ -123,7 +123,7 @@ function <<test.Test>> meta::rel::test::query::basic::testExists(): Any[*] {
   );
 }
 
-function <<test.Test>> meta::rel::test::query::basic::testMap(): Any[*] {
+function <<test.Test>> meta::external::store::rel::test::query::basic::testMap(): Any[*] {
   let rai = schema()->TestConnection();
 
   /*

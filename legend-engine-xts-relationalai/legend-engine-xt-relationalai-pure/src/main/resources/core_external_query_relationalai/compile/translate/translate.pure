@@ -13,23 +13,23 @@
   * tracks outputs of previous compilation steps. 
   */
 
-import meta::rel::compile::ir::utils::*;
-import meta::rel::compile::*;
-import meta::rel::compile::ir::*;
-import meta::rel::compile::substitution::*;
-import meta::rel::compile::utils::*;
-import meta::rel::lib::*;
-import meta::rel::mapping::*;
-import meta::rel::metamodel::*;
-import meta::rel::metamodel::syntactic::*;
-import meta::rel::metamodel::utils::*;
-import meta::rel::trace::*;
-import meta::rel::utils::*;
-import meta::rel::utils::collection::*;
-import meta::rel::utils::lang::*;
+import meta::external::store::rel::compile::ir::utils::*;
+import meta::external::store::rel::compile::*;
+import meta::external::store::rel::compile::ir::*;
+import meta::external::store::rel::compile::substitution::*;
+import meta::external::store::rel::compile::utils::*;
+import meta::external::store::rel::lib::*;
+import meta::external::store::rel::mapping::*;
+import meta::external::store::rel::metamodel::*;
+import meta::external::store::rel::metamodel::syntactic::*;
+import meta::external::store::rel::metamodel::utils::*;
+import meta::external::store::rel::trace::*;
+import meta::external::store::rel::utils::*;
+import meta::external::store::rel::utils::collection::*;
+import meta::external::store::rel::utils::lang::*;
 
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   expr: PExpr[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -41,18 +41,18 @@ function meta::rel::compile::compile(
       ->stage('compile(PExpr[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
       ->detail('expr', $expr->describe());
   $expr->match([
-    s: ConstString[1]          | ^$state(current=meta::rel::metamodel::const($s.value)->annotate(String))->ok(),
-    i: ConstInteger[1]         | ^$state(current=meta::rel::metamodel::const($i.value)->annotate(Integer))->ok(),
-    f: ConstFloat[1]           | ^$state(current=meta::rel::metamodel::const($f.value)->annotate(Float))->ok(),
+    s: ConstString[1]          | ^$state(current=meta::external::store::rel::metamodel::const($s.value)->annotate(String))->ok(),
+    i: ConstInteger[1]         | ^$state(current=meta::external::store::rel::metamodel::const($i.value)->annotate(Integer))->ok(),
+    f: ConstFloat[1]           | ^$state(current=meta::external::store::rel::metamodel::const($f.value)->annotate(Float))->ok(),
     b: ConstBoolean[1]         | ^$state(
       current=
         if($b.value, | booleanTrue(), | booleanFalse())
           ->annotate(Boolean)
       )
       ->ok(),
-    d: ConstStrictDate[1]      | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(StrictDate))->ok(),
-    d: ConstDateTime[1]        | ^$state(current=meta::rel::metamodel::const($d.value)->annotate(DateTime))->ok(),
-    d: ConstEmpty[1]           | ^$state(current=meta::rel::metamodel::relfalse())->ok(),
+    d: ConstStrictDate[1]      | ^$state(current=meta::external::store::rel::metamodel::const($d.value)->annotate(StrictDate))->ok(),
+    d: ConstDateTime[1]        | ^$state(current=meta::external::store::rel::metamodel::const($d.value)->annotate(DateTime))->ok(),
+    d: ConstEmpty[1]           | ^$state(current=meta::external::store::rel::metamodel::relfalse())->ok(),
     e: PExprAt[1]              | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprAll[1]             | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprCast[1]            | $e->compile($substitution, $rewrite, $state, $newTrace),
@@ -71,12 +71,12 @@ function meta::rel::compile::compile(
     e: PExprForAll[1]          | $e->compile($substitution, $rewrite, $state, $newTrace),
     s: PExprCompilationStep[1] | $s.logic->eval($substitution, $rewrite, $state),
     e: PExprIfThenElse[1]      | $e->compile($substitution, $rewrite, $state, $newTrace),
-    j: meta::rel::compile::ir::tds::Join[1]      | $j->meta::rel::compile::tds::compile($substitution, $rewrite, $state, $newTrace),
-    f: meta::rel::compile::ir::tds::TDSFilter[1] | $f->meta::rel::compile::tds::compile($substitution, $rewrite, $state, $newTrace)
+    j: meta::external::store::rel::compile::ir::tds::Join[1]      | $j->meta::external::store::rel::compile::tds::compile($substitution, $rewrite, $state, $newTrace),
+    f: meta::external::store::rel::compile::ir::tds::TDSFilter[1] | $f->meta::external::store::rel::compile::tds::compile($substitution, $rewrite, $state, $newTrace)
   ]);
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   at: PExprAt[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -91,7 +91,7 @@ function meta::rel::compile::compile(
    * Recursively compile the parent and apply partial relational application
    * using the index of the `at` operator.
    */
-  let indexExpr = meta::rel::metamodel::const($at.index);
+  let indexExpr = meta::external::store::rel::metamodel::const($at.index);
   $at.parent
     ->compile($substitution, $rewrite, $state, $newTrace)
     ->step(parent: Expr[1] |
@@ -102,7 +102,7 @@ function meta::rel::compile::compile(
     );
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   all: PExprAll[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -117,7 +117,7 @@ function meta::rel::compile::compile(
     ->then(expr: Expr[1] | ^$state(current=$expr->annotate($all.set.class)))
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   cast: PExprCast[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -156,7 +156,7 @@ function meta::rel::compile::compile(
     );
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   filter: PExprFilter[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -195,7 +195,7 @@ function meta::rel::compile::compile(
     });
 }
 
-function meta::rel::compile::compile<|n>(
+function meta::external::store::rel::compile::compile<|n>(
   fexpr: PExprFunction<|n>[1],
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -213,7 +213,7 @@ function meta::rel::compile::compile<|n>(
     ->then(result: Expr[1] | ^$state(current=$result));
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   exists: PExprExists[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -238,7 +238,7 @@ function meta::rel::compile::compile(
         )
         ->step({predicate: Expr[1] | 
             /*[
-              meta::rel::metamodel::const(1),
+              meta::external::store::rel::metamodel::const(1),
               $parent
                 ->atom([$index, $bound])
                 ->and($predicate)
@@ -259,7 +259,7 @@ function meta::rel::compile::compile(
     });
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   forAll: PExprForAll[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -290,7 +290,7 @@ function meta::rel::compile::compile(
             ->ok();
 
             /*[
-              meta::rel::metamodel::const(1),
+              meta::external::store::rel::metamodel::const(1),
               vars([$index, $bound])
               ->where(
                 $parent
@@ -307,7 +307,7 @@ function meta::rel::compile::compile(
     });
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   access: PExprSetAccess[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -325,7 +325,7 @@ function meta::rel::compile::compile(
     );
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   access: PExprColumnAccess[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -343,7 +343,7 @@ function meta::rel::compile::compile(
     );
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   access: PExprPropertyAccess[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -382,7 +382,7 @@ function meta::rel::compile::compile(
     );
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   expr: PExprMap[1],
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -425,7 +425,7 @@ function meta::rel::compile::compile(
     );
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   expr: PExprScope[1],
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -439,7 +439,7 @@ function meta::rel::compile::compile(
   $expr.inner->compile($substitution, $rewrite, $state, $newTrace);
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   expr: PExprProject[1],
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -530,7 +530,7 @@ function meta::rel::compile::compile(
 }
 
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   expr: VariablePlaceholder[1],
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -546,7 +546,7 @@ function meta::rel::compile::compile(
     ->then(subst: Expr[1] | ^$state(current=$subst));
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   expr: PExprGroupBy[1],
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -563,7 +563,7 @@ function meta::rel::compile::compile(
   ]);
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   expr: PExprGroupByScopes[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -757,7 +757,7 @@ function meta::rel::compile::compile(
 
               let body = 
                 if($grouper->size() == 0, {|
-                  $bound->from($vi->in(meta::rel::metamodel::const(1)));
+                  $bound->from($vi->in(meta::external::store::rel::metamodel::const(1)));
                 }, {|
                   $bound->from(
                       $binding
@@ -781,7 +781,7 @@ function meta::rel::compile::compile(
     });
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   expr: PExprGroupByColumns[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -918,7 +918,7 @@ function meta::rel::compile::compile(
             let binding = 
               if ($expr.group->isEmpty(), {| 
                 //vars($vi->concatenate($vxs)->toOneMany())
-                $vi->in(meta::rel::metamodel::const(1));
+                $vi->in(meta::external::store::rel::metamodel::const(1));
               }, {|
                 vars([$vi]->concatenate($vxs)->toOneMany())
                   ->where(
@@ -957,7 +957,7 @@ function meta::rel::compile::compile(
     });
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   ifThenElse: PExprIfThenElse[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -981,14 +981,14 @@ function meta::rel::compile::compile(
             ->compile($substitution, $rewrite, $state, $newTrace)
             ->step(else: Expr[1] |
               $condition
-                ->meta::rel::metamodel::ifThenElse($then, $else)
+                ->meta::external::store::rel::metamodel::ifThenElse($then, $else)
                 ->ok()
             );
         });
     });
 }
 
-function meta::rel::compile::compile(
+function meta::external::store::rel::compile::compile(
   match: PExprMatch[1], 
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
@@ -1028,7 +1028,7 @@ function meta::rel::compile::compile(
               $newTrace
             )
             ->step(caseExprBody: Expr[1] |
-              $condition->meta::rel::metamodel::ifThenElse($caseExprBody, $accum)->ok();
+              $condition->meta::external::store::rel::metamodel::ifThenElse($caseExprBody, $accum)->ok();
             )
             ->current()
             ->unwrap();

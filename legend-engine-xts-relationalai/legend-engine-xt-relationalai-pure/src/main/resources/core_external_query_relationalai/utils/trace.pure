@@ -1,32 +1,32 @@
-import meta::rel::trace::*;
+import meta::external::store::rel::trace::*;
 
 /**
   * A traced computation.
   */
-Class meta::rel::trace::Trace { 
+Class meta::external::store::rel::trace::Trace { 
   <<equality.Key>> stages: Stage[*];
 }
 
-Class meta::rel::trace::Stage {
+Class meta::external::store::rel::trace::Stage {
   <<equality.Key>> stageName: String[1];
   messages: String[*];
 }
 
-function meta::rel::trace::emptyTrace(): Trace[1] {
+function meta::external::store::rel::trace::emptyTrace(): Trace[1] {
   ^Trace(stages=[])
 }
 
 /**
   * Append a named staged to the traced computation. 
   */
-function meta::rel::trace::stage(trace: Trace[1], stageName: String[1]): Trace[1] {
+function meta::external::store::rel::trace::stage(trace: Trace[1], stageName: String[1]): Trace[1] {
   ^$trace(stages=$trace.stages->add(0, ^Stage(stageName=$stageName)))
 }
 
 /**
   * Append a message to the current stage.
   */
-function meta::rel::trace::detail(trace: Trace[1], label: String[1], message: String[0..1]): Trace[1] {
+function meta::external::store::rel::trace::detail(trace: Trace[1], label: String[1], message: String[0..1]): Trace[1] {
   let headStage = $trace.stages->at(0);
   let headStageMessages = $headStage.messages;
   let headMessage =
@@ -40,11 +40,11 @@ function meta::rel::trace::detail(trace: Trace[1], label: String[1], message: St
 /**
   * Append a message to the current stage.
   */
-function meta::rel::trace::detail(trace: Trace[1], label: String[1], elem: Any[0..1]): Trace[1] {
+function meta::external::store::rel::trace::detail(trace: Trace[1], label: String[1], elem: Any[0..1]): Trace[1] {
   detail($trace, $label, $elem->map(e: Any[1] | $e->toString()));
 }
 
-function meta::rel::trace::traceLog(trace: Trace[0..1]): String[*] {
+function meta::external::store::rel::trace::traceLog(trace: Trace[0..1]): String[*] {
   if($trace->isEmpty(),
     | ['(no trace)'],
     | if($trace.stages->isEmpty(),
