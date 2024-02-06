@@ -70,14 +70,14 @@ function meta::rel::compile::ir::utils::describeScopeTyped(scope: PExprScopeType
   /*
    * Include all fields except `parent`.
    */
-  format('ScopeTyped(%s, %s, %s)', [$scope.inner->describe(), $scope.exprType->describeExprType(), $scope.variable])
+  format('ScopeTyped(%s, %s, %s)', [$scope.variable, $scope.exprType->describeExprType(), $scope.inner->describe()])
 }
 
 function meta::rel::compile::ir::utils::describeScopeUntyped(scope: PExprScopeUntyped[1]): String[1] {
   /*
    * Include all fields except `parent`.
    */
-  format('ScopeUntyped(%s, %s)', [$scope.inner->describe(), $scope.variables->makeString(', ')])
+  format('ScopeUntyped(%s, %s)', [$scope.variables->makeString(', '), $scope.inner->describe()])
 }
 
 function meta::rel::compile::ir::utils::describeAt(at: PExprAt[1]): String[1] {
