@@ -360,7 +360,7 @@ function meta::rel::compile::compile(
       $access.property.name
         ->okOr(| errorTrace('No name specified for property.', $newTrace))
         ->andThen(propertyName: String[1] |
-          let propertyOwnerSet = $access.parent->set();
+          let propertyOwnerSet = $access.set;
           let className = $propertyOwnerSet.class.name->orElse('[UNKNOWN]');
           $propertyOwnerSet
             ->map(set: RelSetImplementation[1] |
