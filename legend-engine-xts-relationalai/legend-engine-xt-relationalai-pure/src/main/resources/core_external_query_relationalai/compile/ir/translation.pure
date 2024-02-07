@@ -90,16 +90,24 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueSpecTo
         variablePlaceholder($variable.name)->ok()
     },
     {
-      spec: NoSetRoutedValueSpecification[1] |
-        let traceDetail = $newTrace->detail('case', 'NoSetRoutedValueSpecification');
+      notrouted: NoSetRoutedValueSpecification[1] |
         assert($set == [], 'Set implementation passed when not expected.');
-        let requiredClass = $spec.genericType.rawType->toOne();
+        let traceDetail = $newTrace->detail('case', 'NoSetRoutedValueSpecification');
+
+        let requiredClass = $notrouted.genericType.rawType->toOne();
         $requiredClass
           ->tryCast(@Class<Any>, $newTrace)
           ->then(c: Class<Any>[1] |
             $typeInfo->setForClass($c)
           )
-          ->then(set: RelSetImplementation[1] | exprSet($set));
+          ->andThen(typeInfoSet: RelSetImplementation[1] |
+
+            $notrouted.value->match([
+              func: FunctionExpression[1]  | $func->functionExprToPExpr($typeInfo, $typeInfoSet, $traceDetail),
+              var: VariableExpression[1]   | $typeInfoSet->setAccess($var.name)->ok(),
+              other: ValueSpecification[1] | $other->valueSpecToPExpr($typeInfo, $typeInfoSet, $traceDetail)
+            ])
+          );
     },
     {
       other: Any[1] |

@@ -57,6 +57,7 @@ function meta::external::store::rel::compile::compile(
     e: PExprAll[1]             | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprCast[1]            | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprPropertyAccess[1]  | $e->compile($substitution, $rewrite, $state, $newTrace),
+    e: PExprSet[1]             | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprSetAccess[1]       | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprColumnAccess[1]    | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprFilter[1]          | $e->compile($substitution, $rewrite, $state, $newTrace),
@@ -305,6 +306,20 @@ function meta::external::store::rel::compile::compile(
         })
         ->current();
     });
+}
+
+function meta::external::store::rel::compile::compile(
+  set: PExprSet[1],
+  substitution: VariableSubstitution[1],
+  rewrite: ColumnAccessRewrite[1],
+  state: CompilationState[1],
+  trace: Trace[1]
+): Result<CompilationState|0..1>[1] {
+  let newTrace =
+    $trace
+      ->stage('compile(PExprSet[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('set', $set->describe());
+  ^$state(current=$set.set.classExpr)->ok();
 }
 
 function meta::external::store::rel::compile::compile(
