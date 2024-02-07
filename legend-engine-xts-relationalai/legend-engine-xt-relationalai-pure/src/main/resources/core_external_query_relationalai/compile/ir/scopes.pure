@@ -144,26 +144,6 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseF
                             );
                           )
                     },
-                    //
-                    // TODO: Remove this repeated case.
-                    //
-                    // {
-                    //   spec: VariableExpression[1] |
-                    //     if ($vars->size() != 1,
-                    //       {|
-                    //         error('Only a single variable is supported.', $newTrace)
-                    //       },
-                    //       {|
-                    //         let var = $vars->toOne();
-                    //         let type = $var.genericType.rawType->toOne();
-                    //         $typeInfo
-                    //           ->exprType($type)
-                    //           ->okOr(| errorTrace(format('Could not determine type for `%s`.', $type->toString()), $newTrace) )
-                    //           ->then(exprType: PExprType[1] |
-                    //             $inner->scopeTyped($var.name, $exprType, $parent);
-                    //           );
-                    //       })
-                    // },
                     {
                       spec: SimpleFunctionExpression[1] |
                         if ($vars->size() != 1,
