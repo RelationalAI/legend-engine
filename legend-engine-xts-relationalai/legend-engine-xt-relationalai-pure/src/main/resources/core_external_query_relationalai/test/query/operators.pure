@@ -447,6 +447,40 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
 
   let rai = $schema->TestConnection();
 
+  /*
+   * Expected intermediate PExpr is:
+   *
+   * Project(
+   *   All(meta_external_store_rel_test_query_models_testmodel_TestClassA),
+   *   [
+   *     Projection(
+   *       PropertyPath1,
+   *       ScopeUntyped(
+   *         x,
+   *         PropertyAccess(
+   *           At(
+   *             Map(
+   *               PropertyAccess(
+   *                 SetAccess(meta_external_store_rel_test_query_models_testmodel_TestClassA, x),
+   *                 propertyA1,
+   *                 meta_external_store_rel_test_query_models_testmodel_TestClassA
+   *               ),
+   *               ScopeUntyped(
+   *                 v_automap,
+   *                 PropertyAccess(VariablePlaceholder(v_automap), propertyAA2, meta_external_store_rel_test_query_models_testmodel_TestClassAA)
+   *               )
+   *             ),
+   *             3
+   *           ),
+   *           propertyAAA2,
+   *           meta_external_store_rel_test_query_models_testmodel_TestClassAAA
+   *         )
+   *       )
+   *     )
+   *   ]
+   * )
+   */
+
   let transpiledQuery =
     $rai
       ->meta::external::store::rel::runtime::query({|
@@ -460,9 +494,10 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
   assertEqualRel(
     [
       'def tbl1[:base] = x from x in TestClassA',
-      'def tbl1[:PropertyPath1, x] = (TestClassAA:propertyAA2[x1] from x1 in TestClassA:propertyA1[x])[3], tbl1(:base, x)',
+      'def tbl1[:PropertyPath1, x] = TestClassAAA:propertyAAA2[(TestClassAA:propertyAA2[x1] from x1 in TestClassA:propertyA1[x])[3]], tbl1(:base, x)',
       'def output = tbl1[:PropertyPath1, i] from i'
     ],
     $transpiledQuery
   );
 }
+
