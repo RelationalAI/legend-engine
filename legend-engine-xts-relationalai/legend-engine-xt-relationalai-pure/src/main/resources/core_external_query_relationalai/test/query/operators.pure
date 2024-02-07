@@ -252,6 +252,77 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
 
   let rai = $schema->TestConnection();
 
+  /*
+   * Expected intermediate PExpr is:
+   *
+   * Project(
+   *   All(meta_external_store_rel_test_query_models_testmodel_TestRootClass),
+   *   [
+   *     Projection(
+   *       PropertyOne,
+   *       ScopeUntyped(
+   *         x,
+   *         PropertyAccess(SetAccess(meta_external_store_rel_test_query_models_testmodel_TestRootClass, x), property1, meta_external_store_rel_test_query_models_testmodel_TestRootClass)
+   *       )
+   *     ),
+   *     Projection(
+   *       PropertyPath1,
+   *       ScopeUntyped(
+   *         x,
+   *         Map(
+   *           PropertyAccess(
+   *             At(
+   *               Map(
+   *                 Map(
+   *                   PropertyAccess(VariablePlaceholder(x), property2, meta_external_store_rel_test_query_models_testmodel_TestRootClass),
+   *                   ScopeUntyped(
+   *                     v_automap,
+   *                     PropertyAccess(VariablePlaceholder(v_automap), propertyA1, meta_external_store_rel_test_query_models_testmodel_TestClassA)
+   *                   )
+   *                 ),
+   *                 ScopeUntyped(v_automap, PropertyAccess(VariablePlaceholder(v_automap), propertyAA2, meta_external_store_rel_test_query_models_testmodel_TestClassAA))
+   *               ), 
+   *               3
+   *             ),
+   *             propertyAAA1,
+   *             meta_external_store_rel_test_query_models_testmodel_TestClassAAA
+   *           ),
+   *           ScopeUntyped(
+   *             v_automap,
+   *             PropertyAccess(VariablePlaceholder(v_automap), propertyAAAA1, meta_external_store_rel_test_query_models_testmodel_TestClassAAAA)
+   *           )
+   *         )
+   *       )
+   *     ),
+   *     Projection(
+   *       PropertyPath2,
+   *       ScopeUntyped(
+   *         x,
+   *         Map(
+   *           Map(
+   *             Map(
+   *               PropertyAccess(VariablePlaceholder(x), property2, meta_external_store_rel_test_query_models_testmodel_TestRootClass),
+   *               ScopeUntyped(
+   *                 v_automap,
+   *                 PropertyAccess(VariablePlaceholder(v_automap), propertyA1, meta_external_store_rel_test_query_models_testmodel_TestClassA)
+   *               )
+   *             ),
+   *             ScopeUntyped(
+   *               v_automap,
+   *               PropertyAccess(VariablePlaceholder(v_automap), propertyAA1, meta_external_store_rel_test_query_models_testmodel_TestClassAA)
+   *             )
+   *           ),
+   *           ScopeUntyped(
+   *             v_automap,
+   *             PropertyAccess(VariablePlaceholder(v_automap), propertyAAA2, meta_external_store_rel_test_query_models_testmodel_TestClassAAA)
+   *           )
+   *         )
+   *       )
+   *     )
+   *   ]
+   * )
+   */
+
   let transpiledQuery =
     $rai
       ->meta::external::store::rel::runtime::query({|
@@ -268,7 +339,7 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
     [
       'def tbl1[:base] = x from x in TestRootClass',
       'def tbl1[:PropertyOne, x] = TestRootClass:property1[x], tbl1(:base, x)',
-      'def tbl1[:PropertyPath1, x] = TestClassAAAA:propertyAAAA1[x4] from x4 in TestClassAAA:propertyAAA1[x3] from x3 in TestClassAA:propertyAA1[x2] from x2 in TestClassA:propertyA1[x1] from x1 in TestRootClass:property2[x], tbl1(:base, x)',
+      'def tbl1[:PropertyPath1, x] = TestClassAAAA:propertyAAAA1[x3] from x3 in TestClassAAA:propertyAAA1[(TestClassAA:propertyAA2[x2] from x2 in TestClassA:propertyA1[x1] from x1 in TestRootClass:property2[x])[3]], tbl1(:base, x)',
       'def tbl1[:PropertyPath2, x] = TestClassAAA:propertyAAA2[x6] from x6 in TestClassAA:propertyAA1[x5] from x5 in TestClassA:propertyA1[x4] from x4 in TestRootClass:property2[x], tbl1(:base, x)',
       'def output = tbl1[:PropertyOne, i], tbl1[:PropertyPath1, i], tbl1[:PropertyPath2, i] from i'
     ],
