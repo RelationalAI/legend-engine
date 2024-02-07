@@ -159,6 +159,16 @@ Class meta::external::store::rel::compile::ir::PExprAll extends PExpr {
 }
 
 /**
+  * Expression corresponding to a named set.
+  *
+  * TODO: This was previously a compilation step. Try to unify this case with PExprAll.
+  * TODO: How is this different to PExprSetAccess? Try to combine.
+  */
+Class meta::external::store::rel::compile::ir::PExprSet extends PExpr {
+  set: RelSetImplementation[1];
+}
+
+/**
   * Expression asking to filter another query node by a given predicate.
   */
 Class meta::external::store::rel::compile::ir::PExprFilter extends PExpr {
@@ -435,6 +445,10 @@ function meta::external::store::rel::compile::ir::columnAccess(parent: PExpr[1],
 
 function meta::external::store::rel::compile::ir::all(set: RelSetImplementation[1]): PExprAll[1] {
   ^PExprAll(set=$set)
+}
+
+function meta::external::store::rel::compile::ir::exprSet(set: RelSetImplementation[1]): PExprSet[1] {
+  ^PExprSet(set=$set)
 }
 
 function meta::external::store::rel::compile::ir::filter(parent: PExpr[1], predicate: PExprScope[1]): PExprFilter[1] {

@@ -54,6 +54,10 @@ function meta::external::store::rel::compile::ir::utils::describeForAll(forall: 
   format('ForAll(%s, %s)', [$forall.parent->describe(), $forall.predicate->describe()])
 }
 
+function meta::external::store::rel::compile::ir::utils::describeSet(set: PExprSet[1]): String[1] {
+  format('Set(%s)', $set.set->describeSetImpl())
+}
+
 function meta::external::store::rel::compile::ir::utils::describeSetAccess(setAccess: PExprSetAccess[1]): String[1] {
   format('SetAccess(%s, %s)', [$setAccess.set->describeSetImpl(), $setAccess.variable])
 }
@@ -153,6 +157,7 @@ function meta::external::store::rel::compile::ir::utils::describe(expr: PExpr[1]
     expr: PExprPropertyAccess[1]  | $expr->describePropertyAccess(),
     expr: PExprScopeTyped[1]      | $expr->describeScopeTyped(),
     expr: PExprScopeUntyped[1]    | $expr->describeScopeUntyped(),
+    expr: PExprSet[1]             | $expr->describeSet(),
     expr: PExprSetAccess[1]       | $expr->describeSetAccess(),
     expr: VariablePlaceholder[1]  | $expr->describeVariablePlaceholder()
   ]);

@@ -99,9 +99,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueSpecTo
           ->then(c: Class<Any>[1] |
             $typeInfo->setForClass($c)
           )
-          ->then(set: RelSetImplementation[1] |
-            $set->exprForSet($newTrace)
-          );
+          ->then(set: RelSetImplementation[1] | exprSet($set));
     },
     {
       other: Any[1] |
@@ -134,20 +132,6 @@ function <<access.private>> meta::external::store::rel::compile::ir::instanceVal
   );
 }
 
-function <<access.private>> meta::external::store::rel::compile::ir::exprForSet(
-  set: RelSetImplementation[1],
-  trace: Trace[1]
-): PExpr[1] {
-  let newTrace =
-    $trace
-      ->stage('exprForSet(RelSetImplementation[1],Trace[1])')
-      ->detail('set', $set->describeSetImpl());
-  compilationStep({callback: VariableSubstitution[1], mapping: ColumnAccessRewrite[1], state: meta::external::store::rel::compile::CompilationState[1] |
-    ^$state(current=$set.classExpr)
-      ->ok()
-  });
-}
-
 function <<access.private>> meta::external::store::rel::compile::ir::valueToPExpr(
   value: Any[1],
   set: RelSetImplementation[0..1],
@@ -167,7 +151,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueToPExp
     d: DateTime[1] | ok(dateTime($d)),
     {class: Class<Any>[1] |
       $set
-        ->map(set: RelSetImplementation[1] | $set->exprForSet($newTrace))
+        ->map(set: RelSetImplementation[1] | exprSet($set))
         ->okOr(| errorTrace(format('Encountered class `%s` but no set implementation has been provided.', $class.name), $newTrace))
     },
     {a: Any[1] |
