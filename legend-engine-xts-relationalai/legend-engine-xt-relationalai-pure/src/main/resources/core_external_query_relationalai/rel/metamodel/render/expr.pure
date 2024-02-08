@@ -157,7 +157,7 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], ifThenElse: IfThenElse[1]): RelQueryBuffer[1] {
   $buffer->append('if ')->render($ifThenElse.condition)->append(' then ')->render($ifThenElse.then)
-         ->append(' else ')->render($ifThenElse.else);
+         ->append(' else ')->render($ifThenElse.else)->append(' end');
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], expr: Expr[1]): RelQueryBuffer[1] {
