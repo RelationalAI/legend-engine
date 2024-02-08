@@ -72,6 +72,7 @@ function meta::external::store::rel::compile::compile(
     e: PExprForAll[1]          | $e->compile($substitution, $rewrite, $state, $newTrace),
     s: PExprCompilationStep[1] | $s.logic->eval($substitution, $rewrite, $state),
     e: PExprIfThenElse[1]      | $e->compile($substitution, $rewrite, $state, $newTrace),
+    e: PExprIn[1]              | $e->compile($substitution, $rewrite, $state, $newTrace),
     j: meta::external::store::rel::compile::ir::tds::Join[1]      | $j->meta::external::store::rel::compile::tds::compile($substitution, $rewrite, $state, $newTrace),
     f: meta::external::store::rel::compile::ir::tds::TDSFilter[1] | $f->meta::external::store::rel::compile::tds::compile($substitution, $rewrite, $state, $newTrace)
   ]);
@@ -437,6 +438,36 @@ function meta::external::store::rel::compile::compile(
             ->ok()*/
         })
         ->current();
+    );
+}
+
+function meta::external::store::rel::compile::compile(
+  expr: PExprIn[1],
+  substitution: VariableSubstitution[1],
+  rewrite: ColumnAccessRewrite[1],
+  state: CompilationState[1],
+  trace: Trace[1]
+): Result<CompilationState|0..1>[1] {
+  let newTrace =
+    $trace
+      ->stage('compile(PExprIn[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1])')
+      ->detail('expr', $expr->describe());
+  $expr.parent
+    ->compile($substitution, $rewrite, $state, $newTrace)
+    ->step(parent: Expr[1] |
+      $expr.inExprs
+        ->map(inExpr: PExpr[1] |
+         $inExpr
+          ->compile($substitution, $rewrite, $state, $newTrace)
+          ->current()
+      )
+      ->collect()
+      ->them(exprs: Expr[*] |
+        if ( $exprs->isEmpty(),
+           | relfalse(),
+           | $parent->intersection(union($exprs->toOneMany())->parenthesise())->empty();
+           )
+      );
     );
 }
 

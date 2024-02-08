@@ -92,6 +92,10 @@ function meta::external::store::rel::compile::ir::utils::describeMap(map: PExprM
   format('Map(%s, %s)', [$map.parent->describe(), $map.body->describe()])
 }
 
+function meta::external::store::rel::compile::ir::utils::describeIn(in: PExprIn[1]): String[1] {
+  format('In(%s, [%s])', [$in.parent->describe(), $in.inExprs->map(e | $e->describe())->makeString(', ')])
+}
+
 function meta::external::store::rel::compile::ir::utils::describeProject(project: PExprProject[1]): String[1] {
   let projections =
     $project.projections
@@ -151,6 +155,7 @@ function meta::external::store::rel::compile::ir::utils::describe(expr: PExpr[1]
     expr: PExprGroupByColumns[1]  | $expr->describeGroupByColumns(),
     expr: PExprGroupByScopes[1]   | $expr->describeGroupByScopes(),
     expr: PExprIfThenElse[1]      | $expr->describeIfThenElse(),
+    expr: PExprIn[1]              | $expr->describeIn(),
     expr: PExprMap[1]             | $expr->describeMap(),
     expr: PExprMatch[1]           | $expr->describeMatch(),
     expr: PExprProject[1]         | $expr->describeProject(),

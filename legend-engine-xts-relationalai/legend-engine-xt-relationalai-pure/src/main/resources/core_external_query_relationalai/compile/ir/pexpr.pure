@@ -271,6 +271,14 @@ Class meta::external::store::rel::compile::ir::PExprMap extends PExpr {
 }
 
 /**
+  * Type denoting `in` expressions.
+  */
+Class meta::external::store::rel::compile::ir::PExprIn extends PExpr {
+  parent: PExpr[1];
+  inExprs: PExpr[*];
+}
+
+/**
   * Type denoting projections.
   */
 Class meta::external::store::rel::compile::ir::PExprProject extends PExpr {
@@ -481,6 +489,10 @@ function meta::external::store::rel::compile::ir::atExpr(parent: PExpr[1], index
 
 function meta::external::store::rel::compile::ir::mapExpr(parent: PExpr[1], body: PExprScope[1]): PExprMap[1] {
   ^PExprMap(parent=$parent, body=$body)
+}
+
+function meta::external::store::rel::compile::ir::inExpr(parent: PExpr[1], inExprs: PExpr[*]): PExprIn[1] {
+  ^PExprIn(parent=$parent, inExprs=$inExprs)
 }
 
 function meta::external::store::rel::compile::ir::exists(parent: PExpr[1], predicate: PExprScope[1]): meta::external::store::rel::compile::ir::PExprExists[1] {

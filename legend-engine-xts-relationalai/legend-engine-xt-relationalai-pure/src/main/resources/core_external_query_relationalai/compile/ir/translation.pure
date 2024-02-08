@@ -78,7 +78,12 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueSpecTo
     {
       value: InstanceValue[1] |
         let traceDetail = $newTrace->detail('case', 'InstanceValue');
-        $value->instanceValueToPExpr($set, $traceDetail);
+        /*
+         * Here we require only a single value in the instance value in all cases.
+         */
+        $value
+          ->instanceValueToPExpr($set, true, $traceDetail)
+          ->them(exprs: PExpr[*] | $exprs->first());
     },
     {
       func: FunctionExpression[1] |
@@ -119,24 +124,34 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueSpecTo
 
 function <<access.private>> meta::external::store::rel::compile::ir::instanceValueToPExpr(
   spec: InstanceValue[1],
-  set: RelSetImplementation[0..1],
   trace: Trace[1]
-): Result<PExpr|0..1>[1] {
+): Result<PExpr|*>[1] {
   let newTrace =
     $trace
-      ->stage('instanceValueToPExpr(InstanceValue[1],RelSetImplementation[1],Trace[1])')
+      ->stage('instanceValueToPExpr(InstanceValue[1],Trace[1])');
+  instanceValueToPExpr($spec, [], false, $newTrace);
+}
+
+function <<access.private>> meta::external::store::rel::compile::ir::instanceValueToPExpr(
+  spec: InstanceValue[1],
+  set: RelSetImplementation[0..1],
+  requireAtMostOne: Boolean[1],
+  trace: Trace[1]
+): Result<PExpr|*>[1] {
+  let newTrace =
+    $trace
+      ->stage('instanceValueToPExpr(InstanceValue[1],RelSetImplementation[0..1],Boolean[1],Trace[1])')
       ->detail('set', $set->describeSetImpl());
   if($spec.values->isEmpty(),
     | constEmpty()->ok(),
     | $spec.values
         ->okm()
         ->andThem(values: Any[*] |
-          if ($values->size() != 1,
+          if ($requireAtMostOne && $values->size() != 1,
             | error('Expected exactly one value in `InstanceValue`.', $newTrace),
-            | $values->toOne()->ok()
+            | $values->map(value | $value->valueToPExpr($set, $newTrace))->collect()
           )
-        )
-        ->andThen(value: Any[1] | $value->valueToPExpr($set, $newTrace))
+        );
   );
 }
 
@@ -388,6 +403,8 @@ function <<access.private>> meta::external::store::rel::compile::ir::functionExp
           handleCaseBigOperator2($func, $typeInfo, $newTrace)),
         case($other == if_Boolean_1__Function_1__Function_1__T_m_,|
           handleCaseIf($func, $typeInfo, $newTrace)),
+        case ($other == in_Any_$0_1$__Any_MANY__Boolean_1_,|
+           handleCaseIn($func, $typeInfo, $newTrace)),
         case($other == instanceOf_Any_1__Type_1__Boolean_1_,|
           handleCaseInstanceOf($func, $typeInfo, $newTrace)),
         case($other == cast_Any_m__T_1__T_m_,|
@@ -480,6 +497,41 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseF
       $param1
         ->valueSpecToUntypedScoped($typeInfo, $parent, $newTrace)
         ->then(scoped: PExprScope[1] | $parent->filter($scoped))
+    );
+}
+
+function <<access.private>> meta::external::store::rel::compile::ir::handleCaseIn(
+  func: FunctionExpression[1],
+  typeInfo: TranspileTypeInfo[1],
+  trace: Trace[1]
+): Result<PExpr|0..1>[1] {
+  assert($func.func == in_Any_$0_1$__Any_MANY__Boolean_1_);
+
+  let newTrace =
+    $trace
+      ->stage('handleCaseIn(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
+      ->detail('typeInfo', $typeInfo->describe());
+
+  let param0 = $func.parametersValues->at(0);
+  let param1 = $func.parametersValues->at(1);
+
+  $param0
+    ->valueSpecToPExpr($typeInfo, $newTrace)
+    ->andThen(parent: PExpr[1] |
+      $param1->match([
+        {
+          value: InstanceValue[1] |
+            $value
+              ->instanceValueToPExpr($newTrace)
+              ->them(exprs: PExpr[*] |
+                $parent->inExpr($exprs);
+              );
+        },
+        {
+          other: ValueSpecification[1] |
+            error('Only instance values are supported within an `in` expression.', $newTrace)
+        }
+      ])
     );
 }
 

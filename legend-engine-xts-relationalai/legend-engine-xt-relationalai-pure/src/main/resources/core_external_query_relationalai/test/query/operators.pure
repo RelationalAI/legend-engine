@@ -501,3 +501,27 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
   );
 }
 
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectNestedIn(): Any[*] {
+  let schema = RAISchema('test')->includeClass(TestRootClass);
+
+  let rai = $schema->TestConnection();
+
+  let transpiledQuery =
+    $rai
+      ->meta::external::store::rel::runtime::query({|
+        TestRootClass.all()->project([
+          x|$x.property2.propertyA3->in(['apple','orange','pear']) ],
+          [ 'PropertyPath1' ]
+        )
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def tbl1[:base] = x from x in TestRootClass',
+      'def tbl1[:PropertyPath1, x] = empty(Intersect[TestClassA:propertyA3[x1] from x1 in TestRootClass:property2[x], ("apple"; "orange"; "pear")]), tbl1(:base, x)',
+      'def output = tbl1[:PropertyPath1, i] from i'
+    ],
+    $transpiledQuery
+  );
+}
