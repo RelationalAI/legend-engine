@@ -555,9 +555,12 @@ function meta::external::store::rel::compile::compile(
                   rel($targetTable)
                     ->appl([label($name), $vx]),
                   [
-                    $scope,
-                    rel($targetTable)
-                      ->atom([label('base'), $vx])
+                    /*
+                     * For readability put the target table first for an output query fragment of this form:
+                     * def tbl1[:Col1, x] = tbl1(:base, x), TestClass:property1[x]
+                     */
+                    rel($targetTable)->atom([label('base'), $vx]),
+                    $scope
                   ]->product()
                 );
               });
