@@ -18,11 +18,15 @@ Class meta::external::store::rel::mapping::schema::RAISchema {
   store: RAIDatabase[1];
 }
 
-function meta::external::store::rel::mapping::schema::RAISchema(name: String[1]): RAISchema[1] {
+function meta::external::store::rel::mapping::schema::RAISchema(name: String[1], config: RAITranspilerConfig[1]): RAISchema[1] {
   ^RAISchema(
     mapping=^Mapping(),
-    store=RAIDatabase([], $name)
+    store=RAIDatabase([], $config, $name)
   )
+}
+
+function meta::external::store::rel::mapping::schema::RAISchema(name: String[1]): RAISchema[1] {
+  RAISchema($name, ^RAITranspilerConfig(configNoIndent=false))
 }
 
 function meta::external::store::rel::mapping::schema::schema(class: Class<Any>[1]): RelationDeclaration[1] {

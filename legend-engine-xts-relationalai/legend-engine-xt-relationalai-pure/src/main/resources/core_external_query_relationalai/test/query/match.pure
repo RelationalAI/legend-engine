@@ -2,6 +2,7 @@ import meta::external::store::rel::mapping::*;
 import meta::external::store::rel::mapping::schema::*;
 import meta::external::store::rel::runtime::*;
 import meta::external::store::rel::test::query::match::*;
+import meta::external::store::rel::test::query::util::*;
 import meta::external::store::rel::utils::assert::*;
 
 Class meta::external::store::rel::test::query::match::TestClassWrapper {
@@ -20,7 +21,7 @@ Class meta::external::store::rel::test::query::match::TestClassSub extends TestC
 // This test passes.
 // Tests matching where a subtype is tested as a supertype.
 function <<test.Test>> meta::external::store::rel::test::query::match::testQueryMatchSub(): Any[*] {
-  let schema = RAISchema('test')->includeClass(TestClassWrapper);
+  let schema = RAITestSchema()->includeClass(TestClassWrapper);
 
   let rai = $schema->TestConnection();
 
@@ -54,7 +55,7 @@ function <<test.Test>> meta::external::store::rel::test::query::match::testQuery
 
   assertEqualRel(
     [
-      'def output = x2 = TestClassWrapper:fieldSub[x1] and (if TestClassSub(x2) then TestClassSub:fieldOfSub[x2] else if TestClassSuper(x2) then TestClassSuper:fieldOfSuper[x2] else false end end) from x1 in TestClassWrapper'
+      'def output = x2 = TestClassWrapper:fieldSub[x1] and ( if TestClassSub(x2) then TestClassSub:fieldOfSub[x2] else if TestClassSuper(x2) then TestClassSuper:fieldOfSuper[x2] else false end end) from x1 in TestClassWrapper'
     ],
     $transpiledQuery
   );
@@ -62,7 +63,7 @@ function <<test.Test>> meta::external::store::rel::test::query::match::testQuery
 
 // Tests matching where a supertype is tested as a subtype.
 function <<test.Test>> meta::external::store::rel::test::query::match::testQueryMatchSuper(): Any[*] {
-  let schema = RAISchema('test')->includeClass(TestClassWrapper);
+  let schema = RAITestSchema()->includeClass(TestClassWrapper);
 
   let rai = $schema->TestConnection();
 
@@ -96,7 +97,7 @@ function <<test.Test>> meta::external::store::rel::test::query::match::testQuery
 
   assertEqualRel(
     [
-      'def output = x2 = TestClassWrapper:fieldSuper[x1] and (if TestClassSub(x2) then TestClassSub:fieldOfSub[x2] else if TestClassSuper(x2) then TestClassSuper:fieldOfSuper[x2] else false end end) from x1 in TestClassWrapper'
+      'def output = x2 = TestClassWrapper:fieldSuper[x1] and ( if TestClassSub(x2) then TestClassSub:fieldOfSub[x2] else if TestClassSuper(x2) then TestClassSuper:fieldOfSuper[x2] else false end end) from x1 in TestClassWrapper'
     ],
     $transpiledQuery
   );

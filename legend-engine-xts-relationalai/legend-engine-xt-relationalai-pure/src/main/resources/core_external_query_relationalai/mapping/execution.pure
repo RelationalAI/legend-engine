@@ -30,15 +30,15 @@ function meta::external::store::rel::mapping::execution(
   extensions: meta::pure::extension::Extension[*],
   debug: DebugContext[1]
 ): meta::pure::mapping::Result<Any|*>[1] {
-  if (!$sq.store->instanceOf(RAIDatabase), | fail('Rel queries can only be executed against an instance of `RAIDatabase`'), | '');
-
-  $sq.fe->execution($mapping, $debug, meta::external::store::rel::trace::emptyTrace());
+  assert($sq.store->instanceOf(RAIDatabase), 'Rel queries can only be executed against an instance of `RAIDatabase`');
+  $sq.fe->execution($mapping, $debug, $sq.store->cast(@RAIDatabase).config, emptyTrace());
 }
 
 function <<access.private>> meta::external::store::rel::mapping::execution(
   query: FunctionExpression[1],
   mapping: meta::pure::mapping::Mapping[1],
   debug: DebugContext[1],
+  config: RAITranspilerConfig[1],
   trace: Trace[1]
 ): meta::pure::mapping::Result<Any|*>[1] {
   let state = CompilationState($debug);
@@ -48,6 +48,7 @@ function <<access.private>> meta::external::store::rel::mapping::execution(
   let result = $query
     ->entryPointPExpr($newTrace)
     ->andThen(node: PExpr[1] |
+      println($node->meta::external::store::rel::compile::ir::utils::describe());
       //$debug->debug(| 'PURE Expression plan:');
       $debug->debug(| $node->meta::external::store::rel::compile::ir::utils::describe());
       $node->compile(emptySubstitution(), emptyColumnAccessRewrite(), $state, $newTrace);
@@ -157,7 +158,7 @@ function <<access.private>> meta::external::store::rel::mapping::execution(
 
   if ($result->isOk(), {|
     let unwrapped = $result->unwrap();
-    let compiled = $unwrapped.program->render();
+    let compiled = $unwrapped.program->render($config.configNoIndent);
 
     ^meta::pure::mapping::Result<Any|*>(
       values=[],

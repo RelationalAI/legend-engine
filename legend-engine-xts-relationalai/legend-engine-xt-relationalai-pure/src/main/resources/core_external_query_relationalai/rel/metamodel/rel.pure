@@ -294,11 +294,7 @@ Class meta::external::store::rel::metamodel::For extends Expr {
 /**
   * Abstract type representing elements or a program (rules and comments).
   */
-Class <<typemodifiers.abstract>> meta::external::store::rel::metamodel::ProgramElement extends Annotated {
-  code() {
-    $this->render()
-  }: String[1];
-}
+Class <<typemodifiers.abstract>> meta::external::store::rel::metamodel::ProgramElement extends Annotated { }
 
 Class meta::external::store::rel::metamodel::Comment extends ProgramElement { }
 
@@ -336,10 +332,6 @@ Class meta::external::store::rel::metamodel::Module {
 Class meta::external::store::rel::metamodel::Program {
   identifier: String[0..1];
   elements: ProgramElement[*];
-
-  code() {
-    $this->render()
-  }: String[1];
 
   output() {
     $this.elements
