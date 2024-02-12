@@ -780,3 +780,14 @@ function meta::external::store::rel::metamodel::toString(type: RelationType[1]):
 function meta::external::store::rel::metamodel::toString(types: ConstType[*]): String[1] {
   $types->stringify(e | $e->toString(), ', ');
 }
+
+///////////////////
+// Utility methods
+///////////////////
+
+function <<access.private>> meta::external::store::rel::metamodel::render::expr::isAtomic(expr: Expr[1]): Boolean[1] {
+  $expr->match([
+    e: NamedAtom[1] | true,
+    e: Expr[1]      | false
+  ])
+}

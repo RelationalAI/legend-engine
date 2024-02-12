@@ -152,7 +152,7 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], intersection: Intersection[1]): RelQueryBuffer[1] {
-  $buffer->append('Intersect[')->render($intersection.left)->append(', ')->render($intersection.right)->append(']')
+  $buffer->append('Intersect[')->renderMaybeParentheses($intersection.left)->append(', ')->renderMaybeParentheses($intersection.right)->append(']')
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], ifThenElse: IfThenElse[1]): RelQueryBuffer[1] {
@@ -218,10 +218,6 @@ function meta::external::store::rel::metamodel::render::expr::renderExprs(exprs:
 // Utility functions //
 ///////////////////////
 
-function <<access.private>> meta::external::store::rel::metamodel::render::expr::maybeParentheses(str: String[1], do: Boolean[1]): String[1] {
-  if ($do, | format('(%s)', $str), | $str)
-}
-
 function <<access.private>> meta::external::store::rel::metamodel::render::expr::canUnambigouslyApply(expr: Expr[1]): Boolean[1] {
   $expr->match([
     e: Abstraction[1]      | true,
@@ -243,4 +239,14 @@ function <<access.private>> meta::external::store::rel::metamodel::render::expr:
     e: From[1]             | false,
     e: Not[1]              | false
   ])
+}
+
+/**
+  * Render the given expression, and if the expression is non-atomic, then render this expression in parentheses.
+  */
+function <<access.private>> meta::external::store::rel::metamodel::render::expr::renderMaybeParentheses(buffer: RelQueryBuffer[1], expr: Expr[1]): RelQueryBuffer[1] {
+  if ( $expr->isAtomic(),
+     | $buffer->render($expr),
+     | $buffer->append('(')->render($expr)->append(')')
+     )
 }
