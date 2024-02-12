@@ -65,7 +65,11 @@ function meta::external::store::rel::mapping::schema::schema(property: Property<
     ->orElse($name->relation([hashValueType(), $type]));
 }
 
-function <<access.private>> meta::external::store::rel::mapping::schema::includeClass(schema: RAISchema[1], class: Class<Any>[1], navigateTypeHierarchy: Boolean[1]): RAISchema[1] {
+Enum meta::external::store::rel::mapping::schema::TypeHierarchyTraversalDirection {
+  None, Down, UpAndDown
+}
+
+function <<access.private>> meta::external::store::rel::mapping::schema::includeClass(schema: RAISchema[1], class: Class<Any>[1], navigateTypeHierarchy: TypeHierarchyTraversalDirection[1]): RAISchema[1] {
   /*
    * If the schema already includes a mapping for the given class then this function does nothing.
    */
@@ -143,23 +147,27 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
   });
 }
 
-function <<access.private>> meta::external::store::rel::mapping::schema::typeRelatedClasses(class: Class<Any>[1], navigateTypeHierarchy: Boolean[1]): Class<Any>[*] {
-  if ($navigateTypeHierarchy,
-    {|
+function <<access.private>> meta::external::store::rel::mapping::schema::typeRelatedClasses(class: Class<Any>[1], navigateTypeHierarchy: TypeHierarchyTraversalDirection[1]): Class<Any>[*] {
+  switch([
+    case($navigateTypeHierarchy == TypeHierarchyTraversalDirection.None, {|
+      $class
+    }),
+    case($navigateTypeHierarchy == TypeHierarchyTraversalDirection.Down, {|
+      let subclasses = meta::pure::functions::meta::findAllSpecializations($class);
+      $subclasses->concatenate($class);
+    })
+  ], {|
+      assert($navigateTypeHierarchy == TypeHierarchyTraversalDirection.UpAndDown, 'Unknown hieararchy traversal direction.');
       let subclasses = meta::pure::functions::meta::findAllSpecializations($class);
       let superclasses = meta::pure::functions::meta::hierarchicalAllGeneralizations($class);
       $subclasses->concatenate($superclasses)->concatenate($class);
-    },
-    {|
-      $class;
-    }
-    )
+  })
 }
 
 function meta::external::store::rel::mapping::schema::includeClass(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
-  includeClass($schema, $class, false)
+  includeClass($schema, $class, TypeHierarchyTraversalDirection.None)
 }
 
 function meta::external::store::rel::mapping::schema::includeAllRelatedClasses(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
-  includeClass($schema, $class, true)
+  includeClass($schema, $class, TypeHierarchyTraversalDirection.Down)
 }
