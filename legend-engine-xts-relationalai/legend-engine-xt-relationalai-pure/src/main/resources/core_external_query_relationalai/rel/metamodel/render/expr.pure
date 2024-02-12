@@ -152,7 +152,7 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], intersection: Intersection[1]): RelQueryBuffer[1] {
-  $buffer->append('Intersect[')->renderMaybeParentheses($intersection.left)->append(', ')->renderMaybeParentheses($intersection.right)->append(']')
+  $buffer->append('intersect[')->renderMaybeParentheses($intersection.left)->append(', ')->renderMaybeParentheses($intersection.right)->append(']')
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], ifThenElse: IfThenElse[1]): RelQueryBuffer[1] {
