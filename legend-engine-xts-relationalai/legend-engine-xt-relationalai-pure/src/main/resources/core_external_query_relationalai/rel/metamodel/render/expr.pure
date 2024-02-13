@@ -16,7 +16,7 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], tuples: Tuple[*]): RelQueryBuffer[1] {
-  $buffer->append($tuples, {accum: RelQueryBuffer[1], t: Tuple[1] | $accum->render($t)}, '; ')
+  $buffer->append($tuples, '; ', {accum: RelQueryBuffer[1], t: Tuple[1] | $accum->render($t)})
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], cons: RelationCons[1]): RelQueryBuffer[1] {
@@ -47,7 +47,7 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
       let newBuffer = $buffer->render($a.head);
       let renderedArguments =
         if (!$a.arguments->isEmpty(),
-          | $newBuffer->append($a.arguments, {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)}, '[', ', ', ']'),
+          | $newBuffer->append($a.arguments, '[', ', ', ']', {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)}),
           | $newBuffer
           );
   ])
@@ -57,7 +57,7 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
   let newBuffer = $buffer->render($atom.head);
   let renderedArguments =
     if (!$atom.arguments->isEmpty(),
-      | $newBuffer->append($atom.arguments, {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)}, '(', ', ', ')'),
+      | $newBuffer->append($atom.arguments, '(', ', ', ')', {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)}),
       | $newBuffer
       );
   $renderedArguments;
@@ -67,18 +67,24 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
   let newBuffer = $buffer->render($atom.head);
   let renderedArguments =
     if (!$atom.arguments->isEmpty(),
-      | $newBuffer->append($atom.arguments, {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)}, '(', ', ', ')'),
+      | $newBuffer->append($atom.arguments, '(', ', ', ')', {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)}),
       | $newBuffer
       );
   $renderedArguments;
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], and: And[1]): RelQueryBuffer[1] {
-  $buffer->append($and.conjuncts, {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)}, ' and ')
+  $buffer->append($and.conjuncts, ' and ', {
+    accum: RelQueryBuffer[1], e: Expr[1] |
+      if ( $e->isAtomic(),
+         | $accum->render($e),
+         | $accum->newline()->render($e)
+         )
+  })
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], or: Or[1]): RelQueryBuffer[1] {
-  $buffer->append($or.disjuncts, {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)}, ' or ')
+  $buffer->append($or.disjuncts, ' or ', {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)})
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], not: Not[1]): RelQueryBuffer[1] {
@@ -117,7 +123,7 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
           | $buffer->render($app.head)
           );
       if (!$app.arguments->isEmpty(),
-        | $newBuffer->append($app.arguments, {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)}, '[', ', ', ']'),
+        | $newBuffer->append($app.arguments, '[', ', ', ']', {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)}),
         | $newBuffer
         );
   ])
@@ -140,7 +146,7 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], product: Product[1]): RelQueryBuffer[1] {
-  $buffer->append($product.exprs, {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)}, ', ')
+  $buffer->append($product.exprs, ', ', {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)})
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], group: ExprGroup[1]): RelQueryBuffer[1] {
@@ -148,7 +154,7 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], union: Union[1]): RelQueryBuffer[1] {
-  $buffer->append($union.exprs, {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)}, '; ')
+  $buffer->append($union.exprs, '; ', {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)})
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], intersection: Intersection[1]): RelQueryBuffer[1] {
@@ -156,12 +162,20 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], ifThenElse: IfThenElse[1]): RelQueryBuffer[1] {
+  let elseBranch = $ifThenElse.else;
+  let elseIsNestedConditional = $elseBranch->instanceOf(IfThenElse);
   $buffer
-    ->newline()->append('if ')->render($ifThenElse.condition)->append(' then')
+    ->append('if ')->render($ifThenElse.condition)->append(' then')
     ->newline()->indent()->render($ifThenElse.then)
-    ->newline()->unindent()->append('else')
-    ->newline()->indent()->render($ifThenElse.else)
-    ->newline()->unindent()->append('end');
+    ->newline()->unindent()->append('else')->map(buffer: RelQueryBuffer[1] |
+      if ( $elseIsNestedConditional,
+         | $buffer
+             ->append(' ')->render($elseBranch)->append(' end'),
+         | $buffer
+             ->newline()->indent()->render($elseBranch)
+             ->newline()->unindent()->append('end')
+         )
+    );
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], expr: Expr[1]): RelQueryBuffer[1] {
@@ -199,7 +213,7 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], exprs: Expr[*]): RelQueryBuffer[1] {
-  $buffer->append($exprs, {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)}, ', ')
+  $buffer->append($exprs, ', ', {accum: RelQueryBuffer[1], e: Expr[1] | $accum->render($e)})
 }
 
 //////////////////////////////////////////////////////

@@ -40,5 +40,5 @@ function meta::external::store::rel::metamodel::render::binding::renderBinding(b
 }
 
 function meta::external::store::rel::metamodel::render::binding::renderBinding(buffer: RelQueryBuffer[1], bindings: Binding[*]): RelQueryBuffer[1] {
-  $buffer->append($bindings, {accum: RelQueryBuffer[1], b: Binding[1] | $accum->renderBinding($b)}, ', ')
+  $buffer->append($bindings, ', ', {accum: RelQueryBuffer[1], b: Binding[1] | $accum->renderBinding($b)})
 }

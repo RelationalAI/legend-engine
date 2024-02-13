@@ -57,7 +57,7 @@ function meta::external::store::rel::metamodel::render::buffer::append(buffer: R
   ^$buffer(contents=$newContents,startNewLine=false);
 }
 
-function meta::external::store::rel::metamodel::render::buffer::append<T>(buffer: RelQueryBuffer[1], elems: T[*], f: FunctionDefinition<{RelQueryBuffer[1], T[1]->RelQueryBuffer[1]}>[1], sep: String[1]): RelQueryBuffer[1] {
+function meta::external::store::rel::metamodel::render::buffer::append<T>(buffer: RelQueryBuffer[1], elems: T[*], sep: String[1], f: FunctionDefinition<{RelQueryBuffer[1], T[1]->RelQueryBuffer[1]}>[1]): RelQueryBuffer[1] {
   let last = $elems->last()->toOne();
   let init = $elems->init();
   if ($elems->isEmpty(),
@@ -67,6 +67,6 @@ function meta::external::store::rel::metamodel::render::buffer::append<T>(buffer
     );
 }
 
-function meta::external::store::rel::metamodel::render::buffer::append<T>(buffer: RelQueryBuffer[1], elems: T[*], f: FunctionDefinition<{RelQueryBuffer[1], T[1]->RelQueryBuffer[1]}>[1], begin: String[1], sep: String[1], end: String[1]): RelQueryBuffer[1] {
-  $buffer->append($begin)->append($elems, $f, $sep)->append($end)
+function meta::external::store::rel::metamodel::render::buffer::append<T>(buffer: RelQueryBuffer[1], elems: T[*], begin: String[1], sep: String[1], end: String[1], f: FunctionDefinition<{RelQueryBuffer[1], T[1]->RelQueryBuffer[1]}>[1]): RelQueryBuffer[1] {
+  $buffer->append($begin)->append($elems, $sep, $f)->append($end)
 }
