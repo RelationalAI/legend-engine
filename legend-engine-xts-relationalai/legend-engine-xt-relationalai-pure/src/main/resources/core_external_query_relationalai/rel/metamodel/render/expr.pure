@@ -78,7 +78,7 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
     accum: RelQueryBuffer[1], e: Expr[1] |
       if ( $e->isAtomic(),
          | $accum->render($e),
-         | $accum->newline()->render($e)
+         | $accum->append('(')->newline()->render($e)->append(')')
          )
   })
 }

@@ -1083,6 +1083,6 @@ function meta::external::store::rel::compile::compile(
             ->unwrap();
         }, relfalse());
 
-      $parentVar->equals($parent)->and($nestedConditionals->parenthesise())->ok();
+      $parentVar->equals($parent)->and($nestedConditionals)->ok();
     );
 }
