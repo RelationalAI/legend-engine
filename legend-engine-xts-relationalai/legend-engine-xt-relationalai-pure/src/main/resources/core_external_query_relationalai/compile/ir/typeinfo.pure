@@ -42,15 +42,17 @@ function meta::external::store::rel::compile::ir::typeinfo::describe(
 }
 
 /**
-  * Returns the sets from the type info for the given class.
+  * Returns the set from the type info for the given class.
   */
 function meta::external::store::rel::compile::ir::typeinfo::setForClass(
   typeInfo: TranspileTypeInfo[1],
   class: Class<Any>[1]
 ): RelSetImplementation[0..1] {
-  $typeInfo.sets->filter(set: RelSetImplementation[1] |
+  let sets = $typeInfo.sets->filter(set: RelSetImplementation[1] |
     $set.class == $class
-  )->first()
+  );
+  assert($sets->size() <= 1, 'Each class must correspond to at most one set implemenation.');
+  $sets->first();
 }
 
 
