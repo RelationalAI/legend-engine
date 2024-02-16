@@ -77,7 +77,7 @@ function meta::external::store::rel::utils::indent(amount: Integer[1]): String[1
   * Concatenate the given messages, separating by newlines, and indenting all nested newlines by two spaces.
   */
 function meta::external::store::rel::utils::concatenateMessages(messages: String[*]): String[1] {
-  $messages->map(s: String[1] | $s->replace('\n', '\n  '))->makeString('\n', '\n', '')
+  $messages->map(s: String[1] | $s->replace('\n', '\n  '))->makeString('', '\n', '')
 }
 
 /**
