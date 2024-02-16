@@ -1,5 +1,6 @@
 import meta::external::store::rel::mapping::*;
 import meta::external::store::rel::metamodel::*;
+import meta::external::store::rel::metamodel::render::expr::*;
 import meta::external::store::rel::utils::*;
 import meta::pure::mapping::*;
 import meta::pure::store::*;
@@ -8,6 +9,14 @@ import meta::pure::store::*;
 Class meta::external::store::rel::mapping::RelSetImplementation extends InstanceSetImplementation {
   // We demand an expression that defines the class we are implementing.
   classExpr: Expr[1];
+}
+
+function meta::external::store::rel::mapping::simpleId(set: RelSetImplementation[1]): String[1] {
+  $set.id->split('_')->reverse()->at(0)
+}
+
+function meta::external::store::rel::mapping::simpleSuperSetId(set: RelSetImplementation[1]): String[1] {
+  $set.superSetImplementationId->orElse('(no super set id)')->split('_')->reverse()->at(0)
 }
 
 function meta::external::store::rel::mapping::relInstanceSet<T>(
@@ -27,6 +36,20 @@ function meta::external::store::rel::mapping::relInstanceSet<T>(
 
 Class meta::external::store::rel::mapping::RelPropertyMapping extends PropertyMapping {
   target: Expr[1];
+}
+
+function meta::external::store::rel::mapping::describe(propertyMapping: RelPropertyMapping[1]): String[1] {
+  let owner = $propertyMapping.owner->cast(@RelSetImplementation)->map(s | $s->simpleId())->orElse('(no owner)');
+  let property = $propertyMapping.property;
+  let target = $propertyMapping.target->renderExpr();
+  format('PropertyMapping[owner: %s, property: %s, target: %s]', [$owner, $property, $target]);
+}
+
+function meta::external::store::rel::mapping::describe(set: RelSetImplementation[1]): String[1] {
+  let id = $set->simpleId();
+  let superSetImplementationId = $set->simpleSuperSetId();
+  let propertyMappings = $set.propertyMappings->map(m | $m->cast(@RelPropertyMapping)->describe())->concatenateCollection();
+  format('Set[id: %s, superSetImplementationId: %s, properties: %s]', [$id, $superSetImplementationId, $propertyMappings]);
 }
 
 /////////////////////////

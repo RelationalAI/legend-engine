@@ -37,7 +37,7 @@ function meta::external::store::rel::compile::ir::typeinfo::describe(
 ): String[1] {
   if ( $typeInfo.sets->isEmpty(),
      | '(no set implemtations)',
-     | $typeInfo.sets->map(s: RelSetImplementation[1] | $s.id)->makeString('[', ', ',']')
+     | $typeInfo.sets->map(s: RelSetImplementation[1] | $s->describe())->makeString('[\n', ',\n','\n]')
      )
 }
 
