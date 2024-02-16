@@ -21,7 +21,7 @@ Class meta::external::store::rel::test::query::match::TestClassSub extends TestC
 // This test passes.
 // Tests matching where a subtype is tested as a supertype.
 function <<test.Test>> meta::external::store::rel::test::query::match::testQueryMatchSub(): Any[*] {
-  let schema = RAITestSchema()->includeClass(TestClassWrapper);
+  let schema = RAITestSchema()->includeSingleClass(TestClassWrapper);
 
   let rai = $schema->TestConnection();
 
@@ -63,7 +63,7 @@ function <<test.Test>> meta::external::store::rel::test::query::match::testQuery
 
 // Tests matching where a supertype is tested as a subtype.
 function <<test.Test>> meta::external::store::rel::test::query::match::testQueryMatchSuper(): Any[*] {
-  let schema = RAITestSchema()->includeClass(TestClassWrapper);
+  let schema = RAITestSchema()->includeSingleClass(TestClassWrapper);
 
   let rai = $schema->TestConnection();
 

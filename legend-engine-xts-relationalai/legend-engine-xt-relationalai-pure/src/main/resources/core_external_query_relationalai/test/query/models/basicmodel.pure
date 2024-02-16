@@ -22,7 +22,7 @@ Association meta::external::store::rel::test::query::models::basicmodel::Employm
 
 function meta::external::store::rel::test::query::models::basicmodel::schema(): RAISchema[1] {
   RAITestSchema()
-    ->includeClass(Person)
-    ->includeClass(Employee)
-    ->includeClass(Firm);
+    ->includeSingleClass(Person)
+    ->includeSingleClass(Employee)
+    ->includeSingleClass(Firm);
 }
