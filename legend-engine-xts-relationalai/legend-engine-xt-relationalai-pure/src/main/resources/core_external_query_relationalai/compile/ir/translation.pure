@@ -221,7 +221,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::propertyToP
            */
           $set2
             ->okOr(|
-              errorTrace(format('No set specified for property %s.\nType info:%s', [$name->quote(), $typeInfo->describe()]), $traceWithDetail)
+              errorTrace(format('No set specified for property %s.', $name->quote()), $traceWithDetail)
             )
             ->andThen(set: RelSetImplementation[1] |
               $param0
