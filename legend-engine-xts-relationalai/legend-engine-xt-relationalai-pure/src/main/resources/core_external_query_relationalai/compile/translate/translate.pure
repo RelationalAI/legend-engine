@@ -373,28 +373,12 @@ function meta::external::store::rel::compile::compile(
   $access.parent
     ->compile($substitution, $rewrite, $state, $newTrace)
     ->step(parent: Expr[1] |
-      $access.property.name
-        ->okOr(| errorTrace('No name specified for property.', $newTrace))
-        ->andThen(propertyName: String[1] |
-          let propertyOwnerSet = $access.set;
-          let className = $propertyOwnerSet.class.name->orElse('[UNKNOWN]');
-          $propertyOwnerSet
-            ->map(set: RelSetImplementation[1] |
-              $set->meta::pure::mapping::propertyMappingsByPropertyName($propertyName);
-            )
-            ->okOr(| errorTrace(format('No property mapping found for property %s in class %s.', [$propertyName->quote(), $className->quote()]), $newTrace))
-            ->them(inner: meta::pure::mapping::PropertyMapping[*] | $inner->first()->toOne())
-            ->tryCast(@RelPropertyMapping, $newTrace)
-            ->andThen(mapping: RelPropertyMapping[1] |
-              $access.property.genericType.rawType
-                ->okOr(| errorTrace('Could not determine type of property ' + $propertyName, $newTrace))
-                ->then(type: Type[1] |
-                  $mapping
-                    .target
-                    ->appl($parent)
-                )
-            );
-        )
+      let propertyMapping = $access.propertyMapping;
+      $propertyMapping.property.genericType.rawType
+        ->okOr(| errorTrace('Could not determine type of property ' + $propertyMapping.property.name->orElse('[NO NAME]'), $newTrace))
+        ->then(type: Type[1] |
+          $propertyMapping.target->appl($parent)
+        );
     );
 }
 

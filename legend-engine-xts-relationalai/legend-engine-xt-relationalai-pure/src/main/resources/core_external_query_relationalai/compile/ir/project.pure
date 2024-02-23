@@ -56,19 +56,14 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
                           ->tryCast(@meta::pure::metamodel::path::PropertyPathElement, $newTrace)
                           ->andThen(p: meta::pure::metamodel::path::PropertyPathElement[1] | $p.property->tryCast(@Property<Nil,Any|*>, $newTrace))
                           ->andThen({property: Property<Nil,Any|*>[1] |
-                            $property
-                              .genericType
-                              .rawType
-                              ->okOr(| errorTrace(format('No type information for property `%s`.', $property.name), $newTrace))
-                              ->then({type: Type[1] |
-                                $set.parent
-                                  ->meta::pure::mapping::classMappingById($type->elementToPath('_'))
-                                  ->map(next | $next->cast(@RelSetImplementation))
-                                  ->okOr(| errorTrace('No set available.', $newTrace))
-                                  ->then(next: RelSetImplementation[1] |
-                                    $expr->propertyAccess($property, $next)
-                                  )
-                              })
+                            $typeInfo
+                              ->mappingForProperty($property)
+                              ->okOr(|
+                                errorTrace(format('No mapping for property `%s`.', $property.name), $newTrace)
+                              )
+                              ->then(propertyMapping: RelPropertyMapping[1] |
+                                $expr->propertyAccess($propertyMapping);
+                              )
                           });
                       });
                   }, ok(setAccess($set, 'x')))

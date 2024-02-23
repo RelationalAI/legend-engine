@@ -59,7 +59,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueSpecTo
       ->stage('valueSpecToPExpr(ValueSpecification[1],RelSetImplementation[0..1],Trace[1])')
       ->detail('spec', $spec->class().name)
       ->detail('typeInfo', $typeInfo->describe())
-      ->detail('set', $set->describeSetImpl());
+      ->detail('set', $set->describe());
 
   $spec->match([
     {
@@ -141,7 +141,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::instanceVal
   let newTrace =
     $trace
       ->stage('instanceValueToPExpr(InstanceValue[1],RelSetImplementation[0..1],Boolean[1],Trace[1])')
-      ->detail('set', $set->describeSetImpl());
+      ->detail('set', $set->describe());
   if($spec.values->isEmpty(),
     | constEmpty()->ok(),
     | $spec.values
@@ -164,7 +164,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueToPExp
     $trace
       ->stage('valueToPExpr(Any[1],RelSetImplementation[0..1],Trace[1])')
       ->detail('value', $value->type()->toString())
-      ->detail('set', $set->describeSetImpl());
+      ->detail('set', $set->describe());
   $value->match([
     s: String[1] | ok(string($s)),
     i: Integer[1] | ok(integer($i)),
@@ -200,36 +200,24 @@ function <<access.private>> meta::external::store::rel::compile::ir::propertyToP
     $trace
       ->stage('propertyToPExpr(Property<Nil,Any|*>[1],RelSetImplementation[0..1],Trace[1])')
       ->detail('typeInfo', $typeInfo->describe())
-      ->detail('set', $set->describeSetImpl());
+      ->detail('set', $set->describe());
 
   let param0 = $func.parametersValues->at(0);
 
   $func.func->match([
     {property: Property<Nil, Any|*>[1] |
-      $property.name
+      let traceWithDetail = $newTrace->detail('property.name', $property.name);
+      $typeInfo
+        ->mappingForProperty($property)
         ->okOr(|
-          errorTrace('Encountered empty name for property.', $newTrace)
+          errorTrace(format('No mapping for property `%s`.', $property.name), $newTrace)
         )
-        ->andThen(name: String[1] |
-          let traceWithDetail = $newTrace->detail('property.name', $name);
-
-          let set2 = $typeInfo->setForClass($property->ownerClass());
-
-          /*
-           * FIXME: Remove `set` argument because we are using type info instead.
-           * Originally we used `set` here instead of `set2`.
-           */
-          $set2
-            ->okOr(|
-              errorTrace(format('No set specified for property %s.', $name->quote()), $traceWithDetail)
+        ->andThen(propertyMapping: RelPropertyMapping[1] |
+          $param0
+            ->valueSpecToPExpr($typeInfo, $traceWithDetail)
+            ->then(inner: PExpr[1] |
+              $inner->propertyAccess($propertyMapping);
             )
-            ->andThen(set: RelSetImplementation[1] |
-              $param0
-                ->valueSpecToPExpr($typeInfo, $traceWithDetail)
-                ->then(inner: PExpr[1] |
-                  $inner->propertyAccess($property, $set);
-                );
-              );
         );
     },
     other: Any[*] |
@@ -289,7 +277,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::functionExp
     $trace
       ->stage('functionExprToPExpr(FunctionExpression[1],RelSetImplementation[0..1],Trace[1])')
       ->detail('typeInfo', $typeInfo->describe())
-      ->detail('set', $set->describeSetImpl());
+      ->detail('set', $set->describe());
 
   $func.func->match([
     {property: Property<Nil, Any|*>[1] |

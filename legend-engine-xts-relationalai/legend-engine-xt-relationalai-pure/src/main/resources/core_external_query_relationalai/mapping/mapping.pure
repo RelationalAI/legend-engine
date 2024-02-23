@@ -52,6 +52,10 @@ function meta::external::store::rel::mapping::describe(set: RelSetImplementation
   format('Set[id: %s, superSetImplementationId: %s, properties: %s]', [$id, $superSetImplementationId, $propertyMappings]);
 }
 
+function meta::external::store::rel::mapping::describe(set: RelSetImplementation[0..1]): String[1] {
+  $set->map(s | $s->describe())->orElse('[NO SET]')
+}
+
 /////////////////////////
 /// Constructor methods
 /////////////////////////
