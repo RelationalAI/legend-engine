@@ -786,8 +786,14 @@ function meta::external::store::rel::metamodel::toString(types: ConstType[*]): S
 ///////////////////
 
 function <<access.private>> meta::external::store::rel::metamodel::render::expr::isAtomic(expr: Expr[1]): Boolean[1] {
+  /*
+   * Named atoms are atomic, as are expression groups (which are just expressions in parenthesis, so no
+   * additional parenthesis are required). We also treat equalities with a variable or literal argument
+   * as atomic because equality binds most tightly.
+   */
   $expr->match([
     e: NamedAtom[1] | true,
+    e: ExprGroup[1] | true,
     e: Equals[1]    | $e.left->instanceOf(Variable) || $e.left->instanceOf(Constant) || $e.right->instanceOf(Variable) || $e.right->instanceOf(Constant),
     e: Expr[1]      | false
   ])
