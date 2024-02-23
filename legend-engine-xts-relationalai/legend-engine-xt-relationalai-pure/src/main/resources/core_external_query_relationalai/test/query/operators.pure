@@ -522,7 +522,7 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
   assertEqualRel(
     [
       'def tbl1[:base] = x from x in TestRootClass',
-      'def tbl1[:PropertyPath1, x] = tbl1(:base, x), empty(intersect[TestClassA:propertyA3[x1] from x1 in TestRootClass:property2[x], ("apple"; "orange"; "pear")])',
+      'def tbl1[:PropertyPath1, x] = tbl1(:base, x), empty(intersect[(TestClassA:propertyA3[x1] from x1 in TestRootClass:property2[x]), ("apple"; "orange"; "pear")])',
       'def output = tbl1[:PropertyPath1, i] from i'
     ],
     $transpiledQuery
