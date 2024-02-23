@@ -788,6 +788,7 @@ function meta::external::store::rel::metamodel::toString(types: ConstType[*]): S
 function <<access.private>> meta::external::store::rel::metamodel::render::expr::isAtomic(expr: Expr[1]): Boolean[1] {
   $expr->match([
     e: NamedAtom[1] | true,
+    e: Equals[1]    | $e.left->instanceOf(Variable) || $e.left->instanceOf(Constant) || $e.right->instanceOf(Variable) || $e.right->instanceOf(Constant),
     e: Expr[1]      | false
   ])
 }
