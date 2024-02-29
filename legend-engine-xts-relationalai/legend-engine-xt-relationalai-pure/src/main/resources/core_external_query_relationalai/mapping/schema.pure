@@ -83,10 +83,10 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
       ->concatenate(
         $class->meta::pure::functions::meta::hierarchicalPropertiesFromAssociations()
       )
-      ->map({p |
+      ->map(p: Property<Nil, Any|*>[1] |
         let relation = $p->schema();
-        pair($p->cast(@Property<Nil, Any|*>), $relation);
-      });
+        pair($p, $relation);
+      );
 
     let augmentedStore =
       $schema.store
