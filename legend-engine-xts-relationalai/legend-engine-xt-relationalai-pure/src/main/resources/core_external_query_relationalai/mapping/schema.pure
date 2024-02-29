@@ -35,14 +35,6 @@ function meta::external::store::rel::mapping::schema::schema(class: Class<Any>[1
     ->relation([entityType($class)])
 }
 
-function meta::external::store::rel::mapping::schema::schema(property: Property<Nil,Any|*>[1]): RelationDeclaration[1] {
-  $property->schema(
-    $property
-      .owner
-      ->cast(@Class<Any>)
-  )
-}
-
 function meta::external::store::rel::mapping::schema::schema(property: Property<Nil,Any|*>[1], parent: Class<Any>[0..1]): RelationDeclaration[1] {
   let name = $property.name->toOne();
   let rawType = $property->type();
@@ -97,11 +89,9 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
       });
 
     let augmentedStore =
-      $properties.second
-        ->fold({decl, accum |
-          $accum->addDeclarations($decl);
-        }, $schema.store)
-      ->addDeclarations($classRelation);
+      $schema.store
+        ->addDeclarations($properties.second)
+        ->addDeclarations($classRelation);
 
     /*
      * The Rel expression that corresponds to the Pure class.
