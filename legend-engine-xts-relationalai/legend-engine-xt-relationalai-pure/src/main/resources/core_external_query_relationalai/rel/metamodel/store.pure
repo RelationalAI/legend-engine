@@ -84,11 +84,15 @@ function meta::external::store::rel::metamodel::store::addDeclarations(database:
 /// API methods
 /////////////////////////
 
-function meta::external::store::rel::metamodel::store::name(decl: RelationDeclaration[1]): String[1] {
+function <<access.private>> meta::external::store::rel::metamodel::store::name(decl: RelationDeclaration[1]): String[1] {
   $decl->match([
-    {named: NamedRelationDeclaration[1] | $named.name},
-    {nested: NestedRelationDeclaration[1] | format('%s:%s', [$nested.parent->name(), $nested.this->name()])}
-  ]);
+    named: NamedRelationDeclaration[1]   | $named.name,
+    nested: NestedRelationDeclaration[1] | format('%s:%s', [$nested.parent->name(), $nested.this->name()])
+  ])
+}
+
+function meta::external::store::rel::metamodel::store::declToName(decl: RelationDeclaration[1]): RelationName[1] {
+  $decl->name()->rel()
 }
 
 /////////////////////////

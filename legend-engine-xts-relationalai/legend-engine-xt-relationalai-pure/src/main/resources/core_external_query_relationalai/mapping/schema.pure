@@ -91,7 +91,7 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
      * The Rel expression that corresponds to the Pure class.
      */
     let classRelation = $class->relationDeclaration();
-    let classExpr = $classRelation->name()->rel();
+    let classExpr = $classRelation->declToName();
     let instanceSetInitial = $schema.mapping->relSetImplementation($class, $classExpr);
 
     let augmentedStore =
@@ -102,7 +102,7 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
     let instanceSetComplete =
       $properties
         ->fold({property: Pair<Property<Nil, Any|*>, RelationDeclaration>[1], accum: RelSetImplementation[1] |
-          $accum->withPropertyMapping($property.first, $property.second->name()->rel(), $augmentedStore);
+          $accum->withPropertyMapping($property.first, $property.second->declToName(), $augmentedStore);
         }, $instanceSetInitial);
 
     let augmentedMapping =
