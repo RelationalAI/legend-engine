@@ -35,9 +35,24 @@ function meta::external::store::rel::mapping::schema::schema(class: Class<Any>[1
     ->relation([entityType($class)])
 }
 
-function meta::external::store::rel::mapping::schema::schema(property: Property<Nil,Any|*>[1], parent: Class<Any>[0..1]): RelationDeclaration[1] {
+function meta::external::store::rel::mapping::schema::schema(property: Property<Nil,Any|*>[1]): RelationDeclaration[1] {
   let name = $property.name->toOne();
   let rawType = $property->type();
+
+  let owner =
+    $property.owner->match([
+      {
+        assoc: Association[1] |
+          let left = $assoc.properties->at(0);
+          let right = $assoc.properties->at(1);
+          let ref = if ($property == $left, | $right, | $left);
+          $ref.genericType.rawType->toOne()->cast(@Class<Any>);
+      },
+      {
+        class: Class<Any>[1] |
+          $class
+      }
+    ]);
 
   let type = switch([
     case($rawType == String,          | stringType()),
@@ -45,16 +60,11 @@ function meta::external::store::rel::mapping::schema::schema(property: Property<
     case($rawType == Float,           | floatType()),
     case($rawType->instanceOf(Class), | entityType($rawType->cast(@Class<Any>)))
   ], {|
-    fail(format('Unknown type for property %s', $name));
+    fail(format('Unknown type for property `%s`.', $name));
     entityType(Any);
   });
 
-  $parent
-    ->map({class: Class<Any>[1] |
-      format('%s:%s', [$class.name->toOne(), $name])
-      ->relation([entityType($class), $type])
-    })
-    ->orElse($name->relation([hashValueType(), $type]));
+  format('%s:%s', [$owner.name->toOne(), $name])->relation([entityType($owner), $type]);
 }
 
 Enum meta::external::store::rel::mapping::schema::TypeHierarchyTraversalDirection {
@@ -74,17 +84,7 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
         $class->meta::pure::functions::meta::hierarchicalPropertiesFromAssociations()
       )
       ->map({p |
-        let owner =
-          if($p.owner->instanceOf(Association), {|
-            let assoc = $p.owner->cast(@Association);
-            let left = $assoc.properties->at(0);
-            let right = $assoc.properties->at(1);
-
-            let ref = if ($p == $left, | $right, | $left );
-            $ref.genericType.rawType->toOne()->cast(@Class<Any>);
-          }, | $p.owner->cast(@Class<Any>));
-
-        let relation = $p->schema($owner);
+        let relation = $p->schema();
         pair($p->cast(@Property<Nil, Any|*>), $relation);
       });
 
