@@ -78,6 +78,10 @@ function meta::external::store::rel::utils::collection::remove<T>(list: SortedLi
      );
 }
 
+function meta::external::store::rel::utils::collection::filterList<T>(list: SortedList<T>[1], func: Function<{T[1]->Boolean[1]}>[1]): SortedList<T>[1] {
+  ^SortedList<T>(elements=$list.elements->filter($func))
+}
+
 function meta::external::store::rel::utils::collection::contains<T>(list: SortedList<T>[1], element: T[1]): Boolean[1] {
   $list.elements->binarySearch($element) >= 0
 }
@@ -135,4 +139,13 @@ function <<test.Test>> meta::external::store::rel::utils::collection::testRemove
   assertEquals($list->remove('y'), $list);
   assertEquals($list->remove('a'), sortedList(['b', 'c', 'e', 'f', 'g', 'z']));
   assertEquals($list->remove('d')->remove('a'), sortedList(['b', 'c', 'e', 'f', 'g', 'z']));
+}
+
+
+function <<test.Test>> meta::external::store::rel::utils::collection::testFilter(): Any[*] {
+  let list = sortedList(['a', 'b', 'c', 'e', 'f', 'g', 'z']);
+
+  assertEquals($list->filterList(c | $c != 'y'), $list);
+  assertEquals($list->filterList(c | $c != 'a'), sortedList(['b', 'c', 'e', 'f', 'g', 'z']));
+  assertEquals($list->filterList(c | $c != 'd' && $c != 'a'), sortedList(['b', 'c', 'e', 'f', 'g', 'z']));
 }
