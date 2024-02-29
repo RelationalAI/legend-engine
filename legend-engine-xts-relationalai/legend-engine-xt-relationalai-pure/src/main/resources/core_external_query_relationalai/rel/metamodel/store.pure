@@ -76,7 +76,7 @@ function meta::external::store::rel::metamodel::store::nestedRelation(parent: Re
   ^NestedRelationDeclaration(parent=$parent, this=$this);
 }
 
-function meta::external::store::rel::metamodel::store::with(database: RAIDatabase[1], declarations: RelationDeclaration[*]): RAIDatabase[1] {
+function meta::external::store::rel::metamodel::store::addDeclarations(database: RAIDatabase[1], declarations: RelationDeclaration[*]): RAIDatabase[1] {
   $database->mutateAdd('declarations', $declarations);
 }
 

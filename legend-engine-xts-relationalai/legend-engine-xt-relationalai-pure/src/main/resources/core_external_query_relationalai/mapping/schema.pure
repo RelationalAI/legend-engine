@@ -99,16 +99,16 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
     let augmentedStore =
       $properties.second
         ->fold({decl, accum |
-          $accum->with($decl);
+          $accum->addDeclarations($decl);
         }, $schema.store)
-      ->with($classRelation);
+      ->addDeclarations($classRelation);
 
     /*
      * The Rel expression that corresponds to the Pure class.
      */
     let classExpr = $classRelation->name()->rel();
 
-    let instanceSetInitial = $schema.mapping->relInstanceSet($class, $classExpr);
+    let instanceSetInitial = $schema.mapping->relSetImplementation($class, $classExpr);
 
     let instanceSetComplete =
       $properties
