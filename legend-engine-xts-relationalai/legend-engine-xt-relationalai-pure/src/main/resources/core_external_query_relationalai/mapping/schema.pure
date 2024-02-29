@@ -136,21 +136,25 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
   });
 }
 
+/**
+  * Return the classes related by subtyping to the specified class.
+  *
+  * TODO: Do not return the class itself.
+  */
 function <<access.private>> meta::external::store::rel::mapping::schema::typeRelatedClasses(class: Class<Any>[1], navigateTypeHierarchy: TypeHierarchyTraversalDirection[1]): Class<Any>[*] {
-  switch([
-    case($navigateTypeHierarchy == TypeHierarchyTraversalDirection.None, {|
-      $class
-    }),
-    case($navigateTypeHierarchy == TypeHierarchyTraversalDirection.Down, {|
-      let subclasses = meta::pure::functions::meta::findAllSpecializations($class);
-      $subclasses->concatenate($class);
-    })
-  ], {|
-      assert($navigateTypeHierarchy == TypeHierarchyTraversalDirection.UpAndDown, 'Unknown hieararchy traversal direction.');
-      let subclasses = meta::pure::functions::meta::findAllSpecializations($class);
-      let superclasses = meta::pure::functions::meta::hierarchicalAllGeneralizations($class);
-      $subclasses->concatenate($superclasses)->concatenate($class);
-  })
+  if ( $navigateTypeHierarchy == TypeHierarchyTraversalDirection.None,
+     | [],
+     | if ( $navigateTypeHierarchy == TypeHierarchyTraversalDirection.Down,
+          {|
+            meta::pure::functions::meta::findAllSpecializations($class)
+          },
+          {|
+            assert($navigateTypeHierarchy == TypeHierarchyTraversalDirection.UpAndDown, 'Unknown hieararchy traversal direction.');
+            let subclasses = meta::pure::functions::meta::findAllSpecializations($class);
+            let superclasses = meta::pure::functions::meta::hierarchicalAllGeneralizations($class);
+            $subclasses->concatenate($superclasses);
+          })
+     )->concatenate($class) // TODO: Avoid returning the class itself here.
 }
 
 function meta::external::store::rel::mapping::schema::includeSingleClass(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
