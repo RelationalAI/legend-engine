@@ -29,13 +29,13 @@ function meta::external::store::rel::mapping::schema::RAISchema(name: String[1])
   RAISchema($name, ^RAITranspilerConfig(configNoIndent=false))
 }
 
-function meta::external::store::rel::mapping::schema::schema(class: Class<Any>[1]): RelationDeclaration[1] {
+function meta::external::store::rel::mapping::schema::relationDeclaration(class: Class<Any>[1]): RelationDeclaration[1] {
   $class.name
     ->toOne()
     ->relation([entityType($class)])
 }
 
-function meta::external::store::rel::mapping::schema::schema(property: Property<Nil,Any|*>[1]): RelationDeclaration[1] {
+function meta::external::store::rel::mapping::schema::relationDeclaration(property: Property<Nil,Any|*>[1]): RelationDeclaration[1] {
   let name = $property.name->toOne();
   let rawType = $property->type();
 
@@ -76,29 +76,28 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
    * If the schema already includes a mapping for the given class then this function does nothing.
    */
   if (!$schema.mapping->_classMappingByClass($class)->isEmpty(), | $schema, {|
-    let classRelation = $class->schema();
-
+  
     let properties = $class
       ->meta::pure::functions::meta::hierarchicalProperties()
       ->concatenate(
         $class->meta::pure::functions::meta::hierarchicalPropertiesFromAssociations()
       )
       ->map(p: Property<Nil, Any|*>[1] |
-        let relation = $p->schema();
+        let relation = $p->relationDeclaration();
         pair($p, $relation);
       );
+
+    /*
+     * The Rel expression that corresponds to the Pure class.
+     */
+    let classRelation = $class->relationDeclaration();
+    let classExpr = $classRelation->name()->rel();
+    let instanceSetInitial = $schema.mapping->relSetImplementation($class, $classExpr);
 
     let augmentedStore =
       $schema.store
         ->addDeclarations($properties.second)
         ->addDeclarations($classRelation);
-
-    /*
-     * The Rel expression that corresponds to the Pure class.
-     */
-    let classExpr = $classRelation->name()->rel();
-
-    let instanceSetInitial = $schema.mapping->relSetImplementation($class, $classExpr);
 
     let instanceSetComplete =
       $properties
