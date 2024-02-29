@@ -90,16 +90,6 @@ function meta::external::store::rel::utils::collection::describe<T>(list: Sorted
   $list.elements->makeString('[', ', ', ']');
 }
 
-// function testing::longList(length: Integer[1]): Integer[*] {
-//   if ( $length < 1,
-//      {| [1]},
-//      {|
-//         let list = longList($length - 1);
-//         let head = $list->at(0);
-//         $list->add(0, $head + 1);
-//      })
-// }
-
 function <<test.Test>> meta::external::store::rel::utils::collection::testContains(): Any[*] {
   let list = sortedList(['a', 'b', 'c', 'e', 'f', 'g']);
   let emptyList = sortedList([]);
