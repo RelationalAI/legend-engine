@@ -90,11 +90,12 @@ function <<access.private>> meta::external::store::rel::mapping::schema::typeRel
      )
 }
 
-function meta::external::store::rel::mapping::schema::reachableClasses(root: Class<Any>[1], navigateTypeHierarchy: TypeHierarchyTraversalDirection[1]): SortedList<Class<Any>>[1] {
-  reachableClasses($root, sortedList([]), $navigateTypeHierarchy);
-}
-
-function <<access.private>> meta::external::store::rel::mapping::schema::reachableClasses(root: Class<Any>[1], accum: SortedList<Class<Any>>[1], navigateTypeHierarchy: TypeHierarchyTraversalDirection[1]): SortedList<Class<Any>>[1] {
+function <<access.private>> meta::external::store::rel::mapping::schema::reachableClasses(
+  root: Class<Any>[1],
+  accum: SortedList<Class<Any>>[1],
+  navigateTypeHierarchy: TypeHierarchyTraversalDirection[1],
+  includePropertiesFromAssociations: Boolean[1]
+): SortedList<Class<Any>>[1] {
   /*
    * If the schema already includes a mapping for the given class then this function does nothing.
    */
@@ -108,52 +109,80 @@ function <<access.private>> meta::external::store::rel::mapping::schema::reachab
        * type related classes, do we need to take the hierarchial properties.
        */
 
+      /*
+       * Collect each property which refers to a class type (i.e., not a primitive type).
+       *
+       * Put the conditional at the top level to avoid repeated condition testing
+       * which affects performance on large models.
+       */
       let classesFromProperties =
-        $root//.properties
-          ->meta::pure::functions::meta::hierarchicalProperties()
-          ->concatenate(
-            $root->meta::pure::functions::meta::hierarchicalPropertiesFromAssociations()
-          )
-          ->filter(property: Property<Nil, Any|*>[1] |
-            /*
-              * Collect each property which refers to a class type (i.e., not a primitive type).
-              */
-            !$property->isPrimitiveValueProperty()
-          )
-          ->map(property: Property<Nil, Any|*>[1] |
-            let owner = $property.owner;
+        if ( $includePropertiesFromAssociations,
+            {|
+              $root->meta::pure::functions::meta::hierarchicalProperties()->concatenate(
+                $root->meta::pure::functions::meta::hierarchicalPropertiesFromAssociations()
+              )
+              ->filter(property: Property<Nil, Any|*>[1] |
+                !$property->isPrimitiveValueProperty()
+              )
+              ->map(property: Property<Nil, Any|*>[1] |
+                let owner = $property.owner;
 
-            let ref = $owner->match([
-              {
-                assoc: Association[1] |
-                  let left = $assoc.properties->at(0);
-                  let right = $assoc.properties->at(1);
-                  if ($property == $left, | $right, | $left);
-              },
-              {
-                other: Class<Any>[1] |
-                  $property;
-              }
-            ]);
-            
-            $ref.genericType.rawType->toOne()->cast(@Class<Any>);
-          )
-          ->removeDuplicates();
+                let ref = $owner->match([
+                  {
+                    assoc: Association[1] |
+                      let left = $assoc.properties->at(0);
+                      let right = $assoc.properties->at(1);
+                      if ($property == $left, | $right, | $left);
+                  },
+                  {
+                    other: Class<Any>[1] |
+                      $property;
+                  }
+                ]);
+              
+                $ref.genericType.rawType->toOne()->cast(@Class<Any>);
+              )
+            },
+            {|
+              $root->meta::pure::functions::meta::hierarchicalProperties()
+              ->filter(property: Property<Nil, Any|*>[1] |
+                !$property->isPrimitiveValueProperty()
+              )
+              ->map(property: Property<Nil, Any|*>[1] |
+                $property.genericType.rawType->toOne()->cast(@Class<Any>);
+              )
+            }
+        )
+        ->removeDuplicates();
 
         let typeHierarchyClasses =
           $root->typeRelatedClasses($navigateTypeHierarchy);
 
         $classesFromProperties->concatenate($typeHierarchyClasses)->fold({referencedClass: Class<Any>[1], accum: SortedList<Class<Any>>[1] |
-          $referencedClass->reachableClasses($accum, $navigateTypeHierarchy)
+          $referencedClass->reachableClasses($accum, $navigateTypeHierarchy, $includePropertiesFromAssociations)
         }, $accum->insert($root));
     })
 }
 
-function meta::external::store::rel::mapping::schema::includeSingleClass(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
-  let properties = $class
-    ->meta::pure::functions::meta::hierarchicalProperties()
-    ->concatenate(
-      $class->meta::pure::functions::meta::hierarchicalPropertiesFromAssociations()
+function meta::external::store::rel::mapping::schema::reachableClasses(
+  root: Class<Any>[1],
+  navigateTypeHierarchy: TypeHierarchyTraversalDirection[1],
+  includePropertiesFromAssociations: Boolean[1]
+): SortedList<Class<Any>>[1] {
+  reachableClasses($root, sortedList([]), $navigateTypeHierarchy, $includePropertiesFromAssociations);
+}
+
+function <<access.private>> meta::external::store::rel::mapping::schema::includeSingleClass(
+  schema: RAISchema[1],
+  class: Class<Any>[1],
+  includePropertiesFromAssociations: Boolean[1]
+): RAISchema[1] {
+  let properties =
+    if($includePropertiesFromAssociations,
+      |$class->meta::pure::functions::meta::hierarchicalProperties()->concatenate(
+          $class->meta::pure::functions::meta::hierarchicalPropertiesFromAssociations()
+        ),
+      |$class->meta::pure::functions::meta::hierarchicalProperties()
     )
     ->map(p: Property<Nil, Any|*>[1] |
       let relation = $p->relationDeclaration();
@@ -188,12 +217,25 @@ function meta::external::store::rel::mapping::schema::includeSingleClass(schema:
   );
 }
 
-function <<access.private>> meta::external::store::rel::mapping::schema::includeClass(schema: RAISchema[1], root: Class<Any>[1], navigateTypeHierarchy: TypeHierarchyTraversalDirection[1]): RAISchema[1] {
+function meta::external::store::rel::mapping::schema::includeSingleClass(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+  includeSingleClass($schema, $class, false);
+}
+
+function meta::external::store::rel::mapping::schema::includeSingleClassWithAssociations(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+  includeSingleClass($schema, $class, true);
+}
+
+function <<access.private>> meta::external::store::rel::mapping::schema::includeClass(
+  schema: RAISchema[1],
+  root: Class<Any>[1],
+  navigateTypeHierarchy: TypeHierarchyTraversalDirection[1],
+  includePropertiesFromAssociations: Boolean[1]
+): RAISchema[1] {
   /*
     * Include all refereneced classes in the RAI schema.
     */
   let classesReachable =
-    meta::external::store::rel::mapping::schema::reachableClasses($root, $navigateTypeHierarchy);
+    reachableClasses($root, $navigateTypeHierarchy, $includePropertiesFromAssociations);
 
   /*
    * If the schema already includes a mapping for a given class then do not add it to the schema again.
@@ -205,14 +247,20 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
       );
 
   $classesToAdd.elements->fold({class: Class<Any>[1], schema: RAISchema[1] |
-    includeSingleClass($schema, $class)
+    includeSingleClass($schema, $class, $includePropertiesFromAssociations)
   }, $schema);
 }
 
 function meta::external::store::rel::mapping::schema::includeClassesReachableFromProperties(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
-  includeClass($schema, $class, TypeHierarchyTraversalDirection.None)
+  /*
+   * Do not include associations by default.
+   */
+  includeClass($schema, $class, TypeHierarchyTraversalDirection.None, false)
 }
 
 function meta::external::store::rel::mapping::schema::includeAllClassesFrom(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
-  includeClass($schema, $class, TypeHierarchyTraversalDirection.Down)
+  /*
+   * Do not include associations by default.
+   */
+  includeClass($schema, $class, TypeHierarchyTraversalDirection.Down, false)
 }
