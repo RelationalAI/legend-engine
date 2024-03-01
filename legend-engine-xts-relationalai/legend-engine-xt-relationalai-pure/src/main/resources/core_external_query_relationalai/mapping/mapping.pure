@@ -48,7 +48,15 @@ function meta::external::store::rel::mapping::describe(propertyMapping: RelPrope
 function meta::external::store::rel::mapping::describe(set: RelSetImplementation[1]): String[1] {
   let id = $set->simpleId();
   let superSetImplementationId = $set->simpleSuperSetId();
-  let propertyMappings = $set.propertyMappings->map(m | $m->cast(@RelPropertyMapping)->describe())->concatenateCollection();
+  /*
+   * Print sets in some order for readability of output.
+   */
+  let propertyMappings =
+    $set.propertyMappings
+      ->map(m | $m->cast(@RelPropertyMapping))
+      ->sortBy(m: RelPropertyMapping[1] | $m.property.name->toOne())
+      ->map(m: RelPropertyMapping[1] | $m->describe())
+      ->concatenateCollection();
   format('Set[id: %s, superSetImplementationId: %s, properties: %s]', [$id, $superSetImplementationId, $propertyMappings]);
 }
 

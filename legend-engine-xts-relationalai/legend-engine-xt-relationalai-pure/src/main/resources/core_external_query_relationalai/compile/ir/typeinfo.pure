@@ -35,10 +35,14 @@ function meta::external::store::rel::compile::ir::typeinfo::union(
 function meta::external::store::rel::compile::ir::typeinfo::describe(
   typeInfo: TranspileTypeInfo[1]
 ): String[1] {
+  /*
+   * Print sets in some order for readability of output.
+   */
+  let orderedSets = $typeInfo.sets->sortBy(s: RelSetImplementation[1] | $s.id);
   if ( $typeInfo.sets->isEmpty(),
      | '(no set implemtations)',
-     | $typeInfo.sets->map(s: RelSetImplementation[1] | $s->describe())->makeString('[\n', ',\n','\n]')
-     )
+     | format('Type info for %s sets: %s', [$orderedSets->size(), $orderedSets->map(s: RelSetImplementation[1] | $s->describe())->makeString('[\n', ',\n','\n]')])
+     );
 }
 
 /**
