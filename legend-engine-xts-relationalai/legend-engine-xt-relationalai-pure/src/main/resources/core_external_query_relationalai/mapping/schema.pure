@@ -155,6 +155,9 @@ function <<access.private>> meta::external::store::rel::mapping::schema::reachab
         )
         ->removeDuplicates();
 
+        /*
+         * For each class encountered, choose whether to include super and sub classs in the traversal.
+         */
         let typeHierarchyClasses =
           $root->typeRelatedClasses($navigateTypeHierarchy);
 
@@ -251,14 +254,27 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
   }, $schema);
 }
 
-function meta::external::store::rel::mapping::schema::includeClassesReachableFromProperties(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+function meta::external::store::rel::mapping::schema::includeFromClassProperties(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
   /*
    * Do not include associations by default.
    */
   includeClass($schema, $class, TypeHierarchyTraversalDirection.None, false)
 }
 
-function meta::external::store::rel::mapping::schema::includeAllClassesFrom(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+function meta::external::store::rel::mapping::schema::includeFromSubclassProperties(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+  /*
+   * Do not include associations by default.
+   *
+   * For the given class, traverse from each subclass.
+   */
+  let allSubclasses =
+    $class->typeRelatedClasses(TypeHierarchyTraversalDirection.Down);
+  $class->concatenate($allSubclasses)->fold({referencedClass: Class<Any>[1], schemaAcc: RAISchema[1] |
+    includeClass($schemaAcc, $referencedClass, TypeHierarchyTraversalDirection.None, false)
+  }, $schema);
+}
+
+function meta::external::store::rel::mapping::schema::includeEverythingFrom(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
   /*
    * Do not include associations by default.
    */
