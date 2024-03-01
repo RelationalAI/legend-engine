@@ -73,8 +73,6 @@ Enum meta::external::store::rel::mapping::schema::TypeHierarchyTraversalDirectio
 
 /**
   * Return the classes related by subtyping to the specified class.
-  *
-  * TODO: Do not return the class itself.
   */
 function <<access.private>> meta::external::store::rel::mapping::schema::typeRelatedClasses(class: Class<Any>[1], navigateTypeHierarchy: TypeHierarchyTraversalDirection[1]): Class<Any>[*] {
   if ( $navigateTypeHierarchy == TypeHierarchyTraversalDirection.None,
@@ -89,7 +87,7 @@ function <<access.private>> meta::external::store::rel::mapping::schema::typeRel
             let superclasses = meta::pure::functions::meta::hierarchicalAllGeneralizations($class);
             $subclasses->concatenate($superclasses);
           })
-     )->concatenate($class) // TODO: Avoid returning the class itself here.
+     )
 }
 
 function meta::external::store::rel::mapping::schema::reachableClasses(root: Class<Any>[1], navigateTypeHierarchy: TypeHierarchyTraversalDirection[1]): SortedList<Class<Any>>[1] {
