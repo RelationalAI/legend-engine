@@ -71,64 +71,25 @@ Enum meta::external::store::rel::mapping::schema::TypeHierarchyTraversalDirectio
   None, Down, UpAndDown
 }
 
-function <<access.private>> meta::external::store::rel::mapping::schema::includeClass(schema: RAISchema[1], root: Class<Any>[1], navigateTypeHierarchy: TypeHierarchyTraversalDirection[1]): RAISchema[1] {
-  /*
-    * Include all refereneced classes in the RAI schema.
-    */
-  let classesReachable =
-    meta::external::store::rel::mapping::schema::reachableClasses($root, $navigateTypeHierarchy);
-
-  /*
-   * If the schema already includes a mapping for a given class then do not add it to the schema again.
-   */
-  let classesToAdd =
-    $classesReachable
-      ->filterList(class: Class<Any>[1] |
-        $schema.mapping->_classMappingByClass($class)->isEmpty()
-      );
-
-  //println($classesToAdd->describe());
-
-  $classesToAdd.elements->fold({class: Class<Any>[1], schema: RAISchema[1] |
-
-    let properties = $class
-      ->meta::pure::functions::meta::hierarchicalProperties()
-      ->concatenate(
-        $class->meta::pure::functions::meta::hierarchicalPropertiesFromAssociations()
-      )
-      ->map(p: Property<Nil, Any|*>[1] |
-        let relation = $p->relationDeclaration();
-        pair($p, $relation);
-      );
-
-    /*
-     * The Rel expression that corresponds to the Pure class.
-     */
-    let classRelation = $class->relationDeclaration();
-    let classExpr = $classRelation->declToName();
-    let instanceSetInitial = $schema.mapping->relSetImplementation($class, $classExpr);
-
-    let augmentedStore =
-      $schema.store
-        ->addDeclarations($properties.second)
-        ->addDeclarations($classRelation);
-
-    let instanceSetComplete =
-      $properties
-        ->fold({property: Pair<Property<Nil, Any|*>, RelationDeclaration>[1], accum: RelSetImplementation[1] |
-          $accum->withPropertyMapping($property.first, $property.second->declToName(), $augmentedStore);
-        }, $instanceSetInitial);
-
-    let augmentedMapping =
-      $schema.mapping
-        ->addSetImplementation($instanceSetComplete);
-
-    ^$schema(
-      mapping=$augmentedMapping,
-      store=$augmentedStore
-    );
-
-  }, $schema);
+/**
+  * Return the classes related by subtyping to the specified class.
+  *
+  * TODO: Do not return the class itself.
+  */
+function <<access.private>> meta::external::store::rel::mapping::schema::typeRelatedClasses(class: Class<Any>[1], navigateTypeHierarchy: TypeHierarchyTraversalDirection[1]): Class<Any>[*] {
+  if ( $navigateTypeHierarchy == TypeHierarchyTraversalDirection.None,
+     | [],
+     | if ( $navigateTypeHierarchy == TypeHierarchyTraversalDirection.Down,
+          {|
+            meta::pure::functions::meta::findAllSpecializations($class)
+          },
+          {|
+            assert($navigateTypeHierarchy == TypeHierarchyTraversalDirection.UpAndDown, 'Unknown hieararchy traversal direction.');
+            let subclasses = meta::pure::functions::meta::findAllSpecializations($class);
+            let superclasses = meta::pure::functions::meta::hierarchicalAllGeneralizations($class);
+            $subclasses->concatenate($superclasses);
+          })
+     )->concatenate($class) // TODO: Avoid returning the class itself here.
 }
 
 function meta::external::store::rel::mapping::schema::reachableClasses(root: Class<Any>[1], navigateTypeHierarchy: TypeHierarchyTraversalDirection[1]): SortedList<Class<Any>>[1] {
@@ -145,12 +106,8 @@ function <<access.private>> meta::external::store::rel::mapping::schema::reachab
 
       /*
        * TODO: Do we need to use `$root->meta::pure::functions::meta::hierarchicalProperties()`
-       * or is `$root.properties` sufficient?
-       */
-
-      /*
-       * TODO: If we are going up and down the hierarchy for the type related classes,
-       * do we need to take the hierarchial properties.
+       * or is `$root.properties` sufficient? If we are going up and down the hierarchy for the
+       * type related classes, do we need to take the hierarchial properties.
        */
 
       let classesFromProperties =
@@ -194,31 +151,70 @@ function <<access.private>> meta::external::store::rel::mapping::schema::reachab
     })
 }
 
-/**
-  * Return the classes related by subtyping to the specified class.
-  *
-  * TODO: Do not return the class itself.
-  */
-function <<access.private>> meta::external::store::rel::mapping::schema::typeRelatedClasses(class: Class<Any>[1], navigateTypeHierarchy: TypeHierarchyTraversalDirection[1]): Class<Any>[*] {
-  if ( $navigateTypeHierarchy == TypeHierarchyTraversalDirection.None,
-     | [],
-     | if ( $navigateTypeHierarchy == TypeHierarchyTraversalDirection.Down,
-          {|
-            meta::pure::functions::meta::findAllSpecializations($class)
-          },
-          {|
-            assert($navigateTypeHierarchy == TypeHierarchyTraversalDirection.UpAndDown, 'Unknown hieararchy traversal direction.');
-            let subclasses = meta::pure::functions::meta::findAllSpecializations($class);
-            let superclasses = meta::pure::functions::meta::hierarchicalAllGeneralizations($class);
-            $subclasses->concatenate($superclasses);
-          })
-     )->concatenate($class) // TODO: Avoid returning the class itself here.
+function meta::external::store::rel::mapping::schema::includeSingleClass(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+  let properties = $class
+    ->meta::pure::functions::meta::hierarchicalProperties()
+    ->concatenate(
+      $class->meta::pure::functions::meta::hierarchicalPropertiesFromAssociations()
+    )
+    ->map(p: Property<Nil, Any|*>[1] |
+      let relation = $p->relationDeclaration();
+      pair($p, $relation);
+    );
+
+  /*
+    * The Rel expression that corresponds to the Pure class.
+    */
+  let classRelation = $class->relationDeclaration();
+  let classExpr = $classRelation->declToName();
+  let instanceSetInitial = $schema.mapping->relSetImplementation($class, $classExpr);
+
+  let augmentedStore =
+    $schema.store
+      ->addDeclarations($properties.second)
+      ->addDeclarations($classRelation);
+
+  let instanceSetComplete =
+    $properties
+      ->fold({property: Pair<Property<Nil, Any|*>, RelationDeclaration>[1], accum: RelSetImplementation[1] |
+        $accum->withPropertyMapping($property.first, $property.second->declToName(), $augmentedStore);
+      }, $instanceSetInitial);
+
+  let augmentedMapping =
+    $schema.mapping
+      ->addSetImplementation($instanceSetComplete);
+
+  ^$schema(
+    mapping=$augmentedMapping,
+    store=$augmentedStore
+  );
 }
 
-function meta::external::store::rel::mapping::schema::includeSingleClass(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+function <<access.private>> meta::external::store::rel::mapping::schema::includeClass(schema: RAISchema[1], root: Class<Any>[1], navigateTypeHierarchy: TypeHierarchyTraversalDirection[1]): RAISchema[1] {
+  /*
+    * Include all refereneced classes in the RAI schema.
+    */
+  let classesReachable =
+    meta::external::store::rel::mapping::schema::reachableClasses($root, $navigateTypeHierarchy);
+
+  /*
+   * If the schema already includes a mapping for a given class then do not add it to the schema again.
+   */
+  let classesToAdd =
+    $classesReachable
+      ->filterList(class: Class<Any>[1] |
+        $schema.mapping->_classMappingByClass($class)->isEmpty()
+      );
+
+  $classesToAdd.elements->fold({class: Class<Any>[1], schema: RAISchema[1] |
+    includeSingleClass($schema, $class)
+  }, $schema);
+}
+
+function meta::external::store::rel::mapping::schema::includeClassesReachableFromProperties(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
   includeClass($schema, $class, TypeHierarchyTraversalDirection.None)
 }
 
-function meta::external::store::rel::mapping::schema::includeClassesFrom(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
+function meta::external::store::rel::mapping::schema::includeAllClassesFrom(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
   includeClass($schema, $class, TypeHierarchyTraversalDirection.Down)
 }

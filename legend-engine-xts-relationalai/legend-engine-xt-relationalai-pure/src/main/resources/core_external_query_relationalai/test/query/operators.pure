@@ -36,7 +36,7 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
 
 // Basic map query.
 function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryMap(): Any[*] {
-  let schema = RAITestSchema()->includeSingleClass(TestRootClass);
+  let schema = RAITestSchema()->includeClassesReachableFromProperties(TestRootClass);
 
   let rai = $schema->TestConnection();
 
@@ -100,7 +100,7 @@ Filter(
 
 // Basic test of multi-level map.
 function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryMapMultiLevel(): Any[*] {
-  let schema = RAITestSchema()->includeSingleClass(TestRootClass);
+  let schema = RAITestSchema()->includeClassesReachableFromProperties(TestRootClass);
 
   let rai = $schema->TestConnection();
 
@@ -164,7 +164,7 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
 
 // Test of 'at' after a multi-level map.
 function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryMapMultiLevelAt(): Any[*] {
-  let schema = RAITestSchema()->includeSingleClass(TestRootClass);
+  let schema = RAITestSchema()->includeClassesReachableFromProperties(TestRootClass);
 
   let rai = $schema->TestConnection();
 
@@ -215,7 +215,7 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
 
 // Basic multi-level project test.
 function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectMultiLevel(): Any[*] {
-  let schema = RAITestSchema()->includeSingleClass(TestRootClass);
+  let schema = RAITestSchema()->includeClassesReachableFromProperties(TestRootClass);
 
   let rai = $schema->TestConnection();
 
@@ -251,7 +251,7 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
 
 // Basic multi-level project test with 'at' along a multihop path.
 function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectMultiLevelWithAt(): Any[*] {
-  let schema = RAITestSchema()->includeSingleClass(TestRootClass)->includeSingleClass(TestClassAA)->includeSingleClass(TestClassAAA);
+  let schema = RAITestSchema()->includeClassesReachableFromProperties(TestRootClass);
 
   let rai = $schema->TestConnection();
 
@@ -352,7 +352,7 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
 
 // Basic test of cast operator.
 function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryCast(): Any[*] {
-  let schema = RAITestSchema()->includeClassesFrom(TestRootClass);
+  let schema = RAITestSchema()->includeAllClassesFrom(TestRootClass);
 
   let rai = $schema->TestConnection();
 
@@ -396,7 +396,7 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
 }
 
 function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectMultiLevelWithAtSimple1(): Any[*] {
-  let schema = RAITestSchema()->includeSingleClass(TestClassAA);
+  let schema = RAITestSchema()->includeClassesReachableFromProperties(TestClassAA);
 
   let rai = $schema->TestConnection();
 
@@ -421,7 +421,7 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
 }
 
 function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectMultiLevelWithAtSimple2(): Any[*] {
-  let schema = RAITestSchema()->includeSingleClass(TestClassA);
+  let schema = RAITestSchema()->includeClassesReachableFromProperties(TestClassA);
 
   let rai = $schema->TestConnection();
 
@@ -446,7 +446,7 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
 }
 
 function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectMultiLevelWithAtSimple3(): Any[*] {
-  let schema = RAITestSchema()->includeSingleClass(TestClassA);
+  let schema = RAITestSchema()->includeClassesReachableFromProperties(TestClassA);
 
   let rai = $schema->TestConnection();
 
@@ -505,7 +505,7 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
 }
 
 function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectNestedIn(): Any[*] {
-  let schema = RAITestSchema()->includeSingleClass(TestRootClass);
+  let schema = RAITestSchema()->includeClassesReachableFromProperties(TestRootClass);
 
   let rai = $schema->TestConnection();
 
