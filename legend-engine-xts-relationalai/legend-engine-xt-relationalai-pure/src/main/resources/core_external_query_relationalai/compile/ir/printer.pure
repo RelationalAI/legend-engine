@@ -124,7 +124,7 @@ function meta::external::store::rel::compile::ir::utils::describeGroupBy(groupby
     $groupby.aggregates
       ->map(e: PExprAggregate[1] | $e->toString()) // TODO: provide a describe function.
       ->makeString('\n', ',\n', '\n');
-  format('GroupBy(%s, [])', [$groupby.parent->describe(), $aggregates]);
+  format('GroupBy(%s, [%s])', [$groupby.parent->describe(), $aggregates]);
 }
 
 function meta::external::store::rel::compile::ir::utils::describeCompilationStep(agg: PExprCompilationStep[1]): String[1] {
