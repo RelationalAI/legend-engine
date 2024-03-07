@@ -231,14 +231,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::recursively
   $valueSpec->match([
     {
       routed: StoreMappingRoutedValueSpecification[1] |
-        let typeInfo = constructTypeInfo($routed);
-
-        let sets =
-          $routed.mapping.classMappings->map(s | $s->match([
-            set: RelSetImplementation[1]                     | $set,
-            other: meta::pure::mapping::SetImplementation[1] | []
-          ]));
-        ^TranspileTypeInfo(sets=$sets);
+        constructTypeInfo($routed)
     },
     {
       expr: SimpleFunctionExpression[1] |
