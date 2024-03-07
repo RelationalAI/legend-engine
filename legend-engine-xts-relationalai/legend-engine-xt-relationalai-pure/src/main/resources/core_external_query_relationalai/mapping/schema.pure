@@ -175,11 +175,13 @@ function meta::external::store::rel::mapping::schema::reachableClasses(
   reachableClasses($root, sortedList([]), $navigateTypeHierarchy, $includePropertiesFromAssociations);
 }
 
-function <<access.private>> meta::external::store::rel::mapping::schema::includeSingleClass(
+function <<access.private>> meta::external::store::rel::mapping::schema::addClassImpl(
   schema: RAISchema[1],
   class: Class<Any>[1],
   includePropertiesFromAssociations: Boolean[1]
 ): RAISchema[1] {
+  assert($schema.mapping->_classMappingByClass($class)->isEmpty(), 'Each class must be added at most once.');
+
   let properties =
     if($includePropertiesFromAssociations,
       |$class->meta::pure::functions::meta::hierarchicalProperties()->concatenate(
@@ -221,11 +223,17 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
 }
 
 function meta::external::store::rel::mapping::schema::includeSingleClass(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
-  includeSingleClass($schema, $class, false);
+  if ( $schema.mapping->_classMappingByClass($class)->isEmpty(),
+     | addClassImpl($schema, $class, false),
+     | $schema
+     )
 }
 
 function meta::external::store::rel::mapping::schema::includeSingleClassWithAssociations(schema: RAISchema[1], class: Class<Any>[1]): RAISchema[1] {
-  includeSingleClass($schema, $class, true);
+  if ( $schema.mapping->_classMappingByClass($class)->isEmpty(),
+     | addClassImpl($schema, $class, true),
+     | $schema
+     )
 }
 
 function <<access.private>> meta::external::store::rel::mapping::schema::includeClass(
@@ -250,7 +258,7 @@ function <<access.private>> meta::external::store::rel::mapping::schema::include
       );
 
   $classesToAdd.elements->fold({class: Class<Any>[1], schema: RAISchema[1] |
-    includeSingleClass($schema, $class, $includePropertiesFromAssociations)
+    addClassImpl($schema, $class, $includePropertiesFromAssociations)
   }, $schema);
 }
 
