@@ -1246,9 +1246,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::getFunction
         {exprs: Expr[*] |
           $exprs
             ->at(0)
-            ->parenthesise()
-            ->exists()
-            ->not()
+            ->empty()
         }
         ->ok()
       }),
