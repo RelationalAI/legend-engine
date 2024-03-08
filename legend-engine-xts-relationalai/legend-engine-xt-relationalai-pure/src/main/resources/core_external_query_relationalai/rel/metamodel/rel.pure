@@ -199,6 +199,7 @@ Class meta::external::store::rel::metamodel::Implies extends Expr {
   * Existential quantification over an expression.
   */
 Class meta::external::store::rel::metamodel::Exists extends Expr {
+  bindings: Binding[1..*];
   inner: Expr[1];
 }
 
@@ -573,8 +574,8 @@ function meta::external::store::rel::metamodel::comma(left: Expr[1..*], right: E
   $left->concatenate($right)->toOneMany()
 }
 
-function meta::external::store::rel::metamodel::exists(expr: Expr[1]): Exists[1] {
-  ^Exists(inner=$expr)
+function meta::external::store::rel::metamodel::exists(bindings: Binding[1..*], expr: Expr[1]): Exists[1] {
+  ^Exists(bindings=$bindings,inner=$expr)
 }
 
 function meta::external::store::rel::metamodel::forAll(bindings: Binding[1..*], expr: Expr[1]): ForAll[1] {

@@ -251,9 +251,8 @@ function meta::external::store::rel::compile::compile(
             ->group()
             ->annotate(Boolean)
             ->ok()*/
-            $predicate
-              ->abstract($bound->in($parent))
-              ->exists()
+            $bound->in($parent)
+              ->exists($predicate)
               ->annotate(Boolean)
               ->ok()
         })
