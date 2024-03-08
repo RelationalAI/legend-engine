@@ -1066,6 +1066,6 @@ function meta::external::store::rel::compile::compile(
             ->unwrap();
         }, relfalse());
 
-      $parentVar->equals($parent)->and($nestedConditionals)->ok();
+      $parentVar->exists($parentVar->equals($parent)->and($nestedConditionals))->ok();
     );
 }
