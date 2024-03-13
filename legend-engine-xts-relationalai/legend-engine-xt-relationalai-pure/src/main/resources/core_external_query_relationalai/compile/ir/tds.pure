@@ -6,10 +6,14 @@ import meta::external::store::rel::utils::*;
 import meta::external::store::rel::utils::lang::*;
 
 Class meta::external::store::rel::compile::ir::tds::PExprTDSJoin extends PExpr {
+  /** The kind of join, e.g., INNER or OUTER. */
   type: meta::relational::metamodel::join::JoinType[1];
-  condition: PExprScope[1];
   left: PExpr[1];
   right: PExpr[1];
+  /** The condition joining `left` and `right`. */
+  condition: PExprScope[1];
+  /** The columns to which to restrict the output; if empty then all columns will be output. */
+  columnNames: String[*];
 }
 
 Class meta::external::store::rel::compile::ir::tds::PExprTDSFilter extends PExpr {

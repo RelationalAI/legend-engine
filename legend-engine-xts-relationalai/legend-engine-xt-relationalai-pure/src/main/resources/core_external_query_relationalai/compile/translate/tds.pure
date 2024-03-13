@@ -60,9 +60,23 @@ function meta::external::store::rel::compile::tds::compile(
                 )
               );
 
-              let projections =
+              /*
+               * Filter the columns originating from the left and right expression.
+               */
+              let filteredLeftColumns =
                 $leftState.cols.names
-                  ->map({col: String[1] |
+                  ->filter(name: String[1] |
+                     $join.columnNames->isEmpty() || $join.columnNames->contains($name)
+                  );
+              let filteredRightColumns =
+                $rightState.cols.names
+                  ->filter(name: String[1] |
+                     $join.columnNames->isEmpty() || $join.columnNames->contains($name)
+                  );
+
+              let projections =
+                $filteredLeftColumns
+                  ->map(col: String[1] |
                     def(
                       $target
                         ->appl(label($col)),
@@ -73,11 +87,11 @@ function meta::external::store::rel::compile::tds::compile(
                       ]
                       ->product()
                       ->from(vars(['i', 'k']))
-                    );
-                  })
+                    )
+                  )
                   ->concatenate(
-                    $rightState.cols.names
-                      ->map({col: String[1] |
+                    $filteredRightColumns
+                      ->map(col: String[1] |
                         def(
                           $target
                             ->appl(label($col)),
@@ -88,13 +102,13 @@ function meta::external::store::rel::compile::tds::compile(
                           ]
                           ->product()
                           ->from(vars(['i', 'k']))
-                        );
-                      })
+                        )
+                      )
                   );
 
               ^$joinedState(
                 program=$joinedState.program->with($joinRule->concatenate($projections)),
-                cols=columns($leftState.cols.names->concatenate($rightState.cols.names)),
+                cols=columns($filteredLeftColumns->concatenate($filteredRightColumns)),
                 current=rel($target)
               );
             });

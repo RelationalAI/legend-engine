@@ -628,8 +628,6 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
       'def tbl2[:ColD5, x] = tbl2(:base, x), TestClassD:propertyD5[x]',
       'def tbl3[:base] = sort[(tbl1[:ColC1, i] = tbl2[:ColD1, j]) and (tbl1[:ColC2, i] = tbl2[:ColD3, j]) for i, j]',
       'def tbl3[:ColC1] = k, tbl1[:ColC1, i], tbl3[:base, k, i, _] from i, k',
-      'def tbl3[:ColC2] = k, tbl1[:ColC2, i], tbl3[:base, k, i, _] from i, k',
-      'def tbl3[:ColD1] = k, tbl2[:ColD1, i], tbl3[:base, k, _, i] from i, k',
       'def tbl3[:ColD2] = k, tbl2[:ColD2, i], tbl3[:base, k, _, i] from i, k',
       'def tbl3[:ColD3] = k, tbl2[:ColD3, i], tbl3[:base, k, _, i] from i, k',
       'def tbl3[:ColD4] = k, tbl2[:ColD4, i], tbl3[:base, k, _, i] from i, k',

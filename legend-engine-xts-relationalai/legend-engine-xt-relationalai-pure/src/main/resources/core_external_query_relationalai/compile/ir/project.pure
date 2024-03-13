@@ -1,4 +1,5 @@
 import meta::external::store::rel::compile::ir::*;
+import meta::external::store::rel::compile::ir::tds::*;
 import meta::external::store::rel::compile::ir::typeinfo::*;
 import meta::external::store::rel::compile::ir::utils::*;
 import meta::external::store::rel::mapping::*;
@@ -242,12 +243,27 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseR
 
         $parent->match([
           { project: PExprProject[1] |
+              /*
+               * Handle simple case of a `restrict` immediately following a `project` by
+               * pushing the restriction into the projection.
+               */
               let newProjections = $project.projections->filter(p: Pair<String,PExprScope>[1] |
                 $columnNames->contains($p.first)
               );
-              ^$project(projections=$newProjections); // ->restrict($columnNames),
+              ^$project(projections=$newProjections);
+          },
+          {
+            join: PExprTDSJoin[1] |
+              /*
+               * If a `join` is immediately followed by a `restrict` then the `restrict` is
+               * used to specify the output columns of the join. 
+               */
+              ^$join(columnNames=$columnNames);
           },
           { other: PExpr[1] |
+            /*
+             * All other cases are handled by projecting out columns in the final output.
+             */
             $parent->restrict($columnNames)
           }
         ]);
