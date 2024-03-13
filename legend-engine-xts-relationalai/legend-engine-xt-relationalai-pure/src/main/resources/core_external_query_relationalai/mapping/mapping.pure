@@ -8,7 +8,7 @@ import meta::pure::store::*;
 
 Class meta::external::store::rel::mapping::RelSetImplementation extends InstanceSetImplementation {
   // We demand an expression that defines the class we are implementing.
-  classExpr: Expr[1];
+  classExpr: RelExpr[1];
 }
 
 function meta::external::store::rel::mapping::simpleId(set: RelSetImplementation[1]): String[1] {
@@ -22,7 +22,7 @@ function meta::external::store::rel::mapping::simpleSuperSetId(set: RelSetImplem
 function meta::external::store::rel::mapping::relSetImplementation<T>(
   owner: Mapping[1],
   sourceClass: Class<T>[1],
-  classExpr: Expr[1]
+  classExpr: RelExpr[1]
 ): RelSetImplementation[1] {
   ^RelSetImplementation(
     id=$sourceClass->elementToPath('_'),
@@ -35,7 +35,7 @@ function meta::external::store::rel::mapping::relSetImplementation<T>(
 }
 
 Class meta::external::store::rel::mapping::RelPropertyMapping extends PropertyMapping {
-  target: Expr[1];
+  target: RelExpr[1];
 }
 
 function meta::external::store::rel::mapping::describe(propertyMapping: RelPropertyMapping[1]): String[1] {
@@ -70,7 +70,7 @@ function meta::external::store::rel::mapping::describe(set: RelSetImplementation
 
 function <<access.private>> meta::external::store::rel::mapping::propertyMapping(
   property: Property<Nil,Any|*>[1],
-  target: Expr[1],
+  target: RelExpr[1],
   owner: RelSetImplementation[0..1],
   store: Store[0..1]
 ): RelPropertyMapping[1] {
@@ -107,7 +107,7 @@ function <<access.private>> meta::external::store::rel::mapping::propertyMapping
 function meta::external::store::rel::mapping::propertyMapping<T>(
   sourceClass: Class<T>[1],
   property: String[1],
-  target: Expr[1],
+  target: RelExpr[1],
   owner: RelSetImplementation[0..1],
   store: Store[0..1]
 ): RelPropertyMapping[0..1] {
@@ -138,7 +138,7 @@ function <<access.private>> meta::external::store::rel::mapping::addPropertyMapp
 function meta::external::store::rel::mapping::withPropertyMapping(
   setImpl: RelSetImplementation[1],
   source: Property<Nil,Any|*>[1],
-  target: Expr[1],
+  target: RelExpr[1],
   store: Store[1]
 ): RelSetImplementation[1] {
   $setImpl->addPropertyMapping(propertyMapping($source, $target, $setImpl, $store));

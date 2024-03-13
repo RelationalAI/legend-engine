@@ -17,7 +17,7 @@ Class meta::external::store::rel::metamodel::store::RAIDatabase extends meta::pu
   // be installed.
   declarations: RelationDeclaration[*];
 
-  program: Program[0..1];
+  program: RelProgram[0..1];
 
   config: RAITranspilerConfig[1];
 
@@ -48,7 +48,7 @@ Class meta::external::store::rel::metamodel::store::NestedRelationDeclaration ex
 /// Constructor methods
 /////////////////////////
 
-function meta::external::store::rel::metamodel::store::RAIDatabase(declarations: RelationDeclaration[*], program: Program[0..1], config: RAITranspilerConfig[1], name: String[0..1]): RAIDatabase[1] {
+function meta::external::store::rel::metamodel::store::RAIDatabase(declarations: RelationDeclaration[*], program: RelProgram[0..1], config: RAITranspilerConfig[1], name: String[0..1]): RAIDatabase[1] {
   ^RAIDatabase(declarations=$declarations, program=$program, config=$config, name=$name);
 }
 
@@ -91,7 +91,7 @@ function <<access.private>> meta::external::store::rel::metamodel::store::name(d
   ])
 }
 
-function meta::external::store::rel::metamodel::store::declToName(decl: RelationDeclaration[1]): RelationName[1] {
+function meta::external::store::rel::metamodel::store::declToName(decl: RelationDeclaration[1]): RelRelationName[1] {
   $decl->name()->rel()
 }
 
