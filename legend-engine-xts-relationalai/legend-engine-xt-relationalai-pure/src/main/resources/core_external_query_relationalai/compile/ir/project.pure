@@ -241,6 +241,15 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseR
         // Type guaranteed by function signature.
         let columnNames = $param.values->cast(@String);
 
+        /*
+         * Here we eagerly push restricts inwards to avoid generating intermediate tables
+         * with more columns than necessary in order to be certain that we do not materialize
+         * a column in an intermediate table which is not later used.
+         *
+         * An alternative design would be to have an optimization phase, to rewrite the PExpr
+         * AST, which would do the same operation, and also remove other unused columns from
+         * intermediate tables where possible.
+         */
         $parent->match([
           { project: PExprProject[1] |
               /*
