@@ -61,6 +61,11 @@ function <<access.private>> meta::external::store::rel::mapping::execution(
         ->andThen({expr: RelExpr[1] |
           let type = $query.genericType.rawType;
 
+          let outputRelation =
+            $config.outputRelationPrefix
+              ->map(s: String[1] | format('%s:%s', [$s, 'output']))
+              ->orElse('output');
+
           /*
            * We distinguish three cases.
            * 1. The type of the query is a primitive type.
@@ -81,7 +86,7 @@ function <<access.private>> meta::external::store::rel::mapping::execution(
               ^$state(program=
                 $state
                   .program
-                  ->with(rel('output')->def($expr))
+                  ->with(rel($outputRelation)->def($expr))
               )
               ->ok(),
             class: Class<Any>[1] |
@@ -93,7 +98,7 @@ function <<access.private>> meta::external::store::rel::mapping::execution(
                   ^$state(program=
                     $state
                       .program
-                      ->with(rel('output')->def($expr))
+                      ->with(rel($outputRelation)->def($expr))
                   )
                   ->ok()
                 }),
@@ -110,7 +115,7 @@ function <<access.private>> meta::external::store::rel::mapping::execution(
 
                   let output =
                     def(
-                      rel('output'),
+                      rel($outputRelation),
                       if ($outputBody->isEmpty(), | reltrue(), {|
                         $outputBody
                           ->toOneMany()
@@ -141,7 +146,7 @@ function <<access.private>> meta::external::store::rel::mapping::execution(
                           program=$state
                             .program
                             ->with([
-                              rel('output')
+                              rel($outputRelation)
                                 ->appl(label('query'))
                                 ->headAtom(var('x'))
                                 ->def($expr->atom(var('x')))
