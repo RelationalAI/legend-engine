@@ -103,6 +103,10 @@ function meta::external::store::rel::compile::ir::utils::describeProject(project
   format('Project(%s, [%s])', [$project.parent->describe(), $projections]);
 }
 
+function meta::external::store::rel::compile::ir::utils::describeRestrict(restrict: PExprRestrict[1]): String[1] {
+  format('Restrict(%s, [%s])', [$restrict.parent->describe(), $restrict.columns->makeString('[', ', ', ']')])
+}
+
 function meta::external::store::rel::compile::ir::utils::describeIfThenElse(condition: PExprIfThenElse[1]): String[1] {
   format('IfThenElse(%s, %s, %s)', [$condition.condition->describe(), $condition.then->describe(), $condition.else->describe()])
 }
@@ -169,6 +173,7 @@ function meta::external::store::rel::compile::ir::utils::describe(expr: PExpr[1]
     expr: PExprMatch[1]           | $expr->describeMatch(),
     expr: PExprProject[1]         | $expr->describeProject(),
     expr: PExprPropertyAccess[1]  | $expr->describePropertyAccess(),
+    expr: PExprRestrict[1]        | $expr->describeRestrict(),
     expr: PExprScopeTyped[1]      | $expr->describeScopeTyped(),
     expr: PExprScopeUntyped[1]    | $expr->describeScopeUntyped(),
     expr: PExprSet[1]             | $expr->describeSet(),

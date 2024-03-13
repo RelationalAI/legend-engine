@@ -350,6 +350,8 @@ function <<access.private>> meta::external::store::rel::compile::ir::functionExp
           handleCaseProject2($func, $typeInfo, $newTrace)),
         case($other == project_K_MANY__Function_MANY__String_MANY__TabularDataSet_1_,|
           handleCaseProject3($func, $typeInfo, $newTrace)),
+        case($other == restrict_TabularDataSet_1__String_MANY__TabularDataSet_1_,|
+          handleCaseRestrict($func, $typeInfo, $newTrace)),
         case($other == groupBy_K_MANY__Function_MANY__AggregateValue_MANY__String_MANY__TabularDataSet_1_,|
           handleCaseGroupBy1($func, $typeInfo, $newTrace)),
         case($other == groupBy_TabularDataSet_1__String_MANY__AggregateValue_MANY__TabularDataSet_1_,|

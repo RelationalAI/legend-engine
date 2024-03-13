@@ -144,14 +144,14 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
 function <<access.private>> meta::external::store::rel::compile::ir::handleCaseProject3(
   func: FunctionExpression[1],
   typeInfo: TranspileTypeInfo[1],
-  tracex: Trace[1]
+  trace: Trace[1]
 ): Result<PExpr|0..1>[1] {
   assert($func.func == project_K_MANY__Function_MANY__String_MANY__TabularDataSet_1_);
 
-  let newTrace = $tracex->stage('handleCaseProject3(FunctionExpression[1],Trace[1])');
+  let newTrace = $trace->stage('handleCaseProject3(FunctionExpression[1],Trace[1])');
 
   let param0 = $func.parametersValues->at(0);
-  // Second argument is the function (what is this??).
+  // Second argument is the function. (TODO: document what this is.)
   let param1 = $func.parametersValues->at(1);
   // Third argument is the column names.
   let param2 = $func.parametersValues->at(2);
@@ -206,11 +206,40 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
           ->andThem(fexprs: PExprScope[*] |
             // Type Result<Project>
             $param2->tryCast(@InstanceValue, $newTrace)->then(param: InstanceValue[1] |
-              // Type guareteed by function signature.
+              // Type guaranteed by function signature.
               let columnNames = $param.values->cast(@String);
               $parent->project($columnNames->zip($fexprs));
             )
           )
       });
   });
+}
+
+function <<access.private>> meta::external::store::rel::compile::ir::handleCaseRestrict(
+  func: FunctionExpression[1],
+  typeInfo: TranspileTypeInfo[1],
+  trace: Trace[1]
+): Result<PExpr|0..1>[1] {
+  assert($func.func == restrict_TabularDataSet_1__String_MANY__TabularDataSet_1_);
+
+  let newTrace =
+    $trace
+      ->stage('handleCaseRestrict(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
+      ->detail('typeInfo', $typeInfo->describe());
+
+  // First argument is the table.
+  let param0 = $func.parametersValues->at(0);
+  // Second argument is the column specification.
+  let param1 = $func.parametersValues->at(1);
+
+
+  $param0
+    ->valueSpecToPExpr($typeInfo, $newTrace)
+    ->andThen(parent: PExpr[1] |
+      $param1->tryCast(@InstanceValue, $newTrace)->then(param: InstanceValue[1] |
+        // Type guaranteed by function signature.
+        let columnNames = $param.values->cast(@String);
+        $parent->restrict($columnNames);
+      )
+    );
 }

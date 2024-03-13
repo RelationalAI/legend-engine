@@ -65,6 +65,7 @@ function meta::external::store::rel::compile::compile(
     e: PExprMap[1]             | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprMatch[1]           | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprProject[1]         | $e->compile($substitution, $rewrite, $state, $newTrace),
+    e: PExprRestrict[1]        | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprScope[1]           | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprGroupBy[1]         | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: VariablePlaceholder[1]  | $e->compile($substitution, $rewrite, $state, $newTrace),
@@ -562,6 +563,24 @@ function meta::external::store::rel::compile::compile(
     });
 }
 
+function meta::external::store::rel::compile::compile(
+  expr: PExprRestrict[1],
+  substitution: VariableSubstitution[1],
+  rewrite: ColumnAccessRewrite[1],
+  state: CompilationState[1],
+  trace: Trace[1]
+): Result<CompilationState|0..1>[1] {
+  let newTrace = $trace
+    ->stage('compile(PExprRestrict[1],VariableSubstitution[1],ColumnAccessRewrite[1],CompilationState[1],Trace[1])')
+    ->detail('expr', $expr->describe());
+
+  $expr.parent
+    ->compile($substitution, $rewrite, $state, $newTrace)
+    ->then(state: CompilationState[1] |
+      let parent = $state.current->toOne();
+      ^$state(cols=columns($expr.columns));
+    );
+}
 
 function meta::external::store::rel::compile::compile(
   expr: VariablePlaceholder[1],

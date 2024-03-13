@@ -213,6 +213,39 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
   );
 }
 
+// Basic project with restricrt test.
+function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectRestrict(): Any[*] {
+  let schema = RAITestSchema()->includeSingleClass(TestRootClass);
+
+  let rai = $schema->TestConnection();
+
+  let transpiledQuery =
+    $rai
+      ->meta::external::store::rel::runtime::query({|
+        TestRootClass.all()->project([
+          x|$x.property1,
+          x|$x.property3,
+          x|$x.property5 ],
+          [ 'PropertyOne', 'PropertyThree', 'PropertyFive' ]
+        )
+        ->restrict(
+          [ 'PropertyOne', 'PropertyFive' ]
+        )
+      })
+      ->rel();
+
+  assertEqualRel(
+    [
+      'def tbl1[:base] = x from x in TestRootClass',
+      'def tbl1[:PropertyOne, x] = tbl1(:base, x), TestRootClass:property1[x]',
+      'def tbl1[:PropertyThree, x] = tbl1(:base, x), TestRootClass:property3[x]',
+      'def tbl1[:PropertyFive, x] = tbl1(:base, x), TestRootClass:property5[x]',
+      'def output = tbl1[:PropertyOne, i], tbl1[:PropertyFive, i] from i'
+    ],
+    $transpiledQuery
+  );
+}
+
 // Basic multi-level project test.
 function <<test.Test>> meta::external::store::rel::test::query::operators::testQueryProjectMultiLevel(): Any[*] {
   let schema = RAITestSchema()->includeFromClassProperties(TestRootClass);

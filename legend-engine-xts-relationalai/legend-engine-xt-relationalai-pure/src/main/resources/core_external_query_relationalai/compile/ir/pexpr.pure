@@ -278,11 +278,19 @@ Class meta::external::store::rel::compile::ir::PExprIn extends PExpr {
 }
 
 /**
-  * Type denoting projections.
+  * Type denoting `project` expressions.
   */
 Class meta::external::store::rel::compile::ir::PExprProject extends PExpr {
   parent: PExpr[1];
   projections: Pair<String,PExprScope>[*];
+}
+
+/**
+  * Type denoting `restrict` expressions.
+  */
+Class meta::external::store::rel::compile::ir::PExprRestrict extends PExpr {
+  parent: PExpr[1];
+  columns: String[*]; // TODO: Is it allowed to have an empty sequence of columns in a restrict?
 }
 
 /**
@@ -506,6 +514,10 @@ function meta::external::store::rel::compile::ir::forAll(parent: PExpr[1], predi
 
 function meta::external::store::rel::compile::ir::project(parent: PExpr[1], projections: Pair<String,PExprScope>[*]): PExprProject[1] {
   ^PExprProject(parent=$parent, projections=$projections)
+}
+
+function meta::external::store::rel::compile::ir::restrict(parent: PExpr[1], columns: String[*]): PExprRestrict[1] {
+  ^PExprRestrict(parent=$parent, columns=$columns)
 }
 
 function meta::external::store::rel::compile::ir::aggregate(map: PExprScope[1], aggregateFunction: PExprScope[1]): PExprAggregate[1] {
