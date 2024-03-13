@@ -100,7 +100,7 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], exists: RelExists[1]): RelQueryBuffer[1] {
-  $buffer->append('exists')->append('(')->renderBinding($exists.bindings)->append(': ')->render($exists.inner)->append(')')
+  $buffer->append('exists(')->renderBinding($exists.bindings)->append(': ')->render($exists.inner)->append(')')
 }
 
 function meta::external::store::rel::metamodel::render::expr::render(buffer: RelQueryBuffer[1], forAll: RelForAll[1]): RelQueryBuffer[1] {
