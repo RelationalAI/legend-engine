@@ -238,7 +238,6 @@ function <<test.Test>> meta::external::store::rel::test::query::operators::testQ
     [
       'def tbl1[:base] = x from x in TestRootClass',
       'def tbl1[:PropertyOne, x] = tbl1(:base, x), TestRootClass:property1[x]',
-      'def tbl1[:PropertyThree, x] = tbl1(:base, x), TestRootClass:property3[x]',
       'def tbl1[:PropertyFive, x] = tbl1(:base, x), TestRootClass:property5[x]',
       'def output = tbl1[:PropertyOne, i], tbl1[:PropertyFive, i] from i'
     ],

@@ -12,7 +12,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
   func: FunctionExpression[1],
   typeInfo: TranspileTypeInfo[1],
   trace: Trace[1]
-): Result<PExpr|0..1>[1] {
+): Result<PExprProject|0..1>[1] {
   assert($func.func == project_T_MANY__Path_MANY__TabularDataSet_1_);
 
   let newTrace = $trace->stage('handleCaseProject1(FunctionExpression[1],Trace[1])');
@@ -101,7 +101,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
   func: FunctionExpression[1],
   typeInfo: TranspileTypeInfo[1],
   trace: Trace[1]
-): Result<PExpr|0..1>[1] {
+): Result<PExprProject|0..1>[1] {
   assert($func.func == project_T_MANY__ColumnSpecification_MANY__TabularDataSet_1_ ||
          $func.func == project_TabularDataSet_1__ColumnSpecification_MANY__TabularDataSet_1_);
 
@@ -145,7 +145,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
   func: FunctionExpression[1],
   typeInfo: TranspileTypeInfo[1],
   trace: Trace[1]
-): Result<PExpr|0..1>[1] {
+): Result<PExprProject|0..1>[1] {
   assert($func.func == project_K_MANY__Function_MANY__String_MANY__TabularDataSet_1_);
 
   let newTrace = $trace->stage('handleCaseProject3(FunctionExpression[1],Trace[1])');
@@ -239,7 +239,18 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseR
       $param1->tryCast(@InstanceValue, $newTrace)->then(param: InstanceValue[1] |
         // Type guaranteed by function signature.
         let columnNames = $param.values->cast(@String);
-        $parent->restrict($columnNames);
+
+        $parent->match([
+          { project: PExprProject[1] |
+              let newProjections = $project.projections->filter(p: Pair<String,PExprScope>[1] |
+                $columnNames->contains($p.first)
+              );
+              ^$project(projections=$newProjections); // ->restrict($columnNames),
+          },
+          { other: PExpr[1] |
+            $parent->restrict($columnNames)
+          }
+        ]);
       )
     );
 }
