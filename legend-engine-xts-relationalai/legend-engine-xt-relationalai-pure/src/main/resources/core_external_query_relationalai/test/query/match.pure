@@ -54,7 +54,7 @@ function <<test.Test>> meta::external::store::rel::test::query::match::testQuery
 
   assertEqualRel(
     [
-      'def output = exists(x2: x2 = TestClassWrapper:fieldSub[x1] and ( if TestClassSub(x2) then TestClassSub:fieldOfSub[x2] else if TestClassSuper(x2) then TestClassSuper:fieldOfSuper[x2] else false end end)) from x1 in TestClassWrapper'
+      'def output = exists(x2: x2 = TestClassWrapper:fieldSub[x1] and (if TestClassSub(x2) then TestClassSub:fieldOfSub[x2] else if TestClassSuper(x2) then TestClassSuper:fieldOfSuper[x2] else false end end)) from x1 in TestClassWrapper'
     ],
     $transpiledQuery
   );
@@ -96,7 +96,7 @@ function <<test.Test>> meta::external::store::rel::test::query::match::testQuery
 
   assertEqualRel(
     [
-      'def output = exists(x2: x2 = TestClassWrapper:fieldSuper[x1] and ( if TestClassSub(x2) then TestClassSub:fieldOfSub[x2] else if TestClassSuper(x2) then TestClassSuper:fieldOfSuper[x2] else false end end)) from x1 in TestClassWrapper'
+      'def output = exists(x2: x2 = TestClassWrapper:fieldSuper[x1] and (if TestClassSub(x2) then TestClassSub:fieldOfSub[x2] else if TestClassSuper(x2) then TestClassSuper:fieldOfSuper[x2] else false end end)) from x1 in TestClassWrapper'
     ],
     $transpiledQuery
   );

@@ -166,14 +166,14 @@ function meta::external::store::rel::metamodel::render::expr::render(buffer: Rel
   let elseIsNestedConditional = $elseBranch->instanceOf(RelIfThenElse);
   $buffer
     ->append('if ')->render($ifThenElse.condition)->append(' then')
-    ->newline()->indent()->render($ifThenElse.then)
-    ->newline()->unindent()->append('else')->map(buffer: RelQueryBuffer[1] |
+    ->newlineOrSpace()->indent()->render($ifThenElse.then)
+    ->newlineOrSpace()->unindent()->append('else')->map(buffer: RelQueryBuffer[1] |
       if ( $elseIsNestedConditional,
          | $buffer
-             ->append(' ')->render($elseBranch)->append(' end'),
+             ->space()->render($elseBranch)->append(' end'),
          | $buffer
-             ->newline()->indent()->render($elseBranch)
-             ->newline()->unindent()->append('end')
+             ->newlineOrSpace()->indent()->render($elseBranch)
+             ->newlineOrSpace()->unindent()->append('end')
          )
     );
 }

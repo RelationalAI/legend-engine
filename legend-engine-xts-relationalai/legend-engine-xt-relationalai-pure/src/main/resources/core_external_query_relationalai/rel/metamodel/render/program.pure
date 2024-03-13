@@ -28,7 +28,7 @@ function meta::external::store::rel::metamodel::render::program::render(rule: Re
     r: RelRule[1]      |
       let annotation = if ($r.inline, | '@inline\n', | '');
       let buffer =
-        emptyBuffer($configNoIndent)->append('def ')->render($r.head)->append(' =')->newline()->indent()->render($r.body);
+        emptyBuffer($configNoIndent)->append('def ')->render($r.head)->append(' =')->newlineOrSpace()->indent()->render($r.body);
       $annotation + $buffer->toString();
   ])
 }
