@@ -1,6 +1,6 @@
 
 /*
- * Measuring the time a functin takes (for development purposes).
+ * Measuring the time a function takes (for development purposes).
  */
 function meta::external::store::rel::utils::reportDuration<T|n>(message: String[1], f: FunctionDefinition<{->T[n]}>[1]): T[n] {
   let timeBegin = now();
