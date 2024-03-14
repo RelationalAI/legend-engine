@@ -290,5 +290,5 @@ function meta::external::store::rel::mapping::schema::includeEverythingFrom(sche
   /*
    * Do not include associations by default.
    */
-  includeClass($schema, $class, TypeHierarchyTraversalDirection.Down, false)
+  includeClass($schema, $class, TypeHierarchyTraversalDirection.UpAndDown, false)
 }
