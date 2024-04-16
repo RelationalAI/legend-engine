@@ -69,7 +69,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueSpecTo
           ->storeMappingRoutedValueSpecToRelSet($newTrace)
           ->andThen(this: RelSetImplementation[1] |
             $routed.value->match([
-              func: FunctionExpression[1]  | $func->functionExprToPExpr($typeInfo, $this, $traceDetail),
+              func: FunctionExpression[1]  | $func->functionExprToPExpr($typeInfo, $traceDetail),
               var: VariableExpression[1]   | $this->setAccess($var.name)->ok(),
               other: ValueSpecification[1] | $other->valueSpecToPExpr($typeInfo, $this, $traceDetail)
             ])
@@ -88,7 +88,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueSpecTo
     {
       func: FunctionExpression[1] |
         let traceDetail = $newTrace->detail('case', 'FunctionExpression');
-        $func->functionExprToPExpr($typeInfo, $set, $traceDetail);
+        $func->functionExprToPExpr($typeInfo, $traceDetail);
     },
     {
       variable: VariableExpression[1] |
@@ -108,7 +108,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueSpecTo
           ->andThen(typeInfoSet: RelSetImplementation[1] |
 
             $notrouted.value->match([
-              func: FunctionExpression[1]  | $func->functionExprToPExpr($typeInfo, $typeInfoSet, $traceDetail),
+              func: FunctionExpression[1]  | $func->functionExprToPExpr($typeInfo, $traceDetail),
               var: VariableExpression[1]   | $typeInfoSet->setAccess($var.name)->ok(),
               other: ValueSpecification[1] | $other->valueSpecToPExpr($typeInfo, $typeInfoSet, $traceDetail)
             ])
@@ -193,14 +193,12 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueToPExp
 function <<access.private>> meta::external::store::rel::compile::ir::propertyToPExpr(
   func: FunctionExpression[1],
   typeInfo: TranspileTypeInfo[1],
-  set: RelSetImplementation[0..1],
   trace: Trace[1]
 ): Result<PExpr|0..1>[1] {
   let newTrace =
     $trace
       ->stage('propertyToPExpr(Property<Nil,Any|*>[1],RelSetImplementation[0..1],Trace[1])')
-      ->detailLazy('typeInfo', $typeInfo->describeLazy())
-      ->detailLazy('set', $set->describeLazy());
+      ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
 
@@ -257,24 +255,22 @@ function meta::external::store::rel::compile::ir::entryPointPExpr(
   let newTypeInfo = recursivelyConstructTypeInfo($func);
 
   let newTrace = $trace->stage('entryPointPExpr(FunctionExpression[1],Trace[1])');
-  functionExprToPExpr($func, $newTypeInfo, [], $newTrace);
+  functionExprToPExpr($func, $newTypeInfo, $newTrace);
 }
 
 function <<access.private>> meta::external::store::rel::compile::ir::functionExprToPExpr(
   func: FunctionExpression[1],
   typeInfo: TranspileTypeInfo[1],
-  set: RelSetImplementation[0..1],
   trace: Trace[1]
 ): Result<PExpr|0..1>[1] {
   let newTrace =
     $trace
       ->stage('functionExprToPExpr(FunctionExpression[1],RelSetImplementation[0..1],Trace[1])')
-      ->detailLazy('typeInfo', $typeInfo->describeLazy())
-      ->detailLazy('set', $set->describeLazy());
+      ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   $func.func->match([
     {property: Property<Nil, Any|*>[1] |
-      propertyToPExpr($func, $typeInfo, $set, $trace)
+      propertyToPExpr($func, $typeInfo, $trace)
     },
     {property: QualifiedProperty<Any>[1] |
       $func.parametersValues
