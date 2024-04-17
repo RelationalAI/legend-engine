@@ -136,7 +136,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseF
                     {
                       spec: StoreMappingRoutedValueSpecification[1] |
                         $spec
-                          ->storeMappingRoutedValueSpecToRelSet($newTrace)
+                          ->routedValueSpecToRelSet($typeInfo, $newTrace)
                           ->andThen(set: RelSetImplementation[0..1] |
                             if ($set->isEmpty() || $vars->size() != 1,
                               | error('Expected exactly one set.', $newTrace),

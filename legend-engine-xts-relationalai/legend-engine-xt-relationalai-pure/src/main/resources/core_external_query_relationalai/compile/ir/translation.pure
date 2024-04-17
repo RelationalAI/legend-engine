@@ -26,17 +26,35 @@ import meta::pure::router::store::metamodel::*;
 // Translation functions //
 ///////////////////////////
 
-function <<access.private>> meta::external::store::rel::compile::ir::storeMappingRoutedValueSpecToRelSet(
-  spec: StoreMappingRoutedValueSpecification[1],
+function <<access.private>> meta::external::store::rel::compile::ir::routedValueSpecToRelSet(
+  spec: RoutedValueSpecification[1],
+  typeInfo: TranspileTypeInfo[1],
   trace: Trace[1]
 ): Result<RelSetImplementation|0..1>[1] {
   let newTrace =
     $trace
-      ->stage('storeMappingRoutedValueSpecToRelSet(StoreMappingRoutedValueSpecification[1],Trace[1])');
-  $spec.sets
-    ->first()
-    ->okOr(| errorTrace('Cannot obtain set implementation from supplied StoreMappingRoutedValueSpecification.', $newTrace))
-    ->tryCast(@RelSetImplementation, $newTrace);
+      ->stage('routedValueSpecToRelSet(RoutedValueSpecification[1],Trace[1])');
+
+  $spec->match([
+    {
+      routed: StoreMappingRoutedValueSpecification[1] |
+        $routed.sets
+          ->first()
+          ->okOr(| errorTrace('Cannot obtain set implementation from supplied StoreMappingRoutedValueSpecification.', $newTrace))
+          ->tryCast(@RelSetImplementation, $newTrace);
+    },
+    {
+      notrouted: NoSetRoutedValueSpecification[1] |
+        let requiredClass = $notrouted.genericType.rawType->toOne();
+        $requiredClass
+          ->tryCast(@Class<Any>, $newTrace)
+          ->then(c: Class<Any>[1] |
+            $typeInfo->setForClass($c)
+          )
+          ->okOr(| errorTrace('Cannot obtain set implementation for supplied NoSetRoutedValueSpecification.', $newTrace))
+          ->tryCast(@RelSetImplementation, $newTrace);
+    }
+  ]);
 }
 
 function meta::external::store::rel::compile::ir::valueSpecToPExpr(
@@ -44,34 +62,40 @@ function meta::external::store::rel::compile::ir::valueSpecToPExpr(
   typeInfo: TranspileTypeInfo[1],
   trace: Trace[1]
 ): Result<PExpr|0..1>[1] {
-  let newTrace = $trace->stage('valueSpecToPExpr(ValueSpecification[1],Trace[1])');
-  $spec->valueSpecToPExpr($typeInfo, [], $newTrace);
-}
-
-function <<access.private>> meta::external::store::rel::compile::ir::valueSpecToPExpr(
-  spec: ValueSpecification[1],
-  typeInfo: TranspileTypeInfo[1],
-  set: RelSetImplementation[0..1],
-  trace: Trace[1]
-): Result<PExpr|0..1>[1] {
   let newTrace =
     $trace
-      ->stage('valueSpecToPExpr(ValueSpecification[1],RelSetImplementation[0..1],Trace[1])')
+      ->stage('valueSpecToPExpr(ValueSpecification[1],TranspileTypeInfo[1],Trace[1])')
       ->detail('spec', $spec->class().name->orElse('(no name)'))
-      ->detailLazy('typeInfo', $typeInfo->describeLazy())
-      ->detailLazy('set', $set->describeLazy());
+      ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   $spec->match([
     {
       routed: StoreMappingRoutedValueSpecification[1] |
         let traceDetail = $newTrace->detail('case', 'StoreMappingRoutedValueSpecification');
         $routed
-          ->storeMappingRoutedValueSpecToRelSet($newTrace)
+          ->routedValueSpecToRelSet($typeInfo, $newTrace)
           ->andThen(this: RelSetImplementation[1] |
             $routed.value->match([
+              func: FunctionExpression[1] | $func->functionExprToPExpr($typeInfo, $traceDetail),
+              var: VariableExpression[1]  | $this->setAccess($var.name)->ok()
+            ])
+          );
+    },
+    {
+      notrouted: NoSetRoutedValueSpecification[1] |
+        let traceDetail = $newTrace->detail('case', 'NoSetRoutedValueSpecification');
+
+        let requiredClass = $notrouted.genericType.rawType->toOne();
+        $requiredClass
+          ->tryCast(@Class<Any>, $newTrace)
+          ->then(c: Class<Any>[1] |
+            $typeInfo->setForClass($c)
+          )
+          ->andThen(typeInfoSet: RelSetImplementation[1] |
+            $notrouted.value->match([
               func: FunctionExpression[1]  | $func->functionExprToPExpr($typeInfo, $traceDetail),
-              var: VariableExpression[1]   | $this->setAccess($var.name)->ok(),
-              other: ValueSpecification[1] | $other->valueSpecToPExpr($typeInfo, $this, $traceDetail)
+              var: VariableExpression[1]   | $typeInfoSet->setAccess($var.name)->ok(),
+              other: ValueSpecification[1] | $other->valueSpecToPExpr($typeInfo, $traceDetail)
             ])
           );
     },
@@ -82,7 +106,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueSpecTo
          * Here we require only a single value in the instance value in all cases.
          */
         $value
-          ->instanceValueToPExpr($set, true, $traceDetail)
+          ->instanceValueToPExpr(true, $typeInfo, $traceDetail)
           ->them(exprs: PExpr[*] | $exprs->first());
     },
     {
@@ -95,53 +119,33 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueSpecTo
         variablePlaceholder($variable.name)->ok()
     },
     {
-      notrouted: NoSetRoutedValueSpecification[1] |
-        assert($set == [], 'Set implementation passed when not expected.');
-        let traceDetail = $newTrace->detail('case', 'NoSetRoutedValueSpecification');
-
-        let requiredClass = $notrouted.genericType.rawType->toOne();
-        $requiredClass
-          ->tryCast(@Class<Any>, $newTrace)
-          ->then(c: Class<Any>[1] |
-            $typeInfo->setForClass($c)
-          )
-          ->andThen(typeInfoSet: RelSetImplementation[1] |
-
-            $notrouted.value->match([
-              func: FunctionExpression[1]  | $func->functionExprToPExpr($typeInfo, $traceDetail),
-              var: VariableExpression[1]   | $typeInfoSet->setAccess($var.name)->ok(),
-              other: ValueSpecification[1] | $other->valueSpecToPExpr($typeInfo, $typeInfoSet, $traceDetail)
-            ])
-          );
-    },
-    {
       other: Any[1] |
         let traceDetail = $newTrace->detail('case', 'Any');
-        $other->valueToPExpr($set, $traceDetail);
+        $other->valueToPExpr($typeInfo, $traceDetail);
     }
   ]);
 }
 
 function <<access.private>> meta::external::store::rel::compile::ir::instanceValueToPExpr(
   spec: InstanceValue[1],
+  typeInfo: TranspileTypeInfo[1],
   trace: Trace[1]
 ): Result<PExpr|*>[1] {
   let newTrace =
     $trace
       ->stage('instanceValueToPExpr(InstanceValue[1],Trace[1])');
-  instanceValueToPExpr($spec, [], false, $newTrace);
+  instanceValueToPExpr($spec, false, $typeInfo, $newTrace);
 }
 
 function <<access.private>> meta::external::store::rel::compile::ir::instanceValueToPExpr(
   spec: InstanceValue[1],
-  set: RelSetImplementation[0..1],
   requireAtMostOne: Boolean[1],
+  typeInfo: TranspileTypeInfo[1],
   trace: Trace[1]
 ): Result<PExpr|*>[1] {
   let newTrace =
     $trace
-      ->stage('instanceValueToPExpr(InstanceValue[1],RelSetImplementation[0..1],Boolean[1],Trace[1])')
-      ->detailLazy('set', $set->describeLazy());
+      ->stage('instanceValueToPExpr(InstanceValue[1],TranspileTypeInfo[1],Boolean[1],Trace[1])');
   if($spec.values->isEmpty(),
     | constEmpty()->ok(),
     | $spec.values
@@ -149,7 +153,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::instanceVal
         ->andThem(values: Any[*] |
           if ($requireAtMostOne && $values->size() != 1,
             | error('Expected exactly one value in `InstanceValue`.', $newTrace),
-            | $values->map(value | $value->valueToPExpr($set, $newTrace))->collect()
+            | $values->map(value | $value->valueToPExpr($typeInfo, $newTrace))->collect()
           )
         );
   );
@@ -157,14 +161,14 @@ function <<access.private>> meta::external::store::rel::compile::ir::instanceVal
 
 function <<access.private>> meta::external::store::rel::compile::ir::valueToPExpr(
   value: Any[1],
-  set: RelSetImplementation[0..1],
+  typeInfo: TranspileTypeInfo[1],
   trace: Trace[1]
 ): Result<PExpr|0..1>[1] {
   let newTrace =
     $trace
-      ->stage('valueToPExpr(Any[1],RelSetImplementation[0..1],Trace[1])')
+      ->stage('valueToPExpr(Any[1],TranspileTypeInfo[1],Trace[1])')
       ->detail('value', $value->type())
-      ->detailLazy('set', $set->describeLazy());
+      ->detailLazy('typeInfo', $typeInfo->describeLazy());
   $value->match([
     s: String[1] | ok(string($s)),
     i: Integer[1] | ok(integer($i)),
@@ -172,11 +176,11 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueToPExp
     b: Boolean[1] | ok(boolean($b)),
     d: StrictDate[1] | ok(strictDate($d)),
     d: DateTime[1] | ok(dateTime($d)),
-    {class: Class<Any>[1] |
-      $set
+    c: Class<Any>[1] |
+      $typeInfo
+        ->setForClass($c)
         ->map(set: RelSetImplementation[1] | exprSet($set))
-        ->okOr(| errorTrace(format('Encountered class `%s` but no set implementation has been provided.', $class.name), $newTrace))
-    },
+        ->okOr(| errorTrace(format('Encountered class `%s` but no set implementation has been provided.', $c.name), $newTrace)),
     {a: Any[1] |
       let message =
         'Encountered unknown instance when constructing PExpr for value with type: ' +
@@ -197,7 +201,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::propertyToP
 ): Result<PExpr|0..1>[1] {
   let newTrace =
     $trace
-      ->stage('propertyToPExpr(Property<Nil,Any|*>[1],RelSetImplementation[0..1],Trace[1])')
+      ->stage('propertyToPExpr(Property<Nil,Any|*>[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -265,7 +269,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::functionExp
 ): Result<PExpr|0..1>[1] {
   let newTrace =
     $trace
-      ->stage('functionExprToPExpr(FunctionExpression[1],RelSetImplementation[0..1],Trace[1])')
+      ->stage('functionExprToPExpr(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   $func.func->match([
@@ -328,7 +332,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::functionExp
         case($other == filter_T_MANY__Function_1__T_MANY_,|
           handleCaseFilter($func, $typeInfo, $newTrace)),
         case($other == getAll_Class_1__T_MANY_,|
-          handleCaseGetAll($func, $newTrace)),
+          handleCaseGetAll($func, $typeInfo, $newTrace)),
         case($other == map_T_m__Function_1__V_m_ ||
              $other == map_T_MANY__Function_1__V_MANY_ ||
              $other == map_T_$0_1$__Function_1__V_$0_1$_,|
@@ -501,7 +505,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseI
         {
           value: InstanceValue[1] |
             $value
-              ->instanceValueToPExpr($newTrace)
+              ->instanceValueToPExpr($typeInfo, $newTrace)
               ->them(exprs: PExpr[*] |
                 $parent->inExpr($exprs);
               );
@@ -514,7 +518,11 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseI
     );
 }
 
-function <<access.private>> meta::external::store::rel::compile::ir::handleCaseGetAll(func: FunctionExpression[1], trace: Trace[1]): Result<PExpr|0..1>[1] {
+function <<access.private>> meta::external::store::rel::compile::ir::handleCaseGetAll(
+  func: FunctionExpression[1],
+  typeInfo: TranspileTypeInfo[1],
+  trace: Trace[1]
+): Result<PExpr|0..1>[1] {
   assert($func.func == getAll_Class_1__T_MANY_);
 
   let newTrace =
@@ -525,7 +533,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseG
 
   $param0
     ->map(spec: StoreMappingRoutedValueSpecification[1] |
-      $spec->storeMappingRoutedValueSpecToRelSet($newTrace)
+      $spec->routedValueSpecToRelSet($typeInfo, $newTrace)
     )
     ->then(set: RelSetImplementation[1] | all($set));
 }
@@ -942,7 +950,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseC
           ->tryCast(@StoreMappingRoutedValueSpecification, $newTrace)
           ->andThen(spec: StoreMappingRoutedValueSpecification[1] |
             $spec
-              ->storeMappingRoutedValueSpecToRelSet($newTrace)
+              ->routedValueSpecToRelSet($typeInfo, $newTrace)
               ->then(set: RelSetImplementation[1] |
                 castExpr($parent, $set)
               )
