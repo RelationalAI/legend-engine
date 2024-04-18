@@ -40,7 +40,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::routedValue
       routed: StoreMappingRoutedValueSpecification[1] |
         $routed.sets
           ->first()
-          ->okOr(| errorTrace('Cannot obtain set implementation from supplied StoreMappingRoutedValueSpecification.', $newTrace))
+          ->okOrError(| errorTrace('Cannot obtain set implementation from supplied StoreMappingRoutedValueSpecification.', $newTrace))
           ->tryCast(@RelSetImplementation, $newTrace);
     },
     {
@@ -51,8 +51,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::routedValue
           ->then(c: Class<Any>[1] |
             $typeInfo->setForClass($c)
           )
-          ->okOr(| errorTrace('Cannot obtain set implementation for supplied NoSetRoutedValueSpecification.', $newTrace))
-          ->tryCast(@RelSetImplementation, $newTrace);
+          ->orError(| errorTrace('Cannot obtain set implementation for supplied NoSetRoutedValueSpecification.', $newTrace));
     }
   ]);
 }
@@ -70,34 +69,20 @@ function meta::external::store::rel::compile::ir::valueSpecToPExpr(
 
   $spec->match([
     {
-      routed: StoreMappingRoutedValueSpecification[1] |
-        let traceDetail = $newTrace->detail('case', 'StoreMappingRoutedValueSpecification');
-        $routed
-          ->routedValueSpecToRelSet($typeInfo, $newTrace)
-          ->andThen(this: RelSetImplementation[1] |
-            $routed.value->match([
-              func: FunctionExpression[1] | $func->functionExprToPExpr($typeInfo, $traceDetail),
-              var: VariableExpression[1]  | $this->setAccess($var.name)->ok()
-            ])
-          );
-    },
-    {
-      notrouted: NoSetRoutedValueSpecification[1] |
-        let traceDetail = $newTrace->detail('case', 'NoSetRoutedValueSpecification');
-
-        let requiredClass = $notrouted.genericType.rawType->toOne();
-        $requiredClass
-          ->tryCast(@Class<Any>, $newTrace)
-          ->then(c: Class<Any>[1] |
-            $typeInfo->setForClass($c)
-          )
-          ->andThen(typeInfoSet: RelSetImplementation[1] |
-            $notrouted.value->match([
-              func: FunctionExpression[1]  | $func->functionExprToPExpr($typeInfo, $traceDetail),
-              var: VariableExpression[1]   | $typeInfoSet->setAccess($var.name)->ok(),
-              other: ValueSpecification[1] | $other->valueSpecToPExpr($typeInfo, $traceDetail)
-            ])
-          );
+      routed: RoutedValueSpecification[1] |
+        let traceDetail = $newTrace->detail('case', 'RoutedValueSpecification');
+        $routed.value->match([
+          func: FunctionExpression[1] |
+            $func->functionExprToPExpr($typeInfo, $traceDetail),
+          var: VariableExpression[1] |
+            $routed
+              ->routedValueSpecToRelSet($typeInfo, $traceDetail)
+              ->andThen(this: RelSetImplementation[1] |
+                $this->setAccess($var.name)->ok()
+              ),
+          other: ValueSpecification[1] |
+            $other->valueSpecToPExpr($typeInfo, $traceDetail)
+        ]);
     },
     {
       value: InstanceValue[1] |
@@ -180,7 +165,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::valueToPExp
       $typeInfo
         ->setForClass($c)
         ->map(set: RelSetImplementation[1] | exprSet($set))
-        ->okOr(| errorTrace(format('Encountered class `%s` but no set implementation has been provided.', $c.name), $newTrace)),
+        ->okOrError(| errorTrace(format('Encountered class `%s` but no set implementation has been provided.', $c.name), $newTrace)),
     {a: Any[1] |
       let message =
         'Encountered unknown instance when constructing PExpr for value with type: ' +
@@ -211,7 +196,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::propertyToP
       let traceWithDetail = $newTrace->detail('property.name', $property.name->orElse('(no property name)'));
       $typeInfo
         ->mappingForProperty($property)
-        ->okOr(|
+        ->okOrError(|
           errorTrace(format('No mapping for property `%s`.', $property.name), $newTrace)
         )
         ->andThen(propertyMapping: RelPropertyMapping[1] |

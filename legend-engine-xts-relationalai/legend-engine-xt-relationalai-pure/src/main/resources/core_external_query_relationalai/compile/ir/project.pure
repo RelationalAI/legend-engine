@@ -41,11 +41,11 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
             ->cast(@meta::pure::metamodel::path::Path<Nil,Any|1>)
         )
       ], {| $param1->reactivate(); })
-      ->okOr(| errorTrace('Encountered unknown argument during compilation of `project_T_MANY__Path_MANY__TabularDataSet_1_`.', $newTrace))
+      ->okOrError(| errorTrace('Encountered unknown argument during compilation of `project_T_MANY__Path_MANY__TabularDataSet_1_`.', $newTrace))
       ->andThem({paths: meta::pure::metamodel::path::Path<Nil,Any|1>[*] |
         $parent
           ->set()
-          ->okOr(| errorTrace('Expected set in parent expression of `project_T_MANY__Path_MANY__TabularDataSet_1_`.', $newTrace))
+          ->okOrError(| errorTrace('Expected set in parent expression of `project_T_MANY__Path_MANY__TabularDataSet_1_`.', $newTrace))
           ->andThen({set: RelSetImplementation[1] |
             $paths
               ->map({path |
@@ -59,7 +59,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
                           ->andThen({property: Property<Nil,Any|*>[1] |
                             $typeInfo
                               ->mappingForProperty($property)
-                              ->okOr(|
+                              ->okOrError(|
                                 errorTrace(format('No mapping for property `%s`.', $property.name), $newTrace)
                               )
                               ->then(propertyMapping: RelPropertyMapping[1] |

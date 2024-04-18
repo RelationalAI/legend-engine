@@ -53,7 +53,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseV
       spec: InstanceValue[1] |
         $spec.values
           ->first()
-          ->okOr(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
+          ->okOrError(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
           ->tryCast(@FunctionRoutedValueSpecification, $newTrace)
           ->andThen(func: FunctionRoutedValueSpecification[1] |
             $func->handleCaseValueSpecToScoped($typeInfo, $requireType, $parent, $newTrace)
@@ -67,7 +67,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseV
           ->andThen(value: InstanceValue[1] |
             $value.values
               ->first()
-              ->okOr(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
+              ->okOrError(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
               ->tryCast(@FunctionDefinition<Any>, $newTrace)
               ->andThen(func: FunctionDefinition<Any>[1] |
                 $func->handleCaseFunctionDefToScoped($typeInfo, $requireType, $parent, $newTrace);
@@ -104,7 +104,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseF
 
   $func.expressionSequence
     ->evaluateAndDeactivate()
-    ->okOr(| errorTrace('Encountered empty function body while evaluating expression.', $newTrace))
+    ->okOrError(| errorTrace('Encountered empty function body while evaluating expression.', $newTrace))
     ->andThem(exprs: ValueSpecification[*] |
       if ($exprs->size() != 1,
         | error('More than one expression in function body not supported yet.', $newTrace),
@@ -155,7 +155,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseF
                             let type = $var.genericType.rawType->toOne();
                             $typeInfo
                               ->exprType($type)
-                              ->okOr(| errorTrace(format('Could not determine type for `%s`.', $type->toString()), $newTrace) )
+                              ->okOrError(| errorTrace(format('Could not determine type for `%s`.', $type->toString()), $newTrace) )
                               ->then(exprType: PExprType[1] |
                                 $inner->scopeTyped($var.name, $exprType, $parent);
                               );
