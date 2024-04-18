@@ -39,7 +39,7 @@ function meta::external::store::rel::compile::ir::tds::intoPExpr(
   typeInfo: TranspileTypeInfo[1],
   trace: Trace[1]
 ): Result<PExpr|0..1>[1] {
-  let newTrace = $trace->stage('intoPExpr(FunctionExpression[1],Trace[1])');
+  let newTrace = $trace->stage('intoPExpr(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])');
   switch([
     case($func.func == meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_, {|
       $func.parametersValues

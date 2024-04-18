@@ -33,7 +33,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::routedValue
 ): Result<RelSetImplementation|0..1>[1] {
   let newTrace =
     $trace
-      ->stage('routedValueSpecToRelSet(RoutedValueSpecification[1],Trace[1])');
+      ->stage('routedValueSpecToRelSet(RoutedValueSpecification[1],TranspileTypeInfo[1],Trace[1])');
 
   $spec->match([
     {
@@ -118,7 +118,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::instanceVal
 ): Result<PExpr|*>[1] {
   let newTrace =
     $trace
-      ->stage('instanceValueToPExpr(InstanceValue[1],Trace[1])');
+      ->stage('instanceValueToPExpr(InstanceValue[1],TranspileTypeInfo[1],Trace[1])');
   instanceValueToPExpr($spec, false, $typeInfo, $newTrace);
 }
 
@@ -130,7 +130,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::instanceVal
 ): Result<PExpr|*>[1] {
   let newTrace =
     $trace
-      ->stage('instanceValueToPExpr(InstanceValue[1],TranspileTypeInfo[1],Boolean[1],Trace[1])');
+      ->stage('instanceValueToPExpr(InstanceValue[1],Boolean[1],TranspileTypeInfo[1],Trace[1])');
   if($spec.values->isEmpty(),
     | constEmpty()->ok(),
     | $spec.values
@@ -186,7 +186,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::propertyToP
 ): Result<PExpr|0..1>[1] {
   let newTrace =
     $trace
-      ->stage('propertyToPExpr(Property<Nil,Any|*>[1],TranspileTypeInfo[1],Trace[1])')
+      ->stage('propertyToPExpr(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -422,7 +422,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseA
 
   let newTrace =
     $trace
-      ->stage('handleCaseAt(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseAt(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -453,7 +453,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseF
 
   let newTrace =
     $trace
-      ->stage('handleCaseFilter(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseFilter(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -512,7 +512,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseG
 
   let newTrace =
     $trace
-      ->stage('handleCaseGetAll(FunctionExpression[1],Trace[1])');
+      ->stage('handleCaseGetAll(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])');
 
   let param0 = $func.parametersValues->at(0);
 
@@ -532,7 +532,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseM
 
   let newTrace =
     $trace
-      ->stage('handleCaseMap(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseMap(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -556,7 +556,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseM
 
   let newTrace =
     $trace
-      ->stage('handleCaseMatch(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseMatch(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -583,7 +583,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseE
 
   let newTrace =
     $trace
-      ->stage('handleCaseExists(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseExists(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -607,7 +607,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseF
 
   let newTrace =
     $trace
-      ->stage('handleCaseForAll(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseForAll(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -631,7 +631,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseG
 
   let newTrace =
     $trace
-      ->stage('handleCaseGroupBy1(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseGroupBy1(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -688,7 +688,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseG
 
   let newTrace =
     $trace
-      ->stage('handleCaseGroupBy2(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseGroupBy2(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -735,7 +735,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseB
 
   let newTrace =
     $trace
-      ->stage('handleCaseBinaryOperator(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseBinaryOperator(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let left = $func.parametersValues->at(0);
@@ -767,7 +767,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseU
 
   let newTrace =
     $trace
-      ->stage('handleCaseUnaryOperator(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseUnaryOperator(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -794,7 +794,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseB
 
   let newTrace =
     $trace
-      ->stage('handleCaseBigOperator1(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseBigOperator1(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -826,7 +826,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseB
 
   let newTrace =
     $trace
-      ->stage('handleCaseBigOperator2(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseBigOperator2(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -849,7 +849,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseI
 
   let newTrace =
     $trace
-      ->stage('handleCaseIf(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseIf(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -878,7 +878,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseI
 
   let newTrace =
     $trace
-      ->stage('handleCaseInstanceOf(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseInstanceOf(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let object = $func.parametersValues->at(0);
@@ -922,7 +922,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseC
 
   let newTrace =
     $trace
-      ->stage('handleCaseCast(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseCast(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -952,7 +952,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseS
 
   let newTrace =
     $trace
-      ->stage('handleCaseSerialize(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseSerialize(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -977,7 +977,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseG
 
   let newTrace =
     $trace
-      ->stage('handleCaseGraphFetch(FunctionExpression[1],Trace[1])')
+      ->stage('handleCaseGraphFetch(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
 
   let param0 = $func.parametersValues->at(0);
@@ -994,7 +994,10 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseG
     );
 }
 
-function <<access.private>> meta::external::store::rel::compile::ir::handleCaseExtractEnumValue(func: FunctionExpression[1], trace: Trace[1]): Result<PExpr|0..1>[1] {
+function <<access.private>> meta::external::store::rel::compile::ir::handleCaseExtractEnumValue(
+  func: FunctionExpression[1],
+  trace: Trace[1]
+): Result<PExpr|0..1>[1] {
   assert($func.func == meta::pure::functions::lang::extractEnumValue_Enumeration_1__String_1__T_1_);
 
   let newTrace =
@@ -1039,7 +1042,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::intoAggrega
 ): Result<PExprAggregate|0..1>[*] {
   let newTrace =
     $trace
-      ->stage('intoAggregates(ValueSpecification[1],PExpr[1],Trace[1])')
+      ->stage('intoAggregates(ValueSpecification[1],TranspileTypeInfo[1],PExpr[1],Trace[1])')
       ->detailLazy('parent', $parent->describeLazy())
       ->detailLazy('typeInfo', $typeInfo->describeLazy());
   $spec->match([
