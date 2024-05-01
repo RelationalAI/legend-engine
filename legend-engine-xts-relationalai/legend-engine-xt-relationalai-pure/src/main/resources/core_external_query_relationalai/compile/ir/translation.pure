@@ -366,7 +366,9 @@ function <<access.private>> meta::external::store::rel::compile::ir::functionExp
         case($other == sum_Integer_MANY__Integer_1_ || $other == sum_Float_MANY__Float_1_ || $other == sum_Number_MANY__Number_1_ ||
              $other == count_Any_MANY__Integer_1_ ||
              $other == max_Integer_MANY__Integer_$0_1$_ || $other == max_Float_MANY__Float_$0_1$_ ||
+             $other == max_Integer_$1_MANY$__Integer_1_ || $other == max_Float_$1_MANY$__Float_1_ ||
              $other == min_Integer_MANY__Integer_$0_1$_ || $other == min_Float_MANY__Float_$0_1$_ ||
+             $other == min_Integer_$1_MANY$__Integer_1_ || $other == min_Float_$1_MANY$__Float_1_ ||
              $other == toString_Any_1__String_1_,|
           handleCaseBigOperator2($func, $typeInfo, $newTrace)),
         case($other == if_Boolean_1__Function_1__Function_1__T_m_,|
@@ -821,7 +823,9 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseB
   assert($func.func == sum_Integer_MANY__Integer_1_ || $func.func == sum_Float_MANY__Float_1_ || $func.func == sum_Number_MANY__Number_1_ ||
          $func.func == count_Any_MANY__Integer_1_ ||
          $func.func == max_Integer_MANY__Integer_$0_1$_ || $func.func == max_Float_MANY__Float_$0_1$_ ||
+         $func.func == max_Integer_$1_MANY$__Integer_1_ || $func.func == max_Float_$1_MANY$__Float_1_ ||
          $func.func == min_Integer_MANY__Integer_$0_1$_ || $func.func == min_Float_MANY__Float_$0_1$_ ||
+         $func.func == min_Integer_$1_MANY$__Integer_1_ || $func.func == min_Float_$1_MANY$__Float_1_ ||
          $func.func == toString_Any_1__String_1_);
 
   let newTrace =
@@ -1122,7 +1126,8 @@ function <<access.private>> meta::external::store::rel::compile::ir::getFunction
         }
         ->ok()
       }),
-      case($fn.func == max_Integer_MANY__Integer_$0_1$_ || $fn.func == max_Float_MANY__Float_$0_1$_,  {|
+      case($fn.func == max_Integer_MANY__Integer_$0_1$_ || $fn.func == max_Integer_$1_MANY$__Integer_1_ ||
+           $fn.func == max_Float_MANY__Float_$0_1$_ || $fn.func == max_Float_$1_MANY$__Float_1_,  {|
         {exprs: RelExpr[*] |
           $exprs
             ->at(0)
@@ -1130,7 +1135,8 @@ function <<access.private>> meta::external::store::rel::compile::ir::getFunction
         }
         ->ok()
       }),
-      case($fn.func == min_Integer_MANY__Integer_$0_1$_ || $fn.func == min_Float_MANY__Float_$0_1$_,  {|
+      case($fn.func == min_Integer_MANY__Integer_$0_1$_ || $fn.func == min_Integer_$1_MANY$__Integer_1_ ||
+           $fn.func == min_Float_MANY__Float_$0_1$_ || $fn.func == min_Float_$1_MANY$__Float_1_,  {|
         {exprs: RelExpr[*] |
           $exprs
             ->at(0)
