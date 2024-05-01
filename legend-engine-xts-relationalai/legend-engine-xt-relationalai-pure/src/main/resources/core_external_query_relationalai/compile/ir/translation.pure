@@ -387,7 +387,9 @@ function <<access.private>> meta::external::store::rel::compile::ir::functionExp
           handleCaseExtractEnumValue($func, $newTrace)),
         case($other == join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_ ||
              $other == filter_TabularDataSet_1__Function_1__TabularDataSet_1_,|
-          meta::external::store::rel::compile::ir::tds::intoPExpr($func, $typeInfo, $newTrace))
+          meta::external::store::rel::compile::ir::tds::intoPExpr($func, $typeInfo, $newTrace)),
+        case($other == toOneMany_T_MANY__T_$1_MANY$_,|
+          handleCaseDoNothing($func, $typeInfo, $newTrace))
 //
 // FIXME: Commented out to fix the build.
 //        case($other == meta::external::store::rel::query::def_String_1__FunctionDefinition_1__Any_MANY_, {|
@@ -444,6 +446,26 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseA
           $parent->atExpr($index)
         )
     });
+}
+
+/**
+  * Handle the case where a given function should be treated as a no-op (i.e., has no effect on the output query).
+  */
+function <<access.private>> meta::external::store::rel::compile::ir::handleCaseDoNothing(
+  func: FunctionExpression[1],
+  typeInfo: TranspileTypeInfo[1],
+  trace: Trace[1]
+): Result<PExpr|0..1>[1] {
+  assert($func.func == toOneMany_T_MANY__T_$1_MANY$_);
+
+  let newTrace =
+    $trace
+      ->stage('handleCaseDoNothing(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
+      ->detailLazy('typeInfo', $typeInfo->describeLazy());
+
+  let param0 = $func.parametersValues->at(0);
+
+  $param0->valueSpecToPExpr($typeInfo, $newTrace);
 }
 
 function <<access.private>> meta::external::store::rel::compile::ir::handleCaseFilter(
