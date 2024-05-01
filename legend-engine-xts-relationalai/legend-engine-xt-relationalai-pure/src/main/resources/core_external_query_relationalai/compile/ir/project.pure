@@ -6,6 +6,7 @@ import meta::external::store::rel::mapping::*;
 import meta::external::store::rel::trace::*;
 import meta::external::store::rel::utils::*;
 import meta::external::store::rel::utils::lang::*;
+import meta::pure::metamodel::relation::*;
 import meta::pure::router::metamodel::*;
 import meta::pure::router::store::metamodel::*;
 
@@ -122,7 +123,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
             ->map({v |
               $v->tryCast(@InstanceValue, $newTrace)
                 ->then(i: InstanceValue[1] |
-                  // Values guaranteed by function signature
+                  // Value types guaranteed by function signature.
                   $i.values
                     ->toOne()
                     ->cast(@BasicColumnSpecification<Any>)
@@ -138,6 +139,48 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseP
                 ->collect()
                 ->them(fexprs: PExprScope[*] | $parent->project($columns.name->zip($fexprs)));
             });
+        });
+    });
+}
+
+function <<access.private>> meta::external::store::rel::compile::ir::handleCaseProject4(
+  func: FunctionExpression[1],
+  typeInfo: TranspileTypeInfo[1],
+  trace: Trace[1]
+): Result<PExprProject|0..1>[1] {
+  assert($func.func == meta::pure::functions::relation::project_C_MANY__FuncColSpecArray_1__Relation_1_);
+
+  let newTrace = $trace->stage('handleCaseProject4(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])');
+
+  /*
+   * This is similar to `handleCaseProject2` above.
+   */
+  
+  let param0 = $func.parametersValues->at(0);
+  // Second argument is the functional column specification.
+  let param1 = $func.parametersValues->at(1);
+
+  $param0
+    ->valueSpecToPExpr($typeInfo, $trace)
+    ->andThen({parent: PExpr[1] |
+      $param1
+        ->tryCast(@InstanceValue, $newTrace)
+        ->andThen({params: InstanceValue[1] |
+          assert($params.values->size() == 1, 'Expected exactly one value.');
+
+          $params.values
+            ->toOne()
+            ->tryCast(@FuncColSpecArray<Any,Any>, $newTrace)
+            ->andThen(i: FuncColSpecArray<Any,Any>[1] |
+              // Value types guaranteed by function signature.
+              let columnNames = $i.funcSpecs.name;
+              $i.funcSpecs.function
+                ->map(fexpr: FunctionDefinition<Any>[1] |
+                  $fexpr->functionDefToUntypedScoped($typeInfo, $parent, $trace);
+                )
+                ->collect()
+                ->them(fexprs: PExprScope[*] | $parent->project($columnNames->zip($fexprs)));
+            );
         });
     });
 }
