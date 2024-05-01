@@ -210,7 +210,7 @@ function meta::external::store::rel::compile::ir::valueSpecToUntypedScoped(
     $trace
       ->stage('valueSpecToUntypedScoped(ValueSpecification[1],TranspileTypeInfo[1],PExpr[0..1],Trace[1])')
       ->detailLazy('parent', $parent->describeLazy());
-  handleCaseValueSpecToScoped($spec, $typeInfo, false, $parent, $trace);
+  handleCaseValueSpecToScoped($spec, $typeInfo, false, $parent, $newTrace);
 }
 
 function meta::external::store::rel::compile::ir::functionDefToUntypedScoped(
@@ -223,7 +223,7 @@ function meta::external::store::rel::compile::ir::functionDefToUntypedScoped(
     $trace
       ->stage('functionDefToUntypedScoped(ValueSpecification[1],TranspileTypeInfo[1],PExpr[1],Trace[1])')
       ->detailLazy('parent', $parent->describeLazy());
-  handleCaseFunctionDefToScoped($func, $typeInfo, false, $parent, $trace);
+  handleCaseFunctionDefToScoped($func, $typeInfo, false, $parent, $newTrace);
 }
 
 ////////////////////////////////////////////////
