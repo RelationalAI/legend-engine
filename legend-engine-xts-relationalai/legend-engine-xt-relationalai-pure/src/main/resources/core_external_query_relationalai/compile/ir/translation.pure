@@ -355,10 +355,9 @@ function <<access.private>> meta::external::store::rel::compile::ir::functionExp
             handleCaseRestrict($func, $typeInfo, $newTrace)),
           case($other == groupBy_K_MANY__Function_MANY__AggregateValue_MANY__String_MANY__TabularDataSet_1_,|
             handleCaseGroupBy1($func, $typeInfo, $newTrace)),
-          case($other == groupBy_TabularDataSet_1__String_MANY__AggregateValue_MANY__TabularDataSet_1_,|
+          case($other == groupBy_TabularDataSet_1__String_MANY__AggregateValue_MANY__TabularDataSet_1_ ||
+               $other == meta::pure::functions::relation::groupBy_Relation_1__ColSpecArray_1__AggColSpecArray_1__Relation_1_,|
             handleCaseGroupBy2($func, $typeInfo, $newTrace)),
-          case($other == meta::pure::functions::relation::groupBy_Relation_1__ColSpecArray_1__AggColSpecArray_1__Relation_1_,|
-            handleCaseGroupBy3($func, $typeInfo, $newTrace)),
           case($other == and_Boolean_1__Boolean_1__Boolean_1_ ||
                $other == or_Boolean_1__Boolean_1__Boolean_1_ ||
                $other == equal_Any_MANY__Any_MANY__Boolean_1_ ||
@@ -717,7 +716,8 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseG
   typeInfo: TranspileTypeInfo[1],
   trace: Trace[1]
 ): Result<PExpr|0..1>[1] {
-  assert($func.func == groupBy_TabularDataSet_1__String_MANY__AggregateValue_MANY__TabularDataSet_1_);
+  assert($func.func == groupBy_TabularDataSet_1__String_MANY__AggregateValue_MANY__TabularDataSet_1_ ||
+         $func.func == meta::pure::functions::relation::groupBy_Relation_1__ColSpecArray_1__AggColSpecArray_1__Relation_1_);
 
   let newTrace =
     $trace
@@ -733,50 +733,15 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseG
     ->andThen(parent: PExpr[1] |
       $param1
         ->tryCast(@InstanceValue, $newTrace)
-        ->andThen(v: InstanceValue[1] |
-          $v.values
-            ->map(s | $s->tryCast(@String, $newTrace))
-            ->collect()
-        )
-        ->andThem(columns: String[*] |
-          $param2
-            ->map(vs: ValueSpecification[1] | $vs->intoAggregates($typeInfo, $parent, $newTrace)->collect())
-            ->them(aggregates: PExprAggregate[*] |
-              $parent->groupBy($columns, $aggregates)
-            )
-        )
-    );
-}
-
-function <<access.private>> meta::external::store::rel::compile::ir::handleCaseGroupBy3(
-  func: FunctionExpression[1],
-  typeInfo: TranspileTypeInfo[1],
-  trace: Trace[1]
-): Result<PExpr|0..1>[1] {
-  assert($func.func == meta::pure::functions::relation::groupBy_Relation_1__ColSpecArray_1__AggColSpecArray_1__Relation_1_);
-
-  let newTrace =
-    $trace
-      ->stage('handleCaseGroupBy3(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])')
-      ->detailLazy('typeInfo', $typeInfo->describeLazy());
-
-  let param0 = $func.parametersValues->at(0);
-  let param1 = $func.parametersValues->at(1);
-  let param2 = $func.parametersValues->at(2);
-
-  $param0
-    ->valueSpecToPExpr($typeInfo, $newTrace)
-    ->andThen(parent: PExpr[1] |
-      $param1
-        ->tryCast(@InstanceValue, $newTrace)
-        ->andThen(v: InstanceValue[1] |
-          assert($v.values->size() == 1, 'Unexpected number of values in instance value.');
-          $v.values
-            ->toOne()
-            ->tryCast(@ColSpecArray<Any>, $newTrace)
-            ->then(columns: ColSpecArray<Any>[1] |
-              $columns.names
-            );
+        ->then(v: InstanceValue[1] |
+          /*
+           * The value is a string array when used with the Tabular API,
+           * whereas it is a column specification array with the Relation API.
+           */
+          $v.values->match([
+            columns: String[*]            | $columns,
+            columns: ColSpecArray<Any>[1] | $columns.names
+          ])
         )
         ->andThem(columns: String[*] |
           $param2
