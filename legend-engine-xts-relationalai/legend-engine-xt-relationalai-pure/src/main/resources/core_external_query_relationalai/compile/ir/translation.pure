@@ -323,90 +323,91 @@ function <<access.private>> meta::external::store::rel::compile::ir::functionExp
             $parent->columnAccess($column.name->toOne())
           );
     },
-    {other: Function<Any>[1] |
-      switch([
-        case($other == at_T_MANY__Integer_1__T_1_,|
-          handleCaseAt($func, $typeInfo, $newTrace)),
-        case($other == filter_T_MANY__Function_1__T_MANY_,|
-          handleCaseFilter($func, $typeInfo, $newTrace)),
-        case($other == getAll_Class_1__T_MANY_,|
-          handleCaseGetAll($func, $typeInfo, $newTrace)),
-        case($other == map_T_m__Function_1__V_m_ ||
-             $other == map_T_MANY__Function_1__V_MANY_ ||
-             $other == map_T_$0_1$__Function_1__V_$0_1$_,|
-          handleCaseMap($func, $typeInfo, $newTrace)),
-        case($other == match_Any_MANY__Function_$1_MANY$__T_m_,|
-          handleCaseMatch($func, $typeInfo, $newTrace)),
-        case($other == exists_T_MANY__Function_1__Boolean_1_,|
-          handleCaseExists($func, $typeInfo, $newTrace)),
-        case($other == forAll_T_MANY__Function_1__Boolean_1_,|
-          handleCaseForAll($func, $typeInfo, $newTrace)),
-        case($other == project_T_MANY__Path_MANY__TabularDataSet_1_,|
-          handleCaseProject1($func, $typeInfo, $newTrace)),
-        case($other == project_T_MANY__ColumnSpecification_MANY__TabularDataSet_1_ ||
-             $other == project_TabularDataSet_1__ColumnSpecification_MANY__TabularDataSet_1_,|
-          handleCaseProject2($func, $typeInfo, $newTrace)),
-        case($other == project_K_MANY__Function_MANY__String_MANY__TabularDataSet_1_,|
-          handleCaseProject3($func, $typeInfo, $newTrace)),
-        case ($other == meta::pure::functions::relation::project_C_MANY__FuncColSpecArray_1__Relation_1_,|
-          handleCaseProject4($func, $typeInfo, $newTrace)),
-        case($other == restrict_TabularDataSet_1__String_MANY__TabularDataSet_1_,|
-          handleCaseRestrict($func, $typeInfo, $newTrace)),
-        case($other == groupBy_K_MANY__Function_MANY__AggregateValue_MANY__String_MANY__TabularDataSet_1_,|
-          handleCaseGroupBy1($func, $typeInfo, $newTrace)),
-        case($other == groupBy_TabularDataSet_1__String_MANY__AggregateValue_MANY__TabularDataSet_1_,|
-          handleCaseGroupBy2($func, $typeInfo, $newTrace)),
-        case($other == meta::pure::functions::relation::groupBy_Relation_1__ColSpecArray_1__AggColSpecArray_1__Relation_1_,|
-          handleCaseGroupBy3($func, $typeInfo, $newTrace)),
-        case($other == and_Boolean_1__Boolean_1__Boolean_1_ ||
-             $other == or_Boolean_1__Boolean_1__Boolean_1_ ||
-             $other == equal_Any_MANY__Any_MANY__Boolean_1_ ||
-             $other == greaterThan_Number_1__Number_1__Boolean_1_ ||
-             $other == greaterThanEqual_Number_1__Number_1__Boolean_1_ ||
-             $other == greaterThan_Date_1__Date_1__Boolean_1_ ||
-             $other == greaterThanEqual_Date_1__Date_1__Boolean_1_ ||
-             $other == lessThan_Number_1__Number_1__Boolean_1_ ||
-             $other == lessThanEqual_Number_1__Number_1__Boolean_1_ ||
-             $other == lessThan_Date_1__Date_1__Boolean_1_ ||
-             $other == lessThanEqual_Date_1__Date_1__Boolean_1_ ||
-             $other == divide_Number_1__Number_1__Float_1_,|
-          handleCaseBinaryOperator($func, $typeInfo, $newTrace)),
-        case($other == not_Boolean_1__Boolean_1_ || $other == isEmpty_Any_$0_1$__Boolean_1_ ||
-             $other == toOne_T_MANY__T_1_,|
-          handleCaseUnaryOperator($func, $typeInfo, $newTrace)),
-        case($other == plus_Number_MANY__Number_1_ || $other == plus_String_MANY__String_1_ ||
-             $other == plus_Integer_MANY__Integer_1_ || $other == plus_Float_MANY__Float_1_ ||
-             $other == times_Number_MANY__Number_1_ || $other == times_Integer_MANY__Integer_1_ ||
-             $other == times_Float_MANY__Float_1_ || $other == minus_Number_MANY__Number_1_ ||
-             $other == minus_Integer_MANY__Integer_1_ || $other == minus_Float_MANY__Float_1_,|
-          handleCaseBigOperator1($func, $typeInfo, $newTrace)),
-        case($other == sum_Integer_MANY__Integer_1_ || $other == sum_Float_MANY__Float_1_ || $other == sum_Number_MANY__Number_1_ ||
-             $other == count_Any_MANY__Integer_1_ ||
-             $other == max_Integer_MANY__Integer_$0_1$_ || $other == max_Float_MANY__Float_$0_1$_ ||
-             $other == max_Integer_$1_MANY$__Integer_1_ || $other == max_Float_$1_MANY$__Float_1_ ||
-             $other == min_Integer_MANY__Integer_$0_1$_ || $other == min_Float_MANY__Float_$0_1$_ ||
-             $other == min_Integer_$1_MANY$__Integer_1_ || $other == min_Float_$1_MANY$__Float_1_ ||
-             $other == toString_Any_1__String_1_,|
-          handleCaseBigOperator2($func, $typeInfo, $newTrace)),
-        case($other == if_Boolean_1__Function_1__Function_1__T_m_,|
-          handleCaseIf($func, $typeInfo, $newTrace)),
-        case ($other == in_Any_$0_1$__Any_MANY__Boolean_1_,|
-           handleCaseIn($func, $typeInfo, $newTrace)),
-        case($other == instanceOf_Any_1__Type_1__Boolean_1_,|
-          handleCaseInstanceOf($func, $typeInfo, $newTrace)),
-        case($other == cast_Any_m__T_1__T_m_,|
-          handleCaseCast($func, $typeInfo, $newTrace)),
-        case($other == meta::pure::graphFetch::execution::serialize_T_MANY__RootGraphFetchTree_1__String_1_,|
-          handleCaseSerialize($func, $typeInfo, $newTrace)),
-        case($other == meta::pure::graphFetch::execution::graphFetch_T_MANY__RootGraphFetchTree_1__T_MANY_,|
-          handleCaseGraphFetch($func, $typeInfo, $newTrace)),
-        case($other == extractEnumValue_Enumeration_1__String_1__T_1_,|
-          handleCaseExtractEnumValue($func, $newTrace)),
-        case($other == join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_ ||
-             $other == filter_TabularDataSet_1__Function_1__TabularDataSet_1_,|
-          meta::external::store::rel::compile::ir::tds::intoPExpr($func, $typeInfo, $newTrace)),
-        case($other == toOneMany_T_MANY__T_$1_MANY$_,|
-          handleCaseDoNothing($func, $typeInfo, $newTrace))
+    {
+      other: Function<Any>[1] |
+        switch([
+          case($other == at_T_MANY__Integer_1__T_1_,|
+            handleCaseAt($func, $typeInfo, $newTrace)),
+          case($other == filter_T_MANY__Function_1__T_MANY_,|
+            handleCaseFilter($func, $typeInfo, $newTrace)),
+          case($other == getAll_Class_1__T_MANY_,|
+            handleCaseGetAll($func, $typeInfo, $newTrace)),
+          case($other == map_T_m__Function_1__V_m_ ||
+               $other == map_T_MANY__Function_1__V_MANY_ ||
+               $other == map_T_$0_1$__Function_1__V_$0_1$_,|
+            handleCaseMap($func, $typeInfo, $newTrace)),
+          case($other == match_Any_MANY__Function_$1_MANY$__T_m_,|
+            handleCaseMatch($func, $typeInfo, $newTrace)),
+          case($other == exists_T_MANY__Function_1__Boolean_1_,|
+            handleCaseExists($func, $typeInfo, $newTrace)),
+          case($other == forAll_T_MANY__Function_1__Boolean_1_,|
+            handleCaseForAll($func, $typeInfo, $newTrace)),
+          case($other == project_T_MANY__Path_MANY__TabularDataSet_1_,|
+            handleCaseProject1($func, $typeInfo, $newTrace)),
+          case($other == project_T_MANY__ColumnSpecification_MANY__TabularDataSet_1_ ||
+               $other == project_TabularDataSet_1__ColumnSpecification_MANY__TabularDataSet_1_,|
+            handleCaseProject2($func, $typeInfo, $newTrace)),
+          case($other == project_K_MANY__Function_MANY__String_MANY__TabularDataSet_1_,|
+            handleCaseProject3($func, $typeInfo, $newTrace)),
+          case ($other == meta::pure::functions::relation::project_C_MANY__FuncColSpecArray_1__Relation_1_,|
+            handleCaseProject4($func, $typeInfo, $newTrace)),
+          case($other == restrict_TabularDataSet_1__String_MANY__TabularDataSet_1_,|
+            handleCaseRestrict($func, $typeInfo, $newTrace)),
+          case($other == groupBy_K_MANY__Function_MANY__AggregateValue_MANY__String_MANY__TabularDataSet_1_,|
+            handleCaseGroupBy1($func, $typeInfo, $newTrace)),
+          case($other == groupBy_TabularDataSet_1__String_MANY__AggregateValue_MANY__TabularDataSet_1_,|
+            handleCaseGroupBy2($func, $typeInfo, $newTrace)),
+          case($other == meta::pure::functions::relation::groupBy_Relation_1__ColSpecArray_1__AggColSpecArray_1__Relation_1_,|
+            handleCaseGroupBy3($func, $typeInfo, $newTrace)),
+          case($other == and_Boolean_1__Boolean_1__Boolean_1_ ||
+               $other == or_Boolean_1__Boolean_1__Boolean_1_ ||
+               $other == equal_Any_MANY__Any_MANY__Boolean_1_ ||
+               $other == greaterThan_Number_1__Number_1__Boolean_1_ ||
+               $other == greaterThanEqual_Number_1__Number_1__Boolean_1_ ||
+               $other == greaterThan_Date_1__Date_1__Boolean_1_ ||
+               $other == greaterThanEqual_Date_1__Date_1__Boolean_1_ ||
+               $other == lessThan_Number_1__Number_1__Boolean_1_ ||
+               $other == lessThanEqual_Number_1__Number_1__Boolean_1_ ||
+               $other == lessThan_Date_1__Date_1__Boolean_1_ ||
+               $other == lessThanEqual_Date_1__Date_1__Boolean_1_ ||
+               $other == divide_Number_1__Number_1__Float_1_,|
+            handleCaseBinaryOperator($func, $typeInfo, $newTrace)),
+          case($other == not_Boolean_1__Boolean_1_ || $other == isEmpty_Any_$0_1$__Boolean_1_ ||
+               $other == toOne_T_MANY__T_1_,|
+            handleCaseUnaryOperator($func, $typeInfo, $newTrace)),
+          case($other == plus_Number_MANY__Number_1_ || $other == plus_String_MANY__String_1_ ||
+               $other == plus_Integer_MANY__Integer_1_ || $other == plus_Float_MANY__Float_1_ ||
+               $other == times_Number_MANY__Number_1_ || $other == times_Integer_MANY__Integer_1_ ||
+               $other == times_Float_MANY__Float_1_ || $other == minus_Number_MANY__Number_1_ ||
+               $other == minus_Integer_MANY__Integer_1_ || $other == minus_Float_MANY__Float_1_,|
+            handleCaseBigOperator1($func, $typeInfo, $newTrace)),
+          case($other == sum_Integer_MANY__Integer_1_ || $other == sum_Float_MANY__Float_1_ || $other == sum_Number_MANY__Number_1_ ||
+               $other == count_Any_MANY__Integer_1_ ||
+               $other == max_Integer_MANY__Integer_$0_1$_ || $other == max_Float_MANY__Float_$0_1$_ ||
+               $other == max_Integer_$1_MANY$__Integer_1_ || $other == max_Float_$1_MANY$__Float_1_ ||
+               $other == min_Integer_MANY__Integer_$0_1$_ || $other == min_Float_MANY__Float_$0_1$_ ||
+               $other == min_Integer_$1_MANY$__Integer_1_ || $other == min_Float_$1_MANY$__Float_1_ ||
+               $other == toString_Any_1__String_1_,|
+            handleCaseBigOperator2($func, $typeInfo, $newTrace)),
+          case($other == if_Boolean_1__Function_1__Function_1__T_m_,|
+            handleCaseIf($func, $typeInfo, $newTrace)),
+          case ($other == in_Any_$0_1$__Any_MANY__Boolean_1_,|
+            handleCaseIn($func, $typeInfo, $newTrace)),
+          case($other == instanceOf_Any_1__Type_1__Boolean_1_,|
+            handleCaseInstanceOf($func, $typeInfo, $newTrace)),
+          case($other == cast_Any_m__T_1__T_m_,|
+            handleCaseCast($func, $typeInfo, $newTrace)),
+          case($other == meta::pure::graphFetch::execution::serialize_T_MANY__RootGraphFetchTree_1__String_1_,|
+            handleCaseSerialize($func, $typeInfo, $newTrace)),
+          case($other == meta::pure::graphFetch::execution::graphFetch_T_MANY__RootGraphFetchTree_1__T_MANY_,|
+            handleCaseGraphFetch($func, $typeInfo, $newTrace)),
+          case($other == extractEnumValue_Enumeration_1__String_1__T_1_,|
+            handleCaseExtractEnumValue($func, $newTrace)),
+          case($other == join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_ ||
+               $other == filter_TabularDataSet_1__Function_1__TabularDataSet_1_,|
+            meta::external::store::rel::compile::ir::tds::intoPExpr($func, $typeInfo, $newTrace)),
+          case($other == toOneMany_T_MANY__T_$1_MANY$_,|
+            handleCaseDoNothing($func, $typeInfo, $newTrace))
 //
 // FIXME: Commented out to fix the build.
 //        case($other == meta::external::store::rel::query::def_String_1__FunctionDefinition_1__Any_MANY_, {|
@@ -416,16 +417,16 @@ function <<access.private>> meta::external::store::rel::compile::ir::functionExp
 //          meta::external::store::rel::compile::ir::const(1)->ok();
 //      )
 //
-      ], |
-        error(
-          'Encountered unknown instance when constructing PExpr for function with type: ' +
-            $other
-              ->elementToPath()
-              ->else(| '<<unknown>>')
-              ->quote(),
-          $newTrace
+        ], |
+          error(
+            'Encountered unknown instance when constructing PExpr for function with type: ' +
+              $other
+                ->elementToPath()
+                ->else(| '<<unknown>>')
+                ->quote(),
+            $newTrace
+          )
         )
-      )
     }
   ]);
 }
