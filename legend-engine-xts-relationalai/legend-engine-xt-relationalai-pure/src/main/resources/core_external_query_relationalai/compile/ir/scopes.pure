@@ -50,18 +50,22 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseV
       ->detailLazy('parent', $parent->describeLazy());
   $spec->match([
     {
-      func: FunctionDefinition<Any>[1] |
-        $func->handleCaseFunctionDefToScoped($typeInfo, $requireType, $parent, $newTrace)
-    },
-    {
       spec: InstanceValue[1] |
         $spec.values
           ->first()
-          ->okOrError(| errorTrace('Expected one value in `InstanceValue`.', $newTrace))
-          ->tryCast(@FunctionRoutedValueSpecification, $newTrace)
-          ->andThen(func: FunctionRoutedValueSpecification[1] |
-            $func->handleCaseValueSpecToScoped($typeInfo, $requireType, $parent, $newTrace)
-          )
+          ->okOrError(| errorTrace('Expected exactly one value in `InstanceValue`.', $newTrace))
+          ->andThen(value: Any[1] |
+            $value->match([
+              func: FunctionRoutedValueSpecification[1] | 
+                $func->handleCaseValueSpecToScoped($typeInfo, $requireType, $parent, $newTrace),
+              func: FunctionDefinition<Any>[1] |
+                $func->handleCaseFunctionDefToScoped($typeInfo, $requireType, $parent, $newTrace)
+            ])
+          );
+    },
+    {
+      func: FunctionDefinition<Any>[1] |
+        $func->handleCaseFunctionDefToScoped($typeInfo, $requireType, $parent, $newTrace)
     },
     {
       spec: FunctionRoutedValueSpecification[1] |
