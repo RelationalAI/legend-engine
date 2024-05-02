@@ -4,10 +4,45 @@ import meta::external::store::rel::compile::ir::typeinfo::*;
 import meta::external::store::rel::trace::*;
 import meta::external::store::rel::utils::*;
 import meta::external::store::rel::utils::lang::*;
+import meta::relational::metamodel::join::*;
+
+Enum meta::external::store::rel::compile::ir::tds::PExprTabularJoinKind
+{
+  INNER,
+  OUTER_LEFT,
+  OUTER_RIGHT,
+  OUTER_FULL
+}
+
+function meta::external::store::rel::compile::ir::tds::tabularJoinKind(
+  kind: meta::relational::metamodel::join::JoinType[1]
+): PExprTabularJoinKind[1] {
+  if ( $kind == JoinType.INNER,
+     | PExprTabularJoinKind.INNER,
+     | if ( $kind == JoinType.LEFT_OUTER,
+          | PExprTabularJoinKind.OUTER_LEFT,
+          | if ( $kind == JoinType.RIGHT_OUTER,
+               | PExprTabularJoinKind.OUTER_RIGHT,
+               | assert($kind == JoinType.FULL_OUTER);
+                 PExprTabularJoinKind.OUTER_FULL;
+               )
+          )
+  )
+}
+
+function meta::external::store::rel::compile::ir::tds::tabularJoinKind(
+  kind: meta::pure::functions::relation::JoinKind[1]
+): PExprTabularJoinKind[1] {
+  if ( $kind == JoinKind.INNER,
+     | PExprTabularJoinKind.INNER,
+     | assert($kind == JoinKind.LEFT);
+       PExprTabularJoinKind.OUTER_LEFT;
+     )
+}
 
 Class meta::external::store::rel::compile::ir::tds::PExprTDSJoin extends PExpr {
-  /** The kind of join, e.g., INNER or OUTER. */
-  type: meta::relational::metamodel::join::JoinType[1];
+  /** The kind of join, e.g., INNER or LEFT_OUTER. */
+  type: PExprTabularJoinKind[1];
   left: PExpr[1];
   right: PExpr[1];
   /** The condition joining `left` and `right`. */
@@ -24,7 +59,7 @@ Class meta::external::store::rel::compile::ir::tds::PExprTDSFilter extends PExpr
 function meta::external::store::rel::compile::ir::tds::join(
   left: PExpr[1],
   right: PExpr[1],
-  type: meta::relational::metamodel::join::JoinType[1],
+  type: PExprTabularJoinKind[1],
   condition: PExprScope[1]
 ): PExprTDSJoin[1] {
   ^PExprTDSJoin(type=$type, condition=$condition, left=$left, right=$right);
@@ -41,41 +76,54 @@ function meta::external::store::rel::compile::ir::tds::intoPExpr(
 ): Result<PExpr|0..1>[1] {
   let newTrace = $trace->stage('intoPExpr(FunctionExpression[1],TranspileTypeInfo[1],Trace[1])');
   switch([
-    case($func.func == meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_, {|
-      $func.parametersValues
-        ->at(0)
+    case($func.func == meta::pure::tds::join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_ ||
+         $func.func == meta::pure::functions::relation::join_Relation_1__Relation_1__JoinKind_1__Function_1__Relation_1_, {|
+      let param0 = $func.parametersValues->at(0);
+      let param1 = $func.parametersValues->at(1);
+      let param2 = $func.parametersValues->at(2);
+      let param3 = $func.parametersValues->at(3);
+
+      /*
+       * TDS uses the JoinType enum where as the Relation API uses JoinKind.
+       */
+
+      $param0
         ->valueSpecToPExpr($typeInfo, $newTrace)
         ->andThen(left: PExpr[1] |
-          $func.parametersValues
-            ->at(1)
+          $param1
             ->valueSpecToPExpr($typeInfo, $newTrace)
             ->andThen(right: PExpr[1] |
-              $func.parametersValues
-                ->at(2)
-                ->reactivate(^Map<String, List<Any>>())
-                ->tryCastm(@meta::relational::metamodel::join::JoinType, $newTrace)
-                ->them(js | $js->toOne())
-                ->andThen(joinType: meta::relational::metamodel::join::JoinType[1] |
-                  $func.parametersValues
-                    ->at(3)
+              $param2
+                ->reactivate()
+                ->toOne('Expected exactly one join type.')
+                ->map(v: Any[1] |
+                  $v->match([
+                    t: meta::relational::metamodel::join::JoinType[1] | tabularJoinKind($t),
+                    t: meta::pure::functions::relation::JoinKind[1]   | tabularJoinKind($t)
+                  ])
+                )
+                ->map(joinType: meta::external::store::rel::compile::ir::tds::PExprTabularJoinKind[1] |
+                  $param3
                     ->valueSpecToUntypedScoped($typeInfo, $newTrace)
                     ->then(condition: PExprScope[1] | join($left, $right, $joinType, $condition))
                 )
             )
-        )
+        );
     }),
-    case($func.func == meta::pure::tds::filter_TabularDataSet_1__Function_1__TabularDataSet_1_, {|
-      $func.parametersValues
-        ->at(0)
+    case($func.func == meta::pure::tds::filter_TabularDataSet_1__Function_1__TabularDataSet_1_ ||
+         $func.func == meta::pure::functions::relation::filter_Relation_1__Function_1__Relation_1_, {|
+      let param0 = $func.parametersValues->at(0);
+      let param1 = $func.parametersValues->at(1);
+
+      $param0
         ->valueSpecToPExpr($typeInfo, $newTrace)
         ->andThen(parent: PExpr[1] |
-          $func.parametersValues
-            ->at(1)
+          $param1
             ->valueSpecToUntypedScoped($typeInfo, $newTrace)
             ->then(predicate: PExprScope[1] |
               meta::external::store::rel::compile::ir::tds::filter($parent, $predicate)
             )
-        )
+        );
     })
   ], |
     error(

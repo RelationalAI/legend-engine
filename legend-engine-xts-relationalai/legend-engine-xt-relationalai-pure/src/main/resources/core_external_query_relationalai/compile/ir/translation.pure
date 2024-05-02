@@ -351,7 +351,8 @@ function <<access.private>> meta::external::store::rel::compile::ir::functionExp
             handleCaseProject3($func, $typeInfo, $newTrace)),
           case ($other == meta::pure::functions::relation::project_C_MANY__FuncColSpecArray_1__Relation_1_,|
             handleCaseProject4($func, $typeInfo, $newTrace)),
-          case($other == restrict_TabularDataSet_1__String_MANY__TabularDataSet_1_,|
+          case($other == restrict_TabularDataSet_1__String_MANY__TabularDataSet_1_ ||
+               $other == meta::pure::functions::relation::select_Relation_1__ColSpecArray_1__Relation_1_,|
             handleCaseRestrict($func, $typeInfo, $newTrace)),
           case($other == groupBy_K_MANY__Function_MANY__AggregateValue_MANY__String_MANY__TabularDataSet_1_,|
             handleCaseGroupBy1($func, $typeInfo, $newTrace)),
@@ -403,7 +404,9 @@ function <<access.private>> meta::external::store::rel::compile::ir::functionExp
           case($other == extractEnumValue_Enumeration_1__String_1__T_1_,|
             handleCaseExtractEnumValue($func, $newTrace)),
           case($other == join_TabularDataSet_1__TabularDataSet_1__JoinType_1__Function_1__TabularDataSet_1_ ||
-               $other == filter_TabularDataSet_1__Function_1__TabularDataSet_1_,|
+               $other == meta::pure::functions::relation::join_Relation_1__Relation_1__JoinKind_1__Function_1__Relation_1_ ||
+               $other == filter_TabularDataSet_1__Function_1__TabularDataSet_1_ ||
+               $other == meta::pure::functions::relation::filter_Relation_1__Function_1__Relation_1_,|
             meta::external::store::rel::compile::ir::tds::intoPExpr($func, $typeInfo, $newTrace)),
           case($other == toOneMany_T_MANY__T_$1_MANY$_,|
             handleCaseDoNothing($func, $typeInfo, $newTrace))
