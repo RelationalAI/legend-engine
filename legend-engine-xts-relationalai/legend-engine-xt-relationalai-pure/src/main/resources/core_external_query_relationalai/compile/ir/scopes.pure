@@ -50,6 +50,10 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseV
       ->detailLazy('parent', $parent->describeLazy());
   $spec->match([
     {
+      func: FunctionDefinition<Any>[1] |
+        $func->handleCaseFunctionDefToScoped($typeInfo, $requireType, $parent, $newTrace)
+    },
+    {
       spec: InstanceValue[1] |
         $spec.values
           ->first()
