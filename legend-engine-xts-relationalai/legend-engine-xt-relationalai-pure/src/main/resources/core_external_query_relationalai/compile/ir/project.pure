@@ -316,7 +316,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::handleCaseR
                 ^$project(projections=$newProjections);
             },
             {
-              join: PExprTDSJoin[1] |
+              join: PExprTabularJoin[1] |
                 /*
                  * If a `join` is immediately followed by a `restrict` then the `restrict` is
                  * used to specify the output columns of the join. 
