@@ -75,8 +75,8 @@ function meta::external::store::rel::compile::compile(
     s: PExprCompilationStep[1] | $s.logic->eval($substitution, $rewrite, $state),
     e: PExprIfThenElse[1]      | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprIn[1]              | $e->compile($substitution, $rewrite, $state, $newTrace),
-    j: PExprTDSJoin[1]         | $j->meta::external::store::rel::compile::tabular::compile($substitution, $rewrite, $state, $newTrace),
-    f: PExprTDSFilter[1]       | $f->meta::external::store::rel::compile::tabular::compile($substitution, $rewrite, $state, $newTrace)
+    j: PExprTabularJoin[1]     | $j->meta::external::store::rel::compile::tabular::compile($substitution, $rewrite, $state, $newTrace),
+    f: PExprTabularFilter[1]   | $f->meta::external::store::rel::compile::tabular::compile($substitution, $rewrite, $state, $newTrace)
   ]);
 }
 

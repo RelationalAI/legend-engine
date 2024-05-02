@@ -9,7 +9,7 @@ import meta::external::store::rel::trace::*;
 import meta::external::store::rel::utils::*;
 
 function meta::external::store::rel::compile::tabular::compile(
-  join: PExprTDSJoin[1],
+  join: PExprTabularJoin[1],
   substitution: VariableSubstitution[1],
   mapping: ColumnAccessRewrite[1],
   state: CompilationState[1],
@@ -117,7 +117,7 @@ function meta::external::store::rel::compile::tabular::compile(
 }
 
 function meta::external::store::rel::compile::tabular::compile(
-  filter: PExprTDSFilter[1],
+  filter: PExprTabularFilter[1],
   substitution: VariableSubstitution[1],
   rewrite: ColumnAccessRewrite[1],
   state: CompilationState[1],
