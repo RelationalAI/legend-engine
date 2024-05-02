@@ -15,7 +15,7 @@
 
 import meta::external::store::rel::compile::*;
 import meta::external::store::rel::compile::ir::*;
-import meta::external::store::rel::compile::ir::tds::*;
+import meta::external::store::rel::compile::ir::tabular::*;
 import meta::external::store::rel::compile::ir::utils::*;
 import meta::external::store::rel::compile::substitution::*;
 import meta::external::store::rel::compile::utils::*;
@@ -75,8 +75,8 @@ function meta::external::store::rel::compile::compile(
     s: PExprCompilationStep[1] | $s.logic->eval($substitution, $rewrite, $state),
     e: PExprIfThenElse[1]      | $e->compile($substitution, $rewrite, $state, $newTrace),
     e: PExprIn[1]              | $e->compile($substitution, $rewrite, $state, $newTrace),
-    j: PExprTDSJoin[1]         | $j->meta::external::store::rel::compile::tds::compile($substitution, $rewrite, $state, $newTrace),
-    f: PExprTDSFilter[1]       | $f->meta::external::store::rel::compile::tds::compile($substitution, $rewrite, $state, $newTrace)
+    j: PExprTDSJoin[1]         | $j->meta::external::store::rel::compile::tabular::compile($substitution, $rewrite, $state, $newTrace),
+    f: PExprTDSFilter[1]       | $f->meta::external::store::rel::compile::tabular::compile($substitution, $rewrite, $state, $newTrace)
   ]);
 }
 

@@ -1,12 +1,12 @@
 import meta::external::store::rel::compile::ir::*;
-import meta::external::store::rel::compile::ir::tds::*;
+import meta::external::store::rel::compile::ir::tabular::*;
 import meta::external::store::rel::compile::ir::typeinfo::*;
 import meta::external::store::rel::trace::*;
 import meta::external::store::rel::utils::*;
 import meta::external::store::rel::utils::lang::*;
 import meta::relational::metamodel::join::*;
 
-Enum meta::external::store::rel::compile::ir::tds::PExprTabularJoinKind
+Enum meta::external::store::rel::compile::ir::tabular::PExprTabularJoinKind
 {
   INNER,
   OUTER_LEFT,
@@ -14,7 +14,7 @@ Enum meta::external::store::rel::compile::ir::tds::PExprTabularJoinKind
   OUTER_FULL
 }
 
-function meta::external::store::rel::compile::ir::tds::tabularJoinKind(
+function meta::external::store::rel::compile::ir::tabular::tabularJoinKind(
   kind: meta::relational::metamodel::join::JoinType[1]
 ): PExprTabularJoinKind[1] {
   if ( $kind == JoinType.INNER,
@@ -30,7 +30,7 @@ function meta::external::store::rel::compile::ir::tds::tabularJoinKind(
   )
 }
 
-function meta::external::store::rel::compile::ir::tds::tabularJoinKind(
+function meta::external::store::rel::compile::ir::tabular::tabularJoinKind(
   kind: meta::pure::functions::relation::JoinKind[1]
 ): PExprTabularJoinKind[1] {
   if ( $kind == JoinKind.INNER,
@@ -40,7 +40,7 @@ function meta::external::store::rel::compile::ir::tds::tabularJoinKind(
      )
 }
 
-Class meta::external::store::rel::compile::ir::tds::PExprTDSJoin extends PExpr {
+Class meta::external::store::rel::compile::ir::tabular::PExprTDSJoin extends PExpr {
   /** The kind of join, e.g., INNER or LEFT_OUTER. */
   type: PExprTabularJoinKind[1];
   left: PExpr[1];
@@ -51,12 +51,12 @@ Class meta::external::store::rel::compile::ir::tds::PExprTDSJoin extends PExpr {
   columnNames: String[*];
 }
 
-Class meta::external::store::rel::compile::ir::tds::PExprTDSFilter extends PExpr {
+Class meta::external::store::rel::compile::ir::tabular::PExprTDSFilter extends PExpr {
   parent: PExpr[1];
   predicate: PExprScope[1];
 }
 
-function meta::external::store::rel::compile::ir::tds::join(
+function meta::external::store::rel::compile::ir::tabular::join(
   left: PExpr[1],
   right: PExpr[1],
   type: PExprTabularJoinKind[1],
@@ -65,11 +65,11 @@ function meta::external::store::rel::compile::ir::tds::join(
   ^PExprTDSJoin(type=$type, condition=$condition, left=$left, right=$right);
 }
 
-function meta::external::store::rel::compile::ir::tds::filter(parent: PExpr[1], predicate: PExprScope[1]): PExprTDSFilter[1] {
+function meta::external::store::rel::compile::ir::tabular::filter(parent: PExpr[1], predicate: PExprScope[1]): PExprTDSFilter[1] {
   ^PExprTDSFilter(parent=$parent, predicate=$predicate);
 }
 
-function meta::external::store::rel::compile::ir::tds::intoPExpr(
+function meta::external::store::rel::compile::ir::tabular::intoPExpr(
   func: FunctionExpression[1],
   typeInfo: TranspileTypeInfo[1],
   trace: Trace[1]
@@ -102,7 +102,7 @@ function meta::external::store::rel::compile::ir::tds::intoPExpr(
                     t: meta::pure::functions::relation::JoinKind[1]   | tabularJoinKind($t)
                   ])
                 )
-                ->map(joinType: meta::external::store::rel::compile::ir::tds::PExprTabularJoinKind[1] |
+                ->map(joinType: PExprTabularJoinKind[1] |
                   $param3
                     ->valueSpecToUntypedScoped($typeInfo, $newTrace)
                     ->then(condition: PExprScope[1] | join($left, $right, $joinType, $condition))
@@ -121,7 +121,7 @@ function meta::external::store::rel::compile::ir::tds::intoPExpr(
           $param1
             ->valueSpecToUntypedScoped($typeInfo, $newTrace)
             ->then(predicate: PExprScope[1] |
-              meta::external::store::rel::compile::ir::tds::filter($parent, $predicate)
+              meta::external::store::rel::compile::ir::tabular::filter($parent, $predicate)
             )
         );
     })

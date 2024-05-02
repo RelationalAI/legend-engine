@@ -407,7 +407,7 @@ function <<access.private>> meta::external::store::rel::compile::ir::functionExp
                $other == meta::pure::functions::relation::join_Relation_1__Relation_1__JoinKind_1__Function_1__Relation_1_ ||
                $other == filter_TabularDataSet_1__Function_1__TabularDataSet_1_ ||
                $other == meta::pure::functions::relation::filter_Relation_1__Function_1__Relation_1_,|
-            meta::external::store::rel::compile::ir::tds::intoPExpr($func, $typeInfo, $newTrace)),
+            meta::external::store::rel::compile::ir::tabular::intoPExpr($func, $typeInfo, $newTrace)),
           case($other == toOneMany_T_MANY__T_$1_MANY$_,|
             handleCaseDoNothing($func, $typeInfo, $newTrace))
         ], |

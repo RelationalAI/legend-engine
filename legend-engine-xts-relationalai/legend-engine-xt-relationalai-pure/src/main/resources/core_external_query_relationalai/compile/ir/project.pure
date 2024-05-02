@@ -1,5 +1,5 @@
 import meta::external::store::rel::compile::ir::*;
-import meta::external::store::rel::compile::ir::tds::*;
+import meta::external::store::rel::compile::ir::tabular::*;
 import meta::external::store::rel::compile::ir::typeinfo::*;
 import meta::external::store::rel::compile::ir::utils::*;
 import meta::external::store::rel::mapping::*;
